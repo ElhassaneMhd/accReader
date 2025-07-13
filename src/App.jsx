@@ -5,6 +5,7 @@ import Charts from "./components/Charts";
 import VmtaPerformance from "./components/VmtaPerformance";
 import SearchAndFilters from "./components/SearchAndFilters";
 import DataTable from "./components/DataTable";
+import ImportStatus from "./components/ImportStatus";
 import { useEmailData } from "./hooks/useEmailData";
 
 function App() {
@@ -18,10 +19,14 @@ function App() {
     searchType,
     filters,
     filterOptions,
+    autoImportEnabled,
+    lastAutoUpdate,
     loadCSVFile,
     updateSearch,
     updateFilters,
     clearFilters,
+    enableAutoImport,
+    disableAutoImport,
   } = useEmailData();
 
   const dataInfo =
@@ -42,6 +47,16 @@ function App() {
       />
 
       <div className="py-6 px-4 md:px-6 w-full">
+        {/* Import Status - Always visible */}
+        <div className="mb-6">
+          <ImportStatus
+            autoImportEnabled={autoImportEnabled}
+            lastAutoUpdate={lastAutoUpdate}
+            onEnableAutoImport={enableAutoImport}
+            onDisableAutoImport={disableAutoImport}
+          />
+        </div>
+
         {rawData.length > 0 ? (
           <>
             {/* Overview Statistics */}

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { parseCSVFile } from "../utils/csvParser";
+import { parseCSVFile, parseCSVString } from "../utils/csvParser";
 import {
   analyzeEmailData,
   searchData,
@@ -32,11 +32,7 @@ export const useEmailData = () => {
       setRawData(parsedData);
       setFilteredData(parsedData);
       setAutoImportEnabled(false); // Disable auto-import when manual file is loaded
-      console.log(
-        "Manual data loaded successfully:",
-        parsedData.length,
-        "records"
-      );
+      console.log("Manual data loaded successfully:", parsedData.length, "records");
     } catch (err) {
       console.error("Error loading CSV file:", err);
       setError(err.message || "Failed to load CSV file");
@@ -50,19 +46,19 @@ export const useEmailData = () => {
     if (!autoImportEnabled) return;
 
     try {
-      const response = await fetch("http://localhost:3003/api/latest-data");
+      const response = await fetch('http://localhost:3001/api/latest-data');
       if (!response.ok) {
-        throw new Error("Failed to fetch auto-import data");
+        throw new Error('Failed to fetch auto-import data');
       }
 
-      const { data, totalRecords, source } = await response.json();
-      if (data && Array.isArray(data) && data.length > 0) {
-        // Data is already parsed JSON from direct server read
-        setRawData(data);
-        setLastAutoUpdate(new Date().toISOString());
-        console.log(
-          `Auto-import data loaded: ${totalRecords} records via ${source}`
-        );
+      const { data, filename } = await response.json();
+      if (data) {
+        const parsedData = await parseCSVString(data);
+        if (parsedData.length > 0) {
+          setRawData(parsedData);
+          setLastAutoUpdate(new Date().toISOString());
+          console.log(`Auto-import data loaded: ${parsedData.length} records from ${filename}`);
+        }
       }
     } catch (err) {
       console.error("Error loading auto-import data:", err);
@@ -80,6 +76,15 @@ export const useEmailData = () => {
   // Disable auto-import mode
   const disableAutoImport = useCallback(() => {
     setAutoImportEnabled(false);
+  }, []);
+      setFilteredData(parsedData);
+      console.log("Data loaded successfully:", parsedData.length, "records");
+    } catch (err) {
+      console.error("Error loading CSV file:", err);
+      setError(err.message || "Failed to load CSV file");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // Apply search and filters
@@ -152,19 +157,6 @@ export const useEmailData = () => {
     };
   }, [rawData]);
 
-  // Auto-import effect - check for new data every 30 seconds
-  useEffect(() => {
-    if (!autoImportEnabled) return;
-
-    // Initial load
-    loadAutoImportData();
-
-    // Set up periodic checking
-    const interval = setInterval(loadAutoImportData, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
-  }, [autoImportEnabled, loadAutoImportData]);
-
   // Apply filters whenever dependencies change
   useEffect(() => {
     applyFilters();
@@ -183,16 +175,11 @@ export const useEmailData = () => {
     searchType,
     filters,
     filterOptions,
-    autoImportEnabled,
-    lastAutoUpdate,
 
     // Actions
     loadCSVFile,
     updateSearch,
     updateFilters,
     clearFilters,
-    enableAutoImport,
-    disableAutoImport,
-    loadAutoImportData,
   };
 };

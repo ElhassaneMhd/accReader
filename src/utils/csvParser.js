@@ -1,5 +1,76 @@
 import Papa from "papaparse";
 
+// Parse CSV string data (for auto-import)
+export const parseCSVString = (csvString) => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvString, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        console.log("CSV String Parse Results:", results);
+
+        if (results.errors.length > 0) {
+          console.warn("CSV String Parse Warnings:", results.errors);
+        }
+
+        try {
+          // Process and clean the data (same logic as parseCSVFile)
+          const processedData = results.data
+            .filter(
+              (row) =>
+                row &&
+                Object.keys(row).some((key) => row[key] && row[key].trim())
+            )
+            .map((row) => {
+              // Clean and process the row data
+              const processedRow = {};
+
+              Object.keys(row).forEach((key) => {
+                const value = row[key];
+                if (value !== null && value !== undefined) {
+                  processedRow[key] = String(value).trim();
+                } else {
+                  processedRow[key] = "";
+                }
+              });
+
+              // Parse dates with timezone support
+              if (processedRow.timeLogged) {
+                processedRow.timeLoggedParsed = parseDateTime(
+                  processedRow.timeLogged
+                );
+              }
+              if (processedRow.timeQueued) {
+                processedRow.timeQueuedParsed = parseDateTime(
+                  processedRow.timeQueued
+                );
+              }
+
+              // Normalize bounce category
+              if (processedRow.bounceCat) {
+                processedRow.bounceCat = processedRow.bounceCat.toLowerCase();
+              }
+
+              return processedRow;
+            });
+
+          console.log(
+            `Processed ${processedData.length} records from CSV string`
+          );
+          resolve(processedData);
+        } catch (error) {
+          console.error("Error processing CSV string data:", error);
+          reject(error);
+        }
+      },
+      error: (error) => {
+        console.error("Papa Parse Error (string):", error);
+        reject(new Error(`CSV parsing failed: ${error.message}`));
+      },
+    });
+  });
+};
+
 export const parseCSVFile = (file) => {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
@@ -127,7 +198,11 @@ export const formatDate = (date) => {
   if (!date) return "N/A";
 
   try {
-    return date.toLocaleString("en-US", {
+    // Handle both Date objects and date strings
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return "Invalid Date";
+
+    return dateObj.toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",

@@ -141,7 +141,7 @@ const DataTable = ({ data, title = "Email Records" }) => {
                       onClick={() => toggleRowExpansion(globalIndex)}
                     >
                       <TableCell className="text-gray-300 text-sm">
-                        {formatDate(row.timeLoggedParsed)}
+                        {formatDate(row.timeLoggedParsed || row.timeLogged)}
                       </TableCell>
 
                       <TableCell>
@@ -211,7 +211,9 @@ const DataTable = ({ data, title = "Email Records" }) => {
                                   <span className="text-gray-400">
                                     Time Queued:
                                   </span>{" "}
-                                  {formatDate(row.timeQueuedParsed)}
+                                  {formatDate(
+                                    row.timeQueuedParsed || row.timeQueued
+                                  )}
                                 </p>
                                 <p>
                                   <span className="text-gray-400">

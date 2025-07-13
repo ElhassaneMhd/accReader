@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { parseCSVFile } from "../utils/csvParser";
+import { parseCSVFile, parseCSVString } from "../utils/csvParser";
 import {
   analyzeEmailData,
   searchData,
@@ -50,19 +50,21 @@ export const useEmailData = () => {
     if (!autoImportEnabled) return;
 
     try {
-      const response = await fetch("http://localhost:3003/api/latest-data");
+      const response = await fetch("http://localhost:3001/api/latest-data");
       if (!response.ok) {
         throw new Error("Failed to fetch auto-import data");
       }
 
-      const { data, totalRecords, source } = await response.json();
-      if (data && Array.isArray(data) && data.length > 0) {
-        // Data is already parsed JSON from direct server read
-        setRawData(data);
-        setLastAutoUpdate(new Date().toISOString());
-        console.log(
-          `Auto-import data loaded: ${totalRecords} records via ${source}`
-        );
+      const { data, filename } = await response.json();
+      if (data) {
+        const parsedData = await parseCSVString(data);
+        if (parsedData.length > 0) {
+          setRawData(parsedData);
+          setLastAutoUpdate(new Date().toISOString());
+          console.log(
+            `Auto-import data loaded: ${parsedData.length} records from ${filename}`
+          );
+        }
       }
     } catch (err) {
       console.error("Error loading auto-import data:", err);

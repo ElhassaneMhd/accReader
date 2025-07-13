@@ -114,10 +114,17 @@ const generateTimelineData = (data) => {
   const timelineMap = {};
 
   data.forEach((row) => {
-    if (!row.timeLoggedParsed) return;
+    // Handle both timeLoggedParsed (from CSV parser) and timeLogged (from API)
+    let timeValue = row.timeLoggedParsed || row.timeLogged;
+    if (!timeValue) return;
+
+    // Parse the time if it's a string
+    const parsedTime =
+      typeof timeValue === "string" ? new Date(timeValue) : timeValue;
+    if (isNaN(parsedTime.getTime())) return; // Skip invalid dates
 
     // Group by hour
-    const hourKey = new Date(row.timeLoggedParsed);
+    const hourKey = new Date(parsedTime);
     hourKey.setMinutes(0, 0, 0);
     const key = hourKey.toISOString();
 
@@ -177,8 +184,15 @@ export const filterData = (data, filters) => {
   return data.filter((row) => {
     // Date range filter
     if (filters.dateRange && filters.dateRange.start && filters.dateRange.end) {
-      if (!row.timeLoggedParsed) return false;
-      const date = row.timeLoggedParsed;
+      // Handle both timeLoggedParsed (from CSV parser) and timeLogged (from API)
+      let timeValue = row.timeLoggedParsed || row.timeLogged;
+      if (!timeValue) return false;
+
+      // Parse the time if it's a string
+      const date =
+        typeof timeValue === "string" ? new Date(timeValue) : timeValue;
+      if (isNaN(date.getTime())) return false; // Skip invalid dates
+
       if (date < filters.dateRange.start || date > filters.dateRange.end) {
         return false;
       }
