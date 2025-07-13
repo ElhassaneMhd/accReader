@@ -12,9 +12,17 @@ import {
   CheckCircle,
   Download,
   Activity,
+  LogOut,
 } from "lucide-react";
 
-const ImportStatus = () => {
+const ImportStatus = ({
+  autoImportEnabled,
+  lastAutoUpdate,
+  onEnableAutoImport,
+  onDisableAutoImport,
+  onDisconnect,
+  isConnected,
+}) => {
   const [status, setStatus] = useState({
     status: "disconnected",
     lastImport: null,
@@ -27,7 +35,7 @@ const ImportStatus = () => {
 
   const fetchStatus = async () => {
     try {
-      const response = await fetch("http://localhost:3003/api/import-status");
+      const response = await fetch("http://localhost:3990/api/import-status");
       if (response.ok) {
         const data = await response.json();
         setStatus(data);
@@ -45,7 +53,7 @@ const ImportStatus = () => {
   const forceImport = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3003/api/force-import", {
+      const response = await fetch("http://localhost:3990/api/force-import", {
         method: "POST",
       });
       if (response.ok) {
@@ -202,25 +210,37 @@ const ImportStatus = () => {
           </div>
         )}
 
-        {/* Manual Import Button */}
-        <Button
-          onClick={forceImport}
-          disabled={loading || status.status === "importing"}
-          variant="outline"
-          className="w-full bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
-        >
-          {loading ? (
-            <>
-              <RefreshCw size={16} className="mr-2 animate-spin" />
-              Importing...
-            </>
-          ) : (
-            <>
-              <RefreshCw size={16} className="mr-2" />
-              Force Import
-            </>
-          )}
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button
+            onClick={forceImport}
+            disabled={loading || status.status === "importing"}
+            variant="outline"
+            className="flex-1 bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+          >
+            {loading ? (
+              <>
+                <RefreshCw size={16} className="mr-2 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              <>
+                <RefreshCw size={16} className="mr-2" />
+                Force Import
+              </>
+            )}
+          </Button>
+
+          <Button
+            onClick={onDisconnect}
+            disabled={loading}
+            variant="outline"
+            className="bg-red-900/20 border-red-700 text-red-400 hover:bg-red-900/30"
+          >
+            <LogOut size={16} className="mr-2" />
+            Disconnect
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

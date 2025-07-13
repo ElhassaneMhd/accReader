@@ -50,7 +50,7 @@ export const useEmailData = () => {
     if (!autoImportEnabled) return;
 
     try {
-      const response = await fetch("http://localhost:3003/api/latest-data");
+      const response = await fetch("http://localhost:3990/api/latest-data");
       if (!response.ok) {
         throw new Error("Failed to fetch auto-import data");
       }

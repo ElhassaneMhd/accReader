@@ -96,7 +96,7 @@ async function testBasicSSH() {
       console.log("      - Check username and password");
       console.log("      - Verify password authentication is enabled");
       console.log(
-        "      - Try: ssh -o PreferredAuthentications=password admin@91.229.239.75"
+        "      - Try: ssh -o PreferredAuthentications=password root@91.229.239.75"
       );
     } else if (error.message.includes("timeout")) {
       console.log("   💡 Timeout issue detected:");
@@ -186,7 +186,7 @@ async function runAllTests() {
   console.log("2. SSH service is running on port 22");
   console.log("3. Username and password are correct");
   console.log("4. Firewall allows SSH connections");
-  console.log("5. Try manual connection: ssh admin@91.229.239.75");
+  console.log("5. Try manual connection: ssh root@91.229.239.75");
 }
 
 runAllTests().catch(console.error);

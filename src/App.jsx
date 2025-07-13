@@ -6,9 +6,19 @@ import VmtaPerformance from "./components/VmtaPerformance";
 import SearchAndFilters from "./components/SearchAndFilters";
 import DataTable from "./components/DataTable";
 import ImportStatus from "./components/ImportStatus";
+import LoginForm from "./components/LoginForm";
 import { useEmailData } from "./hooks/useEmailData";
+import { useConnection } from "./hooks/useConnection";
 
 function App() {
+  const {
+    isConnected,
+    isConnecting,
+    connectionError,
+    connect,
+    disconnect,
+  } = useConnection();
+
   const {
     rawData,
     filteredData,
@@ -37,6 +47,35 @@ function App() {
         }
       : null;
 
+  // Handle connection callbacks
+  const handleConnect = async (connectionData) => {
+    const result = await connect(connectionData);
+    if (result.success) {
+      console.log("Successfully connected to PMTA server");
+    }
+    return result;
+  };
+
+  const handleDisconnect = async () => {
+    const result = await disconnect();
+    if (result.success) {
+      console.log("Successfully disconnected from PMTA server");
+    }
+    return result;
+  };
+
+  // Show login form if not connected
+  if (!isConnected) {
+    return (
+      <LoginForm
+        onConnect={handleConnect}
+        isConnecting={isConnecting}
+        error={connectionError}
+      />
+    );
+  }
+
+  // Show main dashboard if connected
   return (
     <div className="min-h-screen bg-gray-950 w-[100%] m-0 p-0">
       <Header
@@ -54,6 +93,8 @@ function App() {
             lastAutoUpdate={lastAutoUpdate}
             onEnableAutoImport={enableAutoImport}
             onDisableAutoImport={disableAutoImport}
+            onDisconnect={handleDisconnect}
+            isConnected={isConnected}
           />
         </div>
 

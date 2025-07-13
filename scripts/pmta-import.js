@@ -29,7 +29,7 @@ const CONFIG = {
   },
   import: {
     interval: parseInt(process.env.IMPORT_INTERVAL) || 30000, // 30 seconds
-    port: parseInt(process.env.IMPORT_PORT) || 3001,
+    port: parseInt(process.env.IMPORT_PORT) || 3990,
     enabled: process.env.AUTO_IMPORT_ENABLED === "true",
   },
   security: {
@@ -149,6 +149,106 @@ class PMTAImporter {
       }
     });
 
+    // Connection Management Endpoints
+    this.app.post("/api/connect", async (req, res) => {
+      try {
+        const { host, port, username, password, logPath, logPattern } =
+          req.body;
+
+        if (!host || !port || !username || !password) {
+          return res.status(400).json({
+            error: "Missing required connection parameters",
+          });
+        }
+
+        // Disconnect existing connection
+        if (this.isConnected) {
+          await this.disconnect();
+        }
+
+        // Update config with new connection details
+        CONFIG.pmta = {
+          host,
+          port: parseInt(port),
+          username,
+          password,
+          logPath: logPath || "/var/log/pmta",
+          logPattern: logPattern || "acct-*.csv",
+        };
+
+        // Test the connection
+        console.log(`🔄 Attempting to connect to ${host}:${port}...`);
+        await this.connectToServer();
+
+        res.json({
+          success: true,
+          message: "Connected successfully",
+          connectionStatus: this.importStatus,
+        });
+
+        // Start periodic imports if connection successful
+        this.startPeriodicImport();
+      } catch (error) {
+        console.error("❌ Connection failed:", error);
+        this.importStatus.status = "connection_failed";
+        this.importStatus.connectionHealth = "poor";
+
+        // Provide more specific error messages
+        let errorMessage = error.message;
+        let userFriendlyMessage = "";
+
+        if (error.message.includes("All configured authentication methods failed")) {
+          userFriendlyMessage = "Authentication failed. Please check your username and password.";
+          errorMessage = "Invalid credentials or password authentication disabled on server";
+        } else if (error.message.includes("timeout")) {
+          userFriendlyMessage = "Connection timed out. Please check if the server is reachable.";
+          errorMessage = "Connection timeout - server may be unreachable";
+        } else if (error.message.includes("refused") || error.message.includes("ECONNREFUSED")) {
+          userFriendlyMessage = "Connection refused. Please check if SSH service is running on the server.";
+          errorMessage = "Connection refused - SSH service may not be running";
+        } else if (error.message.includes("ENOTFOUND") || error.message.includes("EHOSTUNREACH")) {
+          userFriendlyMessage = "Host not found. Please check the server address.";
+          errorMessage = "Server address not found or unreachable";
+        } else {
+          userFriendlyMessage = "Connection failed. Please check your connection settings.";
+        }
+
+        this.importStatus.lastError = errorMessage;
+
+        res.status(500).json({
+          error: "Connection failed",
+          details: userFriendlyMessage,
+          technicalDetails: error.message,
+        });
+      }
+    });
+
+    this.app.post("/api/disconnect", async (req, res) => {
+      try {
+        await this.disconnect();
+        res.json({
+          success: true,
+          message: "Disconnected successfully",
+          connectionStatus: this.importStatus,
+        });
+      } catch (error) {
+        console.error("❌ Disconnect failed:", error);
+        res.status(500).json({
+          error: "Disconnect failed",
+          details: error.message,
+        });
+      }
+    });
+
+    this.app.get("/api/connection-status", (req, res) => {
+      res.json({
+        isConnected: this.isConnected,
+        connectionHealth: this.importStatus.connectionHealth,
+        status: this.importStatus.status,
+        lastError: this.importStatus.lastError,
+      });
+    });
+
     // Start server
     this.app.listen(CONFIG.import.port, () => {
       console.log(`🚀 PMTA Import API running on port ${CONFIG.import.port}`);
@@ -224,9 +324,13 @@ class PMTAImporter {
         keepaliveInterval: 5000,
         // Try password authentication first, then keyboard-interactive
         tryKeyboard: true,
+        // Add auth method order
+        authHandler: ['password', 'keyboard-interactive', 'none'],
         // Add additional SSH options for better compatibility
         algorithms: {
           kex: [
+            "diffie-hellman-group1-sha1",
+            "diffie-hellman-group14-sha1",
             "diffie-hellman-group14-sha256",
             "diffie-hellman-group16-sha512",
             "diffie-hellman-group18-sha512",
@@ -240,6 +344,10 @@ class PMTAImporter {
             "aes256-ctr",
             "aes128-gcm",
             "aes256-gcm",
+            "aes128-cbc",
+            "aes192-cbc",
+            "aes256-cbc",
+            "3des-cbc",
           ],
           serverHostKey: [
             "ssh-rsa",
@@ -249,16 +357,10 @@ class PMTAImporter {
             "ecdsa-sha2-nistp384",
             "ecdsa-sha2-nistp521",
           ],
-          hmac: ["hmac-sha2-256", "hmac-sha2-512", "hmac-sha1"],
+          hmac: ["hmac-sha2-256", "hmac-sha2-512", "hmac-sha1", "hmac-md5"],
         },
         debug: (msg) => {
-          if (
-            msg.includes("error") ||
-            msg.includes("fail") ||
-            msg.includes("auth")
-          ) {
-            console.log(`🔍 SSH Debug: ${msg}`);
-          }
+          console.log(`🔍 SSH Debug: ${msg}`);
         },
       };
 
@@ -286,7 +388,7 @@ class PMTAImporter {
         console.log("   1. Verify username and password are correct");
         console.log("   2. Check if SSH is enabled on the server");
         console.log("   3. Verify user has SSH access permissions");
-        console.log("   4. Test manually: ssh admin@91.229.239.75");
+        console.log("   4. Test manually: ssh root@91.229.239.75");
         console.log(
           "   5. Check if password authentication is allowed in sshd_config"
         );
@@ -600,26 +702,51 @@ class PMTAImporter {
 
   async start() {
     console.log("🚀 Starting PMTA Auto-Import Service");
-    console.log(`📡 Target server: ${CONFIG.pmta.host}:${CONFIG.pmta.port}`);
-    console.log(
-      `📂 Remote path: ${CONFIG.pmta.logPath}/${CONFIG.pmta.logPattern}`
-    );
-    console.log(`🔄 Import interval: ${CONFIG.import.interval / 1000}s`);
+    console.log(`📡 Service will wait for connection via API`);
+    console.log(`🌐 Web interface available on port ${CONFIG.import.port}`);
 
-    if (!CONFIG.import.enabled) {
-      console.log("⚠️ Auto-import is disabled in configuration");
-      return;
-    }
-
+    // Only prepare local directory - don't auto-connect
     await this.ensureLocalDataDirectory();
-    await this.startFileWatcher();
-    await this.startPeriodicImport();
   }
 
   async stop() {
     console.log("🛑 Stopping PMTA Auto-Import Service");
     if (this.ssh.isConnected()) {
       this.ssh.dispose();
+    }
+  }
+
+  async disconnect() {
+    try {
+      console.log("🔌 Disconnecting from PMTA server...");
+
+      // Clear periodic import if running
+      if (this.importTimer) {
+        clearInterval(this.importTimer);
+        this.importTimer = null;
+      }
+
+      // Close SSH connection
+      if (this.ssh && this.isConnected) {
+        this.ssh.dispose();
+      }
+
+      // Reset connection state
+      this.isConnected = false;
+      this.importStatus.status = "disconnected";
+      this.importStatus.connectionHealth = "unknown";
+      this.importStatus.lastError = null;
+      this.cachedData = [];
+      this.lastDataUpdate = null;
+
+      console.log("✅ Successfully disconnected from PMTA server");
+      return true;
+    } catch (error) {
+      console.error("❌ Error during disconnect:", error.message);
+      // Force reset even if there was an error
+      this.isConnected = false;
+      this.importStatus.status = "disconnected";
+      return false;
     }
   }
 }
