@@ -21,6 +21,8 @@ export const useEmailData = () => {
     bounceCategory: "all",
     dateRange: null,
   });
+  const [selectedFile, setSelectedFile] = useState("all");
+  const [availableFiles, setAvailableFiles] = useState([]);
 
   // Load CSV file (manual upload)
   const loadCSVFile = useCallback(async (file) => {
@@ -55,11 +57,17 @@ export const useEmailData = () => {
         throw new Error("Failed to fetch auto-import data");
       }
 
-      const { data, totalRecords, source } = await response.json();
+      const { data, totalRecords, source, selectedFile, availableFiles } =
+        await response.json();
       if (data && Array.isArray(data) && data.length > 0) {
         // Data is already parsed JSON from direct server read
         setRawData(data);
         setLastAutoUpdate(new Date().toISOString());
+
+        // Update file information
+        if (selectedFile !== undefined) setSelectedFile(selectedFile);
+        if (availableFiles) setAvailableFiles(availableFiles);
+
         console.log(
           `Auto-import data loaded: ${totalRecords} records via ${source}`
         );
@@ -81,6 +89,56 @@ export const useEmailData = () => {
   const disableAutoImport = useCallback(() => {
     setAutoImportEnabled(false);
   }, []);
+
+  // Switch between files
+  const switchToFile = useCallback(
+    async (filename) => {
+      if (!autoImportEnabled) return;
+
+      try {
+        const response = await fetch("http://localhost:3990/api/files/select", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ filename }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setSelectedFile(result.selectedFile);
+
+          // Reload data with new selection
+          await loadAutoImportData();
+
+          console.log(
+            `Switched to: ${result.selectedFile} (${result.recordCount} records)`
+          );
+        }
+      } catch (err) {
+        console.error("Error switching file:", err);
+        setError("Failed to switch file");
+      }
+    },
+    [autoImportEnabled, loadAutoImportData]
+  );
+
+  // Get list of available files
+  const getAvailableFiles = useCallback(async () => {
+    if (!autoImportEnabled) return;
+
+    try {
+      const response = await fetch("http://localhost:3990/api/files");
+      if (response.ok) {
+        const result = await response.json();
+        setAvailableFiles(result.files);
+        setSelectedFile(result.selectedFile);
+        return result;
+      }
+    } catch (err) {
+      console.error("Error getting files:", err);
+    }
+  }, [autoImportEnabled]);
 
   // Apply search and filters
   const applyFilters = useCallback(() => {
@@ -185,6 +243,8 @@ export const useEmailData = () => {
     filterOptions,
     autoImportEnabled,
     lastAutoUpdate,
+    selectedFile,
+    availableFiles,
 
     // Actions
     loadCSVFile,
@@ -194,5 +254,7 @@ export const useEmailData = () => {
     enableAutoImport,
     disableAutoImport,
     loadAutoImportData,
+    switchToFile,
+    getAvailableFiles,
   };
 };

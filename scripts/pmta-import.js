@@ -60,6 +60,10 @@ class PMTAImporter {
     // Add cached data properties for direct server reading
     this.cachedData = [];
     this.lastDataUpdate = null;
+
+    // Track individual files and their data
+    this.importedFiles = []; // Array of {filename, data, importTime, recordCount}
+    this.selectedFile = "all"; // 'all' for combined view, or specific filename
   }
 
   setupExpress() {
@@ -111,21 +115,50 @@ class PMTAImporter {
 
     this.app.get("/api/latest-data", async (req, res) => {
       try {
-        if (this.cachedData.length > 0) {
-          // Return the cached data read directly from server
+        if (this.selectedFile === "all") {
+          // Return combined data from all files
           res.json({
             data: this.cachedData,
             totalRecords: this.cachedData.length,
             lastUpdate: this.lastDataUpdate,
             source: "server_direct_read",
+            selectedFile: "all",
+            availableFiles: this.importedFiles.map((f) => ({
+              filename: f.filename,
+              recordCount: f.recordCount,
+            })),
           });
         } else {
-          res.json({
-            data: [],
-            totalRecords: 0,
-            lastUpdate: null,
-            source: "server_direct_read",
-          });
+          // Return data from selected file
+          const selectedFileData = this.importedFiles.find(
+            (f) => f.filename === this.selectedFile
+          );
+          if (selectedFileData) {
+            res.json({
+              data: selectedFileData.data,
+              totalRecords: selectedFileData.recordCount,
+              lastUpdate: this.lastDataUpdate,
+              source: "server_direct_read",
+              selectedFile: this.selectedFile,
+              availableFiles: this.importedFiles.map((f) => ({
+                filename: f.filename,
+                recordCount: f.recordCount,
+              })),
+            });
+          } else {
+            // Fallback to combined data if selected file not found
+            res.json({
+              data: this.cachedData,
+              totalRecords: this.cachedData.length,
+              lastUpdate: this.lastDataUpdate,
+              source: "server_direct_read",
+              selectedFile: "all",
+              availableFiles: this.importedFiles.map((f) => ({
+                filename: f.filename,
+                recordCount: f.recordCount,
+              })),
+            });
+          }
         }
       } catch (error) {
         console.error("Error serving latest data:", error);
@@ -197,20 +230,34 @@ class PMTAImporter {
         let errorMessage = error.message;
         let userFriendlyMessage = "";
 
-        if (error.message.includes("All configured authentication methods failed")) {
-          userFriendlyMessage = "Authentication failed. Please check your username and password.";
-          errorMessage = "Invalid credentials or password authentication disabled on server";
+        if (
+          error.message.includes("All configured authentication methods failed")
+        ) {
+          userFriendlyMessage =
+            "Authentication failed. Please check your username and password.";
+          errorMessage =
+            "Invalid credentials or password authentication disabled on server";
         } else if (error.message.includes("timeout")) {
-          userFriendlyMessage = "Connection timed out. Please check if the server is reachable.";
+          userFriendlyMessage =
+            "Connection timed out. Please check if the server is reachable.";
           errorMessage = "Connection timeout - server may be unreachable";
-        } else if (error.message.includes("refused") || error.message.includes("ECONNREFUSED")) {
-          userFriendlyMessage = "Connection refused. Please check if SSH service is running on the server.";
+        } else if (
+          error.message.includes("refused") ||
+          error.message.includes("ECONNREFUSED")
+        ) {
+          userFriendlyMessage =
+            "Connection refused. Please check if SSH service is running on the server.";
           errorMessage = "Connection refused - SSH service may not be running";
-        } else if (error.message.includes("ENOTFOUND") || error.message.includes("EHOSTUNREACH")) {
-          userFriendlyMessage = "Host not found. Please check the server address.";
+        } else if (
+          error.message.includes("ENOTFOUND") ||
+          error.message.includes("EHOSTUNREACH")
+        ) {
+          userFriendlyMessage =
+            "Host not found. Please check the server address.";
           errorMessage = "Server address not found or unreachable";
         } else {
-          userFriendlyMessage = "Connection failed. Please check your connection settings.";
+          userFriendlyMessage =
+            "Connection failed. Please check your connection settings.";
         }
 
         this.importStatus.lastError = errorMessage;
@@ -247,6 +294,91 @@ class PMTAImporter {
         status: this.importStatus.status,
         lastError: this.importStatus.lastError,
       });
+    });
+
+    // File Management Endpoints
+    this.app.get("/api/files", (req, res) => {
+      try {
+        const filesInfo = this.importedFiles.map((file) => ({
+          filename: file.filename,
+          recordCount: file.recordCount,
+          importTime: file.importTime,
+          selected: this.selectedFile === file.filename,
+        }));
+
+        res.json({
+          files: filesInfo,
+          selectedFile: this.selectedFile,
+          totalFiles: this.importedFiles.length,
+          combinedRecords: this.cachedData.length,
+        });
+      } catch (error) {
+        console.error("Error getting files info:", error);
+        res.status(500).json({ error: "Failed to get files information" });
+      }
+    });
+
+    this.app.post("/api/files/select", (req, res) => {
+      try {
+        const { filename } = req.body;
+
+        if (filename === "all") {
+          this.selectedFile = "all";
+          res.json({
+            success: true,
+            selectedFile: "all",
+            message: "Switched to combined view (all files)",
+            recordCount: this.cachedData.length,
+          });
+        } else {
+          const file = this.importedFiles.find((f) => f.filename === filename);
+          if (!file) {
+            return res.status(404).json({ error: "File not found" });
+          }
+
+          this.selectedFile = filename;
+          res.json({
+            success: true,
+            selectedFile: filename,
+            message: `Switched to file: ${filename}`,
+            recordCount: file.recordCount,
+          });
+        }
+      } catch (error) {
+        console.error("Error selecting file:", error);
+        res.status(500).json({ error: "Failed to select file" });
+      }
+    });
+
+    this.app.get("/api/file-data/:filename", (req, res) => {
+      try {
+        const { filename } = req.params;
+
+        if (filename === "all") {
+          res.json({
+            data: this.cachedData,
+            totalRecords: this.cachedData.length,
+            filename: "all",
+            source: "combined_files",
+          });
+        } else {
+          const file = this.importedFiles.find((f) => f.filename === filename);
+          if (!file) {
+            return res.status(404).json({ error: "File not found" });
+          }
+
+          res.json({
+            data: file.data,
+            totalRecords: file.recordCount,
+            filename: file.filename,
+            importTime: file.importTime,
+            source: "individual_file",
+          });
+        }
+      } catch (error) {
+        console.error("Error getting file data:", error);
+        res.status(500).json({ error: "Failed to get file data" });
+      }
     });
 
     // Start server
@@ -325,7 +457,7 @@ class PMTAImporter {
         // Try password authentication first, then keyboard-interactive
         tryKeyboard: true,
         // Add auth method order
-        authHandler: ['password', 'keyboard-interactive', 'none'],
+        authHandler: ["password", "keyboard-interactive", "none"],
         // Add additional SSH options for better compatibility
         algorithms: {
           kex: [
@@ -522,6 +654,9 @@ class PMTAImporter {
       let allData = [];
       let processedFiles = 0;
 
+      // Clear previous imported files for fresh import
+      this.importedFiles = [];
+
       for (const remoteFile of files) {
         const filename = path.basename(remoteFile);
 
@@ -587,6 +722,15 @@ class PMTAImporter {
             record._filename = filename;
             record._lineNumber = index + 2; // +2 because we skip header and 0-index
             return record;
+          });
+
+          // Store individual file data
+          this.importedFiles.push({
+            filename: filename,
+            data: fileData,
+            recordCount: fileData.length,
+            importTime: new Date().toISOString(),
+            headers: headers,
           });
 
           allData = allData.concat(fileData);

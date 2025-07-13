@@ -6,18 +6,14 @@ import VmtaPerformance from "./components/VmtaPerformance";
 import SearchAndFilters from "./components/SearchAndFilters";
 import DataTable from "./components/DataTable";
 import ImportStatus from "./components/ImportStatus";
+import FileSelector from "./components/FileSelector";
 import LoginForm from "./components/LoginForm";
 import { useEmailData } from "./hooks/useEmailData";
 import { useConnection } from "./hooks/useConnection";
 
 function App() {
-  const {
-    isConnected,
-    isConnecting,
-    connectionError,
-    connect,
-    disconnect,
-  } = useConnection();
+  const { isConnected, isConnecting, connectionError, connect, disconnect } =
+    useConnection();
 
   const {
     rawData,
@@ -31,12 +27,16 @@ function App() {
     filterOptions,
     autoImportEnabled,
     lastAutoUpdate,
+    selectedFile,
+    availableFiles,
     loadCSVFile,
     updateSearch,
     updateFilters,
     clearFilters,
     enableAutoImport,
     disableAutoImport,
+    switchToFile,
+    getAvailableFiles,
   } = useEmailData();
 
   const dataInfo =
@@ -97,6 +97,19 @@ function App() {
             isConnected={isConnected}
           />
         </div>
+
+        {/* File Selector - Only visible for auto-import mode */}
+        {autoImportEnabled && (
+          <div className="mb-6">
+            <FileSelector
+              selectedFile={selectedFile}
+              availableFiles={availableFiles}
+              onFileSelect={switchToFile}
+              onRefreshFiles={getAvailableFiles}
+              isAutoImportEnabled={autoImportEnabled}
+            />
+          </div>
+        )}
 
         {rawData.length > 0 ? (
           <>

@@ -189,8 +189,8 @@ const LoginForm = ({ onConnect, isConnecting, error }) => {
 
           <div className="mt-6 text-center">
             <p className="text-gray-400 text-xs">
-              Your credentials are used only to establish a secure SSH connection
-              to your PMTA server and are not stored permanently.
+              Your credentials are used only to establish a secure SSH
+              connection to your PMTA server and are not stored permanently.
             </p>
           </div>
         </CardContent>
