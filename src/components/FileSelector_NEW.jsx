@@ -92,13 +92,12 @@ const FileSelector = ({
       });
 
       if (response.ok) {
-        // Refresh both local and hook data
         await fetchAvailableFiles();
-        if (onRefreshFiles) await onRefreshFiles();
 
         // Automatically switch to combined view after import
         await switchToAllFiles();
 
+        if (onRefreshFiles) onRefreshFiles();
         console.log(
           `✅ Successfully imported ${filename} and switched to combined view`
         );
@@ -121,13 +120,12 @@ const FileSelector = ({
       });
 
       if (response.ok) {
-        // Refresh both local and hook data
         await fetchAvailableFiles();
-        if (onRefreshFiles) await onRefreshFiles();
 
         // Automatically switch to combined view after importing all files
         await switchToAllFiles();
 
+        if (onRefreshFiles) onRefreshFiles();
         console.log(
           "✅ Successfully imported all files and switched to combined view"
         );
@@ -152,13 +150,12 @@ const FileSelector = ({
       );
 
       if (response.ok) {
-        // Refresh both local and hook data
         await fetchAvailableFiles();
-        if (onRefreshFiles) await onRefreshFiles();
 
         // Switch to combined view (will show just the latest file if only one is imported)
         await switchToAllFiles();
 
+        if (onRefreshFiles) onRefreshFiles();
         console.log(
           "⚡ Refreshed with latest file only and switched to combined view"
         );
@@ -176,51 +173,14 @@ const FileSelector = ({
     }
   }, [isAutoImportEnabled]);
 
-  // Sync local data when hook's availableFiles changes
-  useEffect(() => {
-    if (isAutoImportEnabled && availableFiles.length > 0) {
-      fetchAvailableFiles();
-    }
-  }, [availableFiles.length, isAutoImportEnabled]);
-
-  // Create unified data source for both dropdowns
-  // Merge hook's availableFiles (imported) with availableFilesData (all files with status)
-  const getUnifiedFileData = () => {
-    const unified = [];
-
-    // Add all files from availableFilesData with their import status
-    availableFilesData.forEach((file) => {
-      const importedFile = availableFiles.find(
-        (f) => f.filename === file.filename
-      );
-      unified.push({
-        ...file,
-        recordCount: importedFile ? importedFile.recordCount : file.recordCount,
-        imported: !!importedFile,
-      });
-    });
-
-    // Add any imported files that might not be in availableFilesData yet
-    availableFiles.forEach((file) => {
-      if (!unified.find((f) => f.filename === file.filename)) {
-        unified.push({
-          ...file,
-          imported: true,
-        });
-      }
-    });
-
-    return unified;
-  };
-
-  const unifiedFileData = getUnifiedFileData();
-  const importedFiles = unifiedFileData.filter((f) => f.imported);
-
   const getTotalRecords = () => {
     if (selectedFile === "all") {
-      return importedFiles.reduce((total, file) => total + file.recordCount, 0);
+      return availableFiles.reduce(
+        (total, file) => total + file.recordCount,
+        0
+      );
     }
-    const file = importedFiles.find((f) => f.filename === selectedFile);
+    const file = availableFiles.find((f) => f.filename === selectedFile);
     return file ? file.recordCount : 0;
   };
 
@@ -240,8 +200,8 @@ const FileSelector = ({
     return null;
   }
 
-  const importedCount = unifiedFileData.filter((f) => f.imported).length;
-  const notImportedCount = unifiedFileData.filter((f) => !f.imported).length;
+  const importedCount = availableFilesData.filter((f) => f.imported).length;
+  const notImportedCount = availableFilesData.filter((f) => !f.imported).length;
 
   return (
     <div className="space-y-4">
@@ -259,7 +219,7 @@ const FileSelector = ({
               variant="outline"
               className="bg-green-900/20 text-green-400 border-green-700"
             >
-              {importedFiles.length} imported
+              {availableFiles.length} imported
             </Badge>
           </div>
         </CardHeader>
@@ -323,7 +283,7 @@ const FileSelector = ({
                         All Files (Combined)
                       </div>
                       <div className="text-xs text-gray-400">
-                        {importedFiles
+                        {availableFiles
                           .reduce((total, file) => total + file.recordCount, 0)
                           .toLocaleString()}{" "}
                         total records
@@ -336,7 +296,7 @@ const FileSelector = ({
                 </button>
 
                 {/* Individual Imported Files */}
-                {importedFiles.map((file) => (
+                {availableFiles.map((file) => (
                   <button
                     key={file.filename}
                     onClick={() => switchToSpecificFile(file.filename)}
@@ -361,7 +321,7 @@ const FileSelector = ({
                   </button>
                 ))}
 
-                {importedFiles.length === 0 && (
+                {availableFiles.length === 0 && (
                   <div className="p-3 text-center text-gray-400 text-sm">
                     No imported files available
                   </div>
@@ -466,7 +426,7 @@ const FileSelector = ({
             {isImportOpen && (
               <div className="absolute z-10 w-full mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                 {/* Available Files with Import Status */}
-                {unifiedFileData.map((file) => (
+                {availableFilesData.map((file) => (
                   <div
                     key={file.filename}
                     className="p-3 border-b border-gray-700 last:border-b-0"
@@ -517,7 +477,7 @@ const FileSelector = ({
                   </div>
                 ))}
 
-                {unifiedFileData.length === 0 && (
+                {availableFilesData.length === 0 && (
                   <div className="p-3 text-center text-gray-400 text-sm">
                     No files available
                   </div>
@@ -531,7 +491,7 @@ const FileSelector = ({
             <div className="p-3 bg-gray-800/50 rounded-lg">
               <div className="text-xs text-gray-400 mb-1">Total Files</div>
               <div className="text-lg font-semibold text-gray-200">
-                {unifiedFileData.length}
+                {availableFilesData.length}
               </div>
             </div>
             <div className="p-3 bg-gray-800/50 rounded-lg">

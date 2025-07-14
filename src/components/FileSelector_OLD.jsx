@@ -92,13 +92,12 @@ const FileSelector = ({
       });
 
       if (response.ok) {
-        // Refresh both local and hook data
         await fetchAvailableFiles();
-        if (onRefreshFiles) await onRefreshFiles();
 
         // Automatically switch to combined view after import
         await switchToAllFiles();
 
+        if (onRefreshFiles) onRefreshFiles();
         console.log(
           `✅ Successfully imported ${filename} and switched to combined view`
         );
@@ -121,13 +120,12 @@ const FileSelector = ({
       });
 
       if (response.ok) {
-        // Refresh both local and hook data
         await fetchAvailableFiles();
-        if (onRefreshFiles) await onRefreshFiles();
 
         // Automatically switch to combined view after importing all files
         await switchToAllFiles();
 
+        if (onRefreshFiles) onRefreshFiles();
         console.log(
           "✅ Successfully imported all files and switched to combined view"
         );
@@ -152,13 +150,12 @@ const FileSelector = ({
       );
 
       if (response.ok) {
-        // Refresh both local and hook data
         await fetchAvailableFiles();
-        if (onRefreshFiles) await onRefreshFiles();
 
         // Switch to combined view (will show just the latest file if only one is imported)
         await switchToAllFiles();
 
+        if (onRefreshFiles) onRefreshFiles();
         console.log(
           "⚡ Refreshed with latest file only and switched to combined view"
         );
@@ -176,51 +173,14 @@ const FileSelector = ({
     }
   }, [isAutoImportEnabled]);
 
-  // Sync local data when hook's availableFiles changes
-  useEffect(() => {
-    if (isAutoImportEnabled && availableFiles.length > 0) {
-      fetchAvailableFiles();
-    }
-  }, [availableFiles.length, isAutoImportEnabled]);
-
-  // Create unified data source for both dropdowns
-  // Merge hook's availableFiles (imported) with availableFilesData (all files with status)
-  const getUnifiedFileData = () => {
-    const unified = [];
-
-    // Add all files from availableFilesData with their import status
-    availableFilesData.forEach((file) => {
-      const importedFile = availableFiles.find(
-        (f) => f.filename === file.filename
-      );
-      unified.push({
-        ...file,
-        recordCount: importedFile ? importedFile.recordCount : file.recordCount,
-        imported: !!importedFile,
-      });
-    });
-
-    // Add any imported files that might not be in availableFilesData yet
-    availableFiles.forEach((file) => {
-      if (!unified.find((f) => f.filename === file.filename)) {
-        unified.push({
-          ...file,
-          imported: true,
-        });
-      }
-    });
-
-    return unified;
-  };
-
-  const unifiedFileData = getUnifiedFileData();
-  const importedFiles = unifiedFileData.filter((f) => f.imported);
-
   const getTotalRecords = () => {
     if (selectedFile === "all") {
-      return importedFiles.reduce((total, file) => total + file.recordCount, 0);
+      return availableFiles.reduce(
+        (total, file) => total + file.recordCount,
+        0
+      );
     }
-    const file = importedFiles.find((f) => f.filename === selectedFile);
+    const file = availableFiles.find((f) => f.filename === selectedFile);
     return file ? file.recordCount : 0;
   };
 
@@ -240,8 +200,8 @@ const FileSelector = ({
     return null;
   }
 
-  const importedCount = unifiedFileData.filter((f) => f.imported).length;
-  const notImportedCount = unifiedFileData.filter((f) => !f.imported).length;
+  const importedCount = availableFilesData.filter((f) => f.imported).length;
+  const notImportedCount = availableFilesData.filter((f) => !f.imported).length;
 
   return (
     <div className="space-y-4">
@@ -255,11 +215,8 @@ const FileSelector = ({
                 View Selector
               </CardTitle>
             </div>
-            <Badge
-              variant="outline"
-              className="bg-green-900/20 text-green-400 border-green-700"
-            >
-              {importedFiles.length} imported
+            <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-700">
+              {availableFiles.length} imported
             </Badge>
           </div>
         </CardHeader>
@@ -279,10 +236,7 @@ const FileSelector = ({
                   </div>
                 </div>
               </div>
-              <Badge
-                variant="outline"
-                className="bg-blue-900/20 text-blue-400 border-blue-700/50"
-              >
+              <Badge variant="outline" className="bg-blue-900/20 text-blue-400 border-blue-700/50">
                 Active View
               </Badge>
             </div>
@@ -299,11 +253,9 @@ const FileSelector = ({
                 <Eye size={16} />
                 Switch View
               </span>
-              <ChevronDown
-                size={16}
-                className={`transition-transform ${
-                  isViewOpen ? "rotate-180" : ""
-                }`}
+              <ChevronDown 
+                size={16} 
+                className={`transition-transform ${isViewOpen ? 'rotate-180' : ''}`} 
               />
             </Button>
 
@@ -313,7 +265,7 @@ const FileSelector = ({
                 <button
                   onClick={() => switchToAllFiles()}
                   className={`w-full p-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
-                    selectedFile === "all" ? "bg-blue-900/20" : ""
+                    selectedFile === 'all' ? 'bg-blue-900/20' : ''
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -323,25 +275,22 @@ const FileSelector = ({
                         All Files (Combined)
                       </div>
                       <div className="text-xs text-gray-400">
-                        {importedFiles
-                          .reduce((total, file) => total + file.recordCount, 0)
-                          .toLocaleString()}{" "}
-                        total records
+                        {availableFiles.reduce((total, file) => total + file.recordCount, 0).toLocaleString()} total records
                       </div>
                     </div>
                   </div>
-                  {selectedFile === "all" && (
+                  {selectedFile === 'all' && (
                     <Check size={16} className="text-blue-400" />
                   )}
                 </button>
 
                 {/* Individual Imported Files */}
-                {importedFiles.map((file) => (
+                {availableFiles.map((file) => (
                   <button
                     key={file.filename}
                     onClick={() => switchToSpecificFile(file.filename)}
                     className={`w-full p-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
-                      selectedFile === file.filename ? "bg-blue-900/20" : ""
+                      selectedFile === file.filename ? 'bg-blue-900/20' : ''
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -361,7 +310,7 @@ const FileSelector = ({
                   </button>
                 ))}
 
-                {importedFiles.length === 0 && (
+                {availableFiles.length === 0 && (
                   <div className="p-3 text-center text-gray-400 text-sm">
                     No imported files available
                   </div>
@@ -383,16 +332,10 @@ const FileSelector = ({
               </CardTitle>
             </div>
             <div className="flex gap-2">
-              <Badge
-                variant="outline"
-                className="bg-green-900/20 text-green-400 border-green-700"
-              >
+              <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-700">
                 {importedCount} imported
               </Badge>
-              <Badge
-                variant="outline"
-                className="bg-orange-900/20 text-orange-400 border-orange-700"
-              >
+              <Badge variant="outline" className="bg-orange-900/20 text-orange-400 border-orange-700">
                 {notImportedCount} available
               </Badge>
             </div>
@@ -404,13 +347,10 @@ const FileSelector = ({
           <div className="p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Zap size={16} className="text-blue-400" />
-              <span className="text-sm font-medium text-blue-400">
-                Performance Mode
-              </span>
+              <span className="text-sm font-medium text-blue-400">Performance Mode</span>
             </div>
             <p className="text-xs text-blue-300">
-              Latest file imported automatically. Import older files manually as
-              needed.
+              Latest file imported automatically. Import older files manually as needed.
             </p>
           </div>
 
@@ -455,18 +395,16 @@ const FileSelector = ({
                 <FolderOpen size={16} />
                 Manage File Imports
               </span>
-              <ChevronDown
-                size={16}
-                className={`transition-transform ${
-                  isImportOpen ? "rotate-180" : ""
-                }`}
+              <ChevronDown 
+                size={16} 
+                className={`transition-transform ${isImportOpen ? 'rotate-180' : ''}`} 
               />
             </Button>
 
             {isImportOpen && (
               <div className="absolute z-10 w-full mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                 {/* Available Files with Import Status */}
-                {unifiedFileData.map((file) => (
+                {availableFilesData.map((file) => (
                   <div
                     key={file.filename}
                     className="p-3 border-b border-gray-700 last:border-b-0"
@@ -479,20 +417,13 @@ const FileSelector = ({
                             {formatFileName(file.filename)}
                           </div>
                           <div className="text-xs text-gray-400">
-                            {file.imported
-                              ? `${
-                                  file.recordCount?.toLocaleString() || 0
-                                } records`
-                              : "Not imported"}
+                            {file.imported ? `${file.recordCount?.toLocaleString() || 0} records` : 'Not imported'}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {file.imported ? (
-                          <Badge
-                            variant="outline"
-                            className="bg-green-900/20 text-green-400 border-green-700 text-xs"
-                          >
+                          <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-700 text-xs">
                             <Check size={12} className="mr-1" />
                             Imported
                           </Badge>
@@ -517,7 +448,7 @@ const FileSelector = ({
                   </div>
                 ))}
 
-                {unifiedFileData.length === 0 && (
+                {availableFilesData.length === 0 && (
                   <div className="p-3 text-center text-gray-400 text-sm">
                     No files available
                   </div>
@@ -531,7 +462,7 @@ const FileSelector = ({
             <div className="p-3 bg-gray-800/50 rounded-lg">
               <div className="text-xs text-gray-400 mb-1">Total Files</div>
               <div className="text-lg font-semibold text-gray-200">
-                {unifiedFileData.length}
+                {availableFilesData.length}
               </div>
             </div>
             <div className="p-3 bg-gray-800/50 rounded-lg">
@@ -550,6 +481,239 @@ const FileSelector = ({
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+export default FileSelector;
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Files size={20} className="text-blue-400" />
+            <CardTitle className="text-lg text-gray-100">
+              File Management
+            </CardTitle>
+          </div>
+          <div className="flex gap-2">
+            <Badge
+              variant="outline"
+              className="bg-green-900/20 text-green-400 border-green-700"
+            >
+              {importedCount} imported
+            </Badge>
+            <Badge
+              variant="outline"
+              className="bg-orange-900/20 text-orange-400 border-orange-700"
+            >
+              {notImportedCount} available
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Performance Mode Info */}
+        <div className="p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={16} className="text-blue-400" />
+            <span className="text-sm font-medium text-blue-400">
+              Performance Mode
+            </span>
+          </div>
+          <p className="text-xs text-blue-300">
+            Only the latest file is imported automatically for better
+            performance. You can manually import older files as needed.
+          </p>
+        </div>
+
+        {/* Current Selection */}
+        <div className="p-3 bg-gray-800/50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {getFileIcon(selectedFile)}
+              <div>
+                <div className="text-sm font-medium text-gray-200">
+                  {formatFileName(selectedFile)}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {getTotalRecords().toLocaleString()} records
+                </div>
+              </div>
+            </div>
+            <Badge
+              variant="outline"
+              className="bg-blue-900/20 text-blue-400 border-blue-700/50"
+            >
+              Active
+            </Badge>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            onClick={refreshLatestOnly}
+            disabled={importing}
+            variant="outline"
+            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+          >
+            {importing ? (
+              <RefreshCw size={16} className="mr-2 animate-spin" />
+            ) : (
+              <Zap size={16} className="mr-2" />
+            )}
+            Latest Only
+          </Button>
+          <Button
+            onClick={importAllFiles}
+            disabled={importing || notImportedCount === 0}
+            variant="outline"
+            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+          >
+            {importing ? (
+              <RefreshCw size={16} className="mr-2 animate-spin" />
+            ) : (
+              <Database size={16} className="mr-2" />
+            )}
+            Import All
+          </Button>
+        </div>
+
+        {/* File Dropdown for switching view */}
+        <div className="relative">
+          <Button
+            onClick={() => setIsOpen(!isOpen)}
+            variant="outline"
+            className="w-full justify-between bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+          >
+            <span>Switch view / Import files</span>
+            <ChevronDown
+              size={16}
+              className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+            />
+          </Button>
+
+          {isOpen && (
+            <div className="absolute z-10 w-full mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+              {/* Combined View Option */}
+              <button
+                onClick={() => switchToAllFiles()}
+                className={`w-full p-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                  selectedFile === "all" ? "bg-blue-900/20" : ""
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <BarChart3 size={16} className="text-blue-400" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-200">
+                      All Files (Combined)
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {availableFiles
+                        .reduce((total, file) => total + file.recordCount, 0)
+                        .toLocaleString()}{" "}
+                      total records
+                    </div>
+                  </div>
+                </div>
+                {selectedFile === "all" && (
+                  <Check size={16} className="text-blue-400" />
+                )}
+              </button>
+
+              {/* Available Files with Import Status */}
+              {availableFilesData.map((file) => (
+                <div
+                  key={file.filename}
+                  className="p-3 border-b border-gray-700 last:border-b-0"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1">
+                      <FileText size={14} className="text-gray-400" />
+                      <div className="flex-1">
+                        <div className="text-sm text-gray-200">
+                          {formatFileName(file.filename)}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {file.imported
+                            ? `${
+                                file.recordCount?.toLocaleString() || 0
+                              } records`
+                            : "Not imported"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {file.imported ? (
+                        <>
+                          <Badge
+                            variant="outline"
+                            className="bg-green-900/20 text-green-400 border-green-700 text-xs"
+                          >
+                            <Check size={12} className="mr-1" />
+                            Imported
+                          </Badge>
+                          <Button
+                            onClick={() => switchToSpecificFile(file.filename)}
+                            size="sm"
+                            variant="ghost"
+                            className="text-blue-400 hover:bg-blue-900/20 text-xs px-2"
+                          >
+                            View
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          onClick={() => importFile(file.filename)}
+                          disabled={loadingFile === file.filename}
+                          size="sm"
+                          variant="outline"
+                          className="bg-blue-900/20 border-blue-700 text-blue-400 hover:bg-blue-900/30 text-xs"
+                        >
+                          {loadingFile === file.filename ? (
+                            <Clock size={12} className="mr-1 animate-spin" />
+                          ) : (
+                            <Download size={12} className="mr-1" />
+                          )}
+                          Import
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {availableFilesData.length === 0 && (
+                <div className="p-3 text-center text-gray-400 text-sm">
+                  No files available
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* File Statistics */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="p-3 bg-gray-800/50 rounded-lg">
+            <div className="text-xs text-gray-400 mb-1">Total</div>
+            <div className="text-lg font-semibold text-gray-200">
+              {availableFilesData.length}
+            </div>
+          </div>
+          <div className="p-3 bg-gray-800/50 rounded-lg">
+            <div className="text-xs text-gray-400 mb-1">Imported</div>
+            <div className="text-lg font-semibold text-green-400">
+              {importedCount}
+            </div>
+          </div>
+          <div className="p-3 bg-gray-800/50 rounded-lg">
+            <div className="text-xs text-gray-400 mb-1">Available</div>
+            <div className="text-lg font-semibold text-orange-400">
+              {notImportedCount}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

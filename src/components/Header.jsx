@@ -28,7 +28,7 @@ const Header = ({ onFileUpload, loading, error, dataInfo }) => {
   };
 
   return (
-    <header className="bg-gray-900 border-b border-gray-700 shadow-sm">
+    <header className="bg-gray-900 border-b border-gray-700 shadow-sm py-4">
       <div className="px-4 py-3 md:px-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           {/* Left side - Logo and title */}

@@ -381,6 +381,99 @@ class PMTAImporter {
       }
     });
 
+    // Manual File Import Endpoints
+    this.app.get("/api/files/available", (req, res) => {
+      try {
+        const availableFiles = this.availableFiles || [];
+        const importedFiles = this.importedFiles || [];
+
+        const filesWithStatus = availableFiles.map((file) => ({
+          filename: file.filename,
+          imported: importedFiles.some(
+            (imported) => imported.filename === file.filename
+          ),
+          available: true,
+          recordCount:
+            importedFiles.find(
+              (imported) => imported.filename === file.filename
+            )?.recordCount || 0,
+        }));
+
+        res.json({
+          files: filesWithStatus,
+          totalAvailable: availableFiles.length,
+          totalImported: importedFiles.length,
+          latestFile:
+            availableFiles.length > 0 ? availableFiles[0].filename : null,
+        });
+      } catch (error) {
+        console.error("Error getting available files:", error);
+        res.status(500).json({ error: "Failed to get available files" });
+      }
+    });
+
+    this.app.post("/api/files/import", async (req, res) => {
+      try {
+        const { filename, importAll } = req.body;
+
+        if (!this.isConnected) {
+          return res.status(400).json({ error: "Not connected to server" });
+        }
+
+        if (importAll) {
+          console.log("🔄 Importing all available files...");
+          const result = await this.readRemoteData(true);
+
+          res.json({
+            success: result.success,
+            message: `Imported all ${result.importedFiles} files`,
+            filesImported: result.importedFiles,
+            totalRecords: result.data.length,
+          });
+        } else if (filename) {
+          console.log(`🔄 Importing specific file: ${filename}`);
+          const result = await this.importSpecificFile(filename);
+
+          res.json(result);
+        } else {
+          res
+            .status(400)
+            .json({ error: "Must specify filename or importAll=true" });
+        }
+      } catch (error) {
+        console.error("Error importing files:", error);
+        res.status(500).json({
+          error: "Failed to import files",
+          details: error.message,
+        });
+      }
+    });
+
+    this.app.post("/api/files/import-latest-only", async (req, res) => {
+      try {
+        if (!this.isConnected) {
+          return res.status(400).json({ error: "Not connected to server" });
+        }
+
+        console.log("⚡ Importing latest file only (performance mode)...");
+        const result = await this.readRemoteData(false);
+
+        res.json({
+          success: result.success,
+          message: "Imported latest file only",
+          filesImported: result.importedFiles,
+          totalRecords: result.data.length,
+          availableFiles: result.availableFiles,
+        });
+      } catch (error) {
+        console.error("Error importing latest file:", error);
+        res.status(500).json({
+          error: "Failed to import latest file",
+          details: error.message,
+        });
+      }
+    });
+
     // Start server
     this.app.listen(CONFIG.import.port, () => {
       console.log(`🚀 PMTA Import API running on port ${CONFIG.import.port}`);
@@ -622,8 +715,7 @@ class PMTAImporter {
       return null;
     }
   }
-
-  async readRemoteData() {
+  async readRemoteData(importAllFiles = false) {
     try {
       if (!this.isConnected) {
         console.log("❌ Not connected to server");
@@ -640,24 +732,50 @@ class PMTAImporter {
         return { success: false, data: [] };
       }
 
-      const files = result.stdout.trim().split("\n").filter(Boolean);
-      console.log(`📁 Found ${files.length} log files on server`);
+      const allFiles = result.stdout.trim().split("\n").filter(Boolean);
+      console.log(`📁 Found ${allFiles.length} log files on server`);
 
       // Set total files count for status reporting
-      this.importStatus.totalFiles = files.length;
+      this.importStatus.totalFiles = allFiles.length;
 
-      if (files.length === 0) {
+      if (allFiles.length === 0) {
         console.log("ℹ️ No files found matching pattern");
         return { success: true, data: [], filesProcessed: 0, totalFiles: 0 };
+      }
+
+      // Decide which files to import
+      const filesToImport = importAllFiles ? allFiles : [allFiles[0]]; // Only latest file by default
+
+      if (!importAllFiles) {
+        console.log(
+          `⚡ Performance mode: Importing only the latest file (${path.basename(
+            filesToImport[0]
+          )})`
+        );
+        console.log(
+          `📋 ${allFiles.length - 1} older files available for manual import`
+        );
+      } else {
+        console.log(
+          `📥 Full import mode: Importing all ${filesToImport.length} files`
+        );
       }
 
       let allData = [];
       let processedFiles = 0;
 
+      // Store available files (even if not imported)
+      this.availableFiles = allFiles.map((file) => ({
+        filename: path.basename(file),
+        fullPath: file,
+        imported: false,
+        available: true,
+      }));
+
       // Clear previous imported files for fresh import
       this.importedFiles = [];
 
-      for (const remoteFile of files) {
+      for (const remoteFile of filesToImport) {
         const filename = path.basename(remoteFile);
 
         try {
@@ -749,7 +867,7 @@ class PMTAImporter {
       });
 
       console.log(
-        `✅ Read completed: ${processedFiles}/${files.length} files processed, ${allData.length} total records`
+        `✅ Read completed: ${processedFiles}/${filesToImport.length} files processed, ${allData.length} total records`
       );
 
       // Store the data in memory for API access
@@ -760,7 +878,9 @@ class PMTAImporter {
         success: true,
         data: allData,
         filesProcessed: processedFiles,
-        totalFiles: files.length,
+        totalFiles: allFiles.length,
+        importedFiles: filesToImport.length,
+        availableFiles: allFiles.length,
       };
     } catch (error) {
       console.error("❌ Read error:", error.message);
@@ -891,6 +1011,137 @@ class PMTAImporter {
       this.isConnected = false;
       this.importStatus.status = "disconnected";
       return false;
+    }
+  }
+
+  async importSpecificFile(filename) {
+    try {
+      if (!this.isConnected) {
+        throw new Error("Not connected to server");
+      }
+
+      // Check if file is already imported
+      const existingFile = this.importedFiles.find(
+        (f) => f.filename === filename
+      );
+      if (existingFile) {
+        return {
+          success: true,
+          message: `File ${filename} is already imported`,
+          recordCount: existingFile.recordCount,
+          skipped: true,
+        };
+      }
+
+      // Find the file in available files
+      const availableFile = this.availableFiles.find(
+        (f) => f.filename === filename
+      );
+      if (!availableFile) {
+        throw new Error(`File ${filename} not found in available files`);
+      }
+
+      console.log(`📖 Importing specific file: ${filename}`);
+
+      // Read file content directly from server
+      const fileResult = await this.ssh.execCommand(
+        `cat "${availableFile.fullPath}"`
+      );
+
+      if (fileResult.stderr) {
+        throw new Error(`Error reading ${filename}: ${fileResult.stderr}`);
+      }
+
+      if (!fileResult.stdout.trim()) {
+        throw new Error(`File ${filename} is empty`);
+      }
+
+      // Parse CSV content
+      const lines = fileResult.stdout.trim().split("\n");
+      if (lines.length < 2) {
+        throw new Error(`File ${filename} has no data rows`);
+      }
+
+      // Parse CSV with same logic as readRemoteData
+      const parseCSVLine = (line) => {
+        const result = [];
+        let current = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === "," && !inQuotes) {
+            result.push(current);
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+
+        result.push(current);
+        return result;
+      };
+
+      const headers = parseCSVLine(lines[0]);
+      const fileData = lines.slice(1).map((line, index) => {
+        const values = parseCSVLine(line);
+        const record = {};
+        headers.forEach((header, i) => {
+          record[header] = values[i]
+            ? values[i].replace(/^"|"$/g, "").trim()
+            : "";
+        });
+        record._filename = filename;
+        record._lineNumber = index + 2;
+        return record;
+      });
+
+      // Add to imported files
+      this.importedFiles.push({
+        filename: filename,
+        data: fileData,
+        recordCount: fileData.length,
+        importTime: new Date().toISOString(),
+        headers: headers,
+        imported: true,
+      });
+
+      // Mark as imported in available files
+      availableFile.imported = true;
+
+      // Update cached data (combine with existing data)
+      this.cachedData = this.cachedData.concat(fileData);
+
+      // Sort combined data by timeLogged
+      this.cachedData.sort((a, b) => {
+        const timeA = new Date(a.timeLogged || 0);
+        const timeB = new Date(b.timeLogged || 0);
+        return timeB - timeA;
+      });
+
+      this.lastDataUpdate = new Date();
+
+      console.log(
+        `✅ Successfully imported ${filename} (${fileData.length} records)`
+      );
+
+      return {
+        success: true,
+        message: `Successfully imported ${filename}`,
+        recordCount: fileData.length,
+        totalRecords: this.cachedData.length,
+        imported: true,
+      };
+    } catch (error) {
+      console.error(`❌ Failed to import ${filename}:`, error.message);
+      return {
+        success: false,
+        error: error.message,
+        imported: false,
+      };
     }
   }
 }

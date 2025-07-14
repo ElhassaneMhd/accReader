@@ -132,6 +132,8 @@ function App() {
               onFiltersChange={updateFilters}
               onClearFilters={clearFilters}
               resultsCount={filteredData.length}
+              filteredData={filteredData}
+              analysis={analysis}
             />
 
             {/* Data Table */}

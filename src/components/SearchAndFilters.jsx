@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, X } from "lucide-react";
+import ExportControls from "./ExportControls";
 
 const SearchAndFilters = ({
   searchTerm,
@@ -14,6 +15,9 @@ const SearchAndFilters = ({
   onFiltersChange,
   onClearFilters,
   resultsCount,
+  // New props for export functionality
+  filteredData,
+  analysis,
 }) => {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
@@ -190,9 +194,20 @@ const SearchAndFilters = ({
         {/* Results Count */}
         {resultsCount !== undefined && (
           <div className="flex items-center justify-between bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
-            <span className="text-sm text-gray-300">
-              Showing {resultsCount.toLocaleString()} records
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-300">
+                Showing {resultsCount.toLocaleString()} records
+              </span>
+              {resultsCount > 0 && (
+                <ExportControls
+                  data={filteredData}
+                  analysis={analysis}
+                  filters={filters}
+                  searchTerm={searchTerm}
+                  resultsCount={resultsCount}
+                />
+              )}
+            </div>
             {activeFiltersCount > 0 && (
               <span className="text-sm text-blue-400">
                 {activeFiltersCount} filter{activeFiltersCount > 1 ? "s" : ""}{" "}

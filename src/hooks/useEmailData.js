@@ -96,6 +96,8 @@ export const useEmailData = () => {
       if (!autoImportEnabled) return;
 
       try {
+        setSelectedFile(filename); // Update UI immediately
+
         const response = await fetch("http://localhost:3990/api/files/select", {
           method: "POST",
           headers: {
@@ -106,13 +108,14 @@ export const useEmailData = () => {
 
         if (response.ok) {
           const result = await response.json();
-          setSelectedFile(result.selectedFile);
 
           // Reload data with new selection
           await loadAutoImportData();
 
           console.log(
-            `Switched to: ${result.selectedFile} (${result.recordCount} records)`
+            `Switched to: ${result.selectedFile} (${
+              result.recordCount || "combined"
+            } records)`
           );
         }
       } catch (err) {
