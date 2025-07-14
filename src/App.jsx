@@ -50,17 +50,11 @@ function App() {
   // Handle connection callbacks
   const handleConnect = async (connectionData) => {
     const result = await connect(connectionData);
-    if (result.success) {
-      console.log("Successfully connected to PMTA server");
-    }
     return result;
   };
 
   const handleDisconnect = async () => {
     const result = await disconnect();
-    if (result.success) {
-      console.log("Successfully disconnected from PMTA server");
-    }
     return result;
   };
 

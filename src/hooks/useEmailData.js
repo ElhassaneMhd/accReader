@@ -34,13 +34,7 @@ export const useEmailData = () => {
       setRawData(parsedData);
       setFilteredData(parsedData);
       setAutoImportEnabled(false); // Disable auto-import when manual file is loaded
-      console.log(
-        "Manual data loaded successfully:",
-        parsedData.length,
-        "records"
-      );
     } catch (err) {
-      console.error("Error loading CSV file:", err);
       setError(err.message || "Failed to load CSV file");
     } finally {
       setLoading(false);

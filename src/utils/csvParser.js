@@ -7,8 +7,6 @@ export const parseCSVString = (csvString) => {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        console.log("CSV String Parse Results:", results);
-
         if (results.errors.length > 0) {
           console.warn("CSV String Parse Warnings:", results.errors);
         }
@@ -77,8 +75,6 @@ export const parseCSVFile = (file) => {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        console.log("CSV Parse Results:", results);
-
         if (results.errors.length > 0) {
           console.warn("CSV Parse Warnings:", results.errors);
         }
@@ -144,7 +140,6 @@ export const parseCSVFile = (file) => {
             return processedRow;
           });
 
-        console.log(`Processed ${processedData.length} records`);
         resolve(processedData);
       },
       error: (error) => {
