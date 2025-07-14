@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 const API_BASE_URL = "http://localhost:3990";
+const SESSION_KEY = "pmta_session";
 
 export const useConnection = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -8,26 +9,54 @@ export const useConnection = () => {
   const [connectionError, setConnectionError] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
 
-  // Check connection status on load
+  // Check for existing session on load
   useEffect(() => {
-    checkConnectionStatus();
+    const checkSession = () => {
+      try {
+        const session = localStorage.getItem(SESSION_KEY);
+        if (session) {
+          const sessionData = JSON.parse(session);
+          // Check if session is still valid (within 24 hours)
+          const sessionAge = Date.now() - sessionData.timestamp;
+          const twentyFourHours = 24 * 60 * 60 * 1000;
+          
+          if (sessionAge < twentyFourHours) {
+            // Verify the connection is still active
+            verifyActiveConnection();
+          } else {
+            // Session expired, clear it
+            localStorage.removeItem(SESSION_KEY);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking existing session:", error);
+        localStorage.removeItem(SESSION_KEY);
+      }
+    };
+
+    checkSession();
   }, []);
 
-  const checkConnectionStatus = async () => {
+  const verifyActiveConnection = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/connection-status`);
       if (response.ok) {
         const status = await response.json();
-        setIsConnected(status.isConnected);
-        setConnectionStatus(status.status);
-        if (status.lastError) {
-          setConnectionError(status.lastError);
+        if (status.isConnected) {
+          setIsConnected(true);
+          setConnectionStatus(status.status);
+        } else {
+          // Connection is not active, clear session
+          localStorage.removeItem(SESSION_KEY);
         }
+      } else {
+        // API not available, clear session
+        localStorage.removeItem(SESSION_KEY);
       }
     } catch (error) {
-      console.error("Failed to check connection status:", error);
-      // API service might not be running
-      setConnectionError("Unable to connect to import service");
+      console.error("Failed to verify connection:", error);
+      // API service might not be running, don't set as connected
+      localStorage.removeItem(SESSION_KEY);
     }
   };
 
@@ -50,6 +79,13 @@ export const useConnection = () => {
         setIsConnected(true);
         setConnectionStatus("connected");
         setConnectionError(null);
+        
+        // Save session to localStorage
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          timestamp: Date.now(),
+          connected: true
+        }));
+        
         return { success: true, data: result };
       } else {
         setConnectionError(
@@ -78,6 +114,10 @@ export const useConnection = () => {
         setIsConnected(false);
         setConnectionStatus("disconnected");
         setConnectionError(null);
+        
+        // Clear session from localStorage
+        localStorage.removeItem(SESSION_KEY);
+        
         return { success: true };
       } else {
         const result = await response.json();
@@ -88,8 +128,19 @@ export const useConnection = () => {
       // Force local state update even if API call failed
       setIsConnected(false);
       setConnectionStatus("disconnected");
+      
+      // Clear session from localStorage
+      localStorage.removeItem(SESSION_KEY);
+      
       return { success: false, error: error.message };
     }
+  };
+
+  const clearSession = () => {
+    localStorage.removeItem(SESSION_KEY);
+    setIsConnected(false);
+    setConnectionStatus("disconnected");
+    setConnectionError(null);
   };
 
   return {
@@ -99,6 +150,7 @@ export const useConnection = () => {
     connectionStatus,
     connect,
     disconnect,
-    checkConnectionStatus,
+    clearSession,
+    checkConnectionStatus: verifyActiveConnection,
   };
 };

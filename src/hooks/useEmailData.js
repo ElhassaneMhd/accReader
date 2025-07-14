@@ -14,6 +14,7 @@ export const useEmailData = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("recipient");
   const [autoImportEnabled, setAutoImportEnabled] = useState(true);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [lastAutoUpdate, setLastAutoUpdate] = useState(null);
   const [filters, setFilters] = useState({
     status: "all",
@@ -56,6 +57,7 @@ export const useEmailData = () => {
       if (data && Array.isArray(data) && data.length > 0) {
         // Data is already parsed JSON from direct server read
         setRawData(data);
+        setFilteredData(data); // Immediately update filtered data to trigger UI refresh
         setLastAutoUpdate(new Date().toISOString());
 
         // Update file information
@@ -72,6 +74,19 @@ export const useEmailData = () => {
     }
   }, [autoImportEnabled]);
 
+  // Force refresh data (manual refresh)
+  const forceRefresh = useCallback(async () => {
+    if (!autoImportEnabled) return;
+
+    setLoading(true);
+    try {
+      await loadAutoImportData();
+      console.log("Manual refresh completed");
+    } finally {
+      setLoading(false);
+    }
+  }, [autoImportEnabled, loadAutoImportData]);
+
   // Enable auto-import mode
   const enableAutoImport = useCallback(() => {
     setAutoImportEnabled(true);
@@ -82,6 +97,21 @@ export const useEmailData = () => {
   // Disable auto-import mode
   const disableAutoImport = useCallback(() => {
     setAutoImportEnabled(false);
+  }, []);
+
+  // Toggle auto-refresh
+  const toggleAutoRefresh = useCallback(() => {
+    setAutoRefreshEnabled(prev => !prev);
+  }, []);
+
+  // Enable auto-refresh
+  const enableAutoRefresh = useCallback(() => {
+    setAutoRefreshEnabled(true);
+  }, []);
+
+  // Disable auto-refresh
+  const disableAutoRefresh = useCallback(() => {
+    setAutoRefreshEnabled(false);
   }, []);
 
   // Switch between files
@@ -207,18 +237,24 @@ export const useEmailData = () => {
     };
   }, [rawData]);
 
-  // Auto-import effect - check for new data every 30 seconds
+  // Auto-import effect - check for new data more frequently with router support and auto-refresh control
   useEffect(() => {
-    if (!autoImportEnabled) return;
+    if (!autoImportEnabled || !autoRefreshEnabled) return;
 
     // Initial load
     loadAutoImportData();
 
-    // Set up periodic checking
-    const interval = setInterval(loadAutoImportData, 30000); // 30 seconds
+    // Set up periodic checking every 10 seconds for more responsive updates
+    const interval = setInterval(() => {
+      if (autoRefreshEnabled) {
+        loadAutoImportData();
+        // Force component re-render by updating a timestamp
+        setLastAutoUpdate(new Date().toISOString());
+      }
+    }, 10000); // 10 seconds for faster updates
 
     return () => clearInterval(interval);
-  }, [autoImportEnabled, loadAutoImportData]);
+  }, [autoImportEnabled, autoRefreshEnabled, loadAutoImportData]);
 
   // Apply filters whenever dependencies change
   useEffect(() => {
@@ -239,6 +275,7 @@ export const useEmailData = () => {
     filters,
     filterOptions,
     autoImportEnabled,
+    autoRefreshEnabled,
     lastAutoUpdate,
     selectedFile,
     availableFiles,
@@ -250,7 +287,11 @@ export const useEmailData = () => {
     clearFilters,
     enableAutoImport,
     disableAutoImport,
+    toggleAutoRefresh,
+    enableAutoRefresh,
+    disableAutoRefresh,
     loadAutoImportData,
+    forceRefresh,
     switchToFile,
     getAvailableFiles,
   };

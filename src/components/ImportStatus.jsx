@@ -13,13 +13,18 @@ import {
   Download,
   Activity,
   LogOut,
+  Pause,
+  Play,
 } from "lucide-react";
 
 const ImportStatus = ({
   autoImportEnabled,
+  autoRefreshEnabled,
   lastAutoUpdate,
   onEnableAutoImport,
   onDisableAutoImport,
+  onToggleAutoRefresh,
+  onForceRefresh,
   onDisconnect,
   isConnected,
 }) => {
@@ -132,6 +137,28 @@ const ImportStatus = ({
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
+            {autoImportEnabled && (
+              <Badge 
+                variant="outline" 
+                className={
+                  autoRefreshEnabled
+                    ? "bg-green-900/20 text-green-400 border-green-700/50"
+                    : "bg-orange-900/20 text-orange-400 border-orange-700/50"
+                }
+              >
+                {autoRefreshEnabled ? (
+                  <>
+                    <Play size={12} className="mr-1" />
+                    Auto-Refresh ON
+                  </>
+                ) : (
+                  <>
+                    <Pause size={12} className="mr-1" />
+                    Auto-Refresh OFF
+                  </>
+                )}
+              </Badge>
+            )}
             <Badge variant="outline" className={getStatusColor()}>
               {getStatusIcon()}
               <span className="ml-1 capitalize">{status.status}</span>
@@ -211,7 +238,7 @@ const ImportStatus = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Button
             onClick={forceImport}
             disabled={loading || status.status === "importing"}
@@ -230,6 +257,42 @@ const ImportStatus = ({
               </>
             )}
           </Button>
+
+          {autoImportEnabled && onToggleAutoRefresh && (
+            <Button
+              onClick={onToggleAutoRefresh}
+              variant="outline"
+              className={`flex-1 ${
+                autoRefreshEnabled
+                  ? "bg-orange-900/20 border-orange-600 text-orange-400 hover:bg-orange-900/30"
+                  : "bg-green-900/20 border-green-600 text-green-400 hover:bg-green-900/30"
+              }`}
+              title={autoRefreshEnabled ? "Pause auto-refresh" : "Resume auto-refresh"}
+            >
+              {autoRefreshEnabled ? (
+                <>
+                  <Pause size={16} className="mr-2" />
+                  Pause Refresh
+                </>
+              ) : (
+                <>
+                  <Play size={16} className="mr-2" />
+                  Resume Refresh
+                </>
+              )}
+            </Button>
+          )}
+
+          {autoImportEnabled && onForceRefresh && (
+            <Button
+              onClick={onForceRefresh}
+              variant="outline"
+              className="flex-1 bg-blue-900/20 border-blue-600 text-blue-400 hover:bg-blue-900/30"
+            >
+              <Download size={16} className="mr-2" />
+              Refresh Data
+            </Button>
+          )}
 
           <Button
             onClick={onDisconnect}
