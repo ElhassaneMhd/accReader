@@ -165,9 +165,7 @@ const FileSelector = ({
         onFileSelect(filename);
       }
       dispatch(setViewOpen(false));
-      if (onRefreshFiles) {
-        onRefreshFiles();
-      }
+      // Removed onRefreshFiles() call - not needed when just switching views
     } catch (err) {
       console.error(`❌ Failed to switch to ${filename}:`, err);
     }

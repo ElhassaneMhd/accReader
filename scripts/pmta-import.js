@@ -446,24 +446,43 @@ class PMTAImporter {
         const availableFiles = this.availableFiles || [];
         const importedFiles = this.importedFiles || [];
 
-        const filesWithStatus = availableFiles.map((file) => ({
-          filename: file.filename,
-          imported: importedFiles.some(
-            (imported) => imported.filename === file.filename
-          ),
-          available: true,
-          recordCount:
-            importedFiles.find(
-              (imported) => imported.filename === file.filename
-            )?.recordCount || 0,
-        }));
+        console.log(`📡 /api/files/available called - ${importedFiles.length} imported files in memory`);
+
+        // Create a map of all files (both available and imported)
+        const allFilesMap = new Map();
+
+        // Add files from PMTA server (if connected)
+        availableFiles.forEach((file) => {
+          allFilesMap.set(file.filename, {
+            filename: file.filename,
+            imported: false,
+            available: true,
+            recordCount: 0,
+          });
+        });
+
+        // Add/update with imported files (these take precedence)
+        importedFiles.forEach((file) => {
+          allFilesMap.set(file.filename, {
+            filename: file.filename,
+            imported: true,
+            available: true,
+            recordCount: file.recordCount || 0,
+          });
+        });
+
+        const filesWithStatus = Array.from(allFilesMap.values()).sort((a, b) =>
+          b.filename.localeCompare(a.filename)
+        );
+
+        console.log(`📊 Returning ${filesWithStatus.length} total files, ${importedFiles.length} marked as imported`);
 
         res.json({
           files: filesWithStatus,
-          totalAvailable: availableFiles.length,
+          totalAvailable: filesWithStatus.length,
           totalImported: importedFiles.length,
           latestFile:
-            availableFiles.length > 0 ? availableFiles[0].filename : null,
+            filesWithStatus.length > 0 ? filesWithStatus[0].filename : null,
         });
       } catch (error) {
         console.error("Error getting available files:", error);
@@ -705,12 +724,13 @@ class PMTAImporter {
           .status(500)
           .json({ error: "Failed to get debug state", details: error.message });
       }
-    });
-
-    // Start server
-    this.app.listen(CONFIG.import.port, () => {
-      console.log(`🚀 PMTA Import API running on port ${CONFIG.import.port}`);
-    });
+    });    // Load existing imported files BEFORE starting server
+    this.loadExistingImportedFiles().then(() => {
+      // Start server after loading files
+      this.app.listen(CONFIG.import.port, () => {
+        console.log(`🚀 PMTA Import API running on port ${CONFIG.import.port}`);
+      });
+    }).catch(console.error);
   }
 
   async ensureLocalDataDirectory() {
@@ -1509,6 +1529,67 @@ class PMTAImporter {
         error: error.message,
         imported: false,
       };
+    }
+  }
+
+  async loadExistingImportedFiles() {
+    try {
+      console.log("📂 Loading existing imported files...");
+
+      // Ensure the directory exists
+      await this.ensureLocalDataDirectory();
+
+      // Read all CSV files from the imported data directory
+      const files = await fs.readdir(this.localDataPath);
+      const csvFiles = files.filter((file) => file.endsWith(".csv"));
+
+      console.log(
+        `📋 Found ${csvFiles.length} existing files: ${csvFiles.join(", ")}`
+      );
+
+      // Load each file into memory
+      for (const filename of csvFiles) {
+        try {
+          const filePath = path.join(this.localDataPath, filename);
+          const stats = await fs.stat(filePath);
+          const content = await fs.readFile(filePath, "utf-8");
+
+          // Parse CSV content to count records
+          const lines = content.trim().split("\n");
+          const recordCount = Math.max(0, lines.length - 1); // Subtract header row
+
+          // Add to imported files array
+          this.importedFiles.push({
+            filename,
+            data: content,
+            importTime: stats.mtime.toISOString(),
+            recordCount,
+          });
+
+          console.log(`✅ Loaded ${filename}: ${recordCount} records`);
+        } catch (fileError) {
+          console.error(`❌ Failed to load ${filename}:`, fileError.message);
+        }
+      }
+
+      console.log(
+        `🎯 Successfully loaded ${this.importedFiles.length} imported files`
+      );
+
+      // Set default selected file
+      if (this.importedFiles.length > 0) {
+        // Select the most recent file by default
+        const latestFile = this.importedFiles.sort(
+          (a, b) => new Date(b.importTime) - new Date(a.importTime)
+        )[0];
+        this.selectedFile = latestFile.filename;
+        console.log(`🎯 Auto-selected latest file: ${this.selectedFile}`);
+      }
+    } catch (error) {
+      console.error(
+        "❌ Failed to load existing imported files:",
+        error.message
+      );
     }
   }
 }
