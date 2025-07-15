@@ -9,6 +9,7 @@ import { ConnectionProvider } from "./contexts/ConnectionContext";
 import { EmailDataProvider } from "./contexts/EmailDataContext";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import PublicUploadPage from "./pages/PublicUploadPage";
 import { useConnectionContext } from "./hooks/useConnectionContext";
 
 // Protected Route Component
@@ -45,6 +46,7 @@ const AppRouter = () => {
           </PublicRoute>
         }
       />
+      <Route path="/upload" element={<PublicUploadPage />} />
       <Route
         path="/dashboard"
         element={
@@ -53,7 +55,7 @@ const AppRouter = () => {
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };
