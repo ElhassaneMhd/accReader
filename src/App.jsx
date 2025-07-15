@@ -5,6 +5,8 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { Provider } from "react-redux";
+import { store } from "./store/store";
 import { ConnectionProvider } from "./contexts/ConnectionContext";
 import { EmailDataProvider } from "./contexts/EmailDataContext";
 import LoginPage from "./pages/LoginPage";
@@ -62,13 +64,15 @@ const AppRouter = () => {
 
 function App() {
   return (
-    <Router>
-      <ConnectionProvider>
-        <EmailDataProvider>
-          <AppRouter />
-        </EmailDataProvider>
-      </ConnectionProvider>
-    </Router>
+    <Provider store={store}>
+      <Router>
+        <ConnectionProvider>
+          <EmailDataProvider>
+            <AppRouter />
+          </EmailDataProvider>
+        </ConnectionProvider>
+      </Router>
+    </Provider>
   );
 }
 

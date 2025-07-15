@@ -40,7 +40,7 @@ const ImportStatus = ({
 
   const fetchStatus = async () => {
     try {
-      const response = await fetch("http://localhost:3990/api/import-status");
+      const response = await fetch("http://localhost:3999/api/import-status");
       if (response.ok) {
         const data = await response.json();
         setStatus(data);
@@ -58,7 +58,7 @@ const ImportStatus = ({
   const forceImport = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3990/api/force-import", {
+      const response = await fetch("http://localhost:3999/api/force-import", {
         method: "POST",
       });
       if (response.ok) {
@@ -138,8 +138,8 @@ const ImportStatus = ({
           </div>
           <div className="flex items-center gap-2">
             {autoImportEnabled && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className={
                   autoRefreshEnabled
                     ? "bg-green-900/20 text-green-400 border-green-700/50"
@@ -267,7 +267,11 @@ const ImportStatus = ({
                   ? "bg-orange-900/20 border-orange-600 text-orange-400 hover:bg-orange-900/30"
                   : "bg-green-900/20 border-green-600 text-green-400 hover:bg-green-900/30"
               }`}
-              title={autoRefreshEnabled ? "Pause auto-refresh" : "Resume auto-refresh"}
+              title={
+                autoRefreshEnabled
+                  ? "Pause auto-refresh"
+                  : "Resume auto-refresh"
+              }
             >
               {autoRefreshEnabled ? (
                 <>

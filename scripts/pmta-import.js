@@ -29,7 +29,7 @@ const CONFIG = {
   },
   import: {
     interval: parseInt(process.env.IMPORT_INTERVAL) || 30000, // 30 seconds
-    port: parseInt(process.env.IMPORT_PORT) || 3990,
+    port: parseInt(process.env.IMPORT_PORT) || 3999,
     enabled: process.env.AUTO_IMPORT_ENABLED === "true",
   },
   security: {
@@ -109,6 +109,7 @@ class PMTAImporter {
         ...this.importStatus,
         totalRecords: this.cachedData.length,
         lastDataUpdate: this.lastDataUpdate,
+        note: "Files are downloaded and kept for management. Use delete controls to remove when needed.",
       };
       res.json(statusWithData);
     });
@@ -121,7 +122,7 @@ class PMTAImporter {
             data: this.cachedData,
             totalRecords: this.cachedData.length,
             lastUpdate: this.lastDataUpdate,
-            source: "server_direct_read",
+            source: "downloaded_files_processed",
             selectedFile: "all",
             availableFiles: this.importedFiles.map((f) => ({
               filename: f.filename,
@@ -138,7 +139,7 @@ class PMTAImporter {
               data: selectedFileData.data,
               totalRecords: selectedFileData.recordCount,
               lastUpdate: this.lastDataUpdate,
-              source: "server_direct_read",
+              source: "downloaded_files_processed",
               selectedFile: this.selectedFile,
               availableFiles: this.importedFiles.map((f) => ({
                 filename: f.filename,
@@ -151,7 +152,7 @@ class PMTAImporter {
               data: this.cachedData,
               totalRecords: this.cachedData.length,
               lastUpdate: this.lastDataUpdate,
-              source: "server_direct_read",
+              source: "downloaded_files_processed",
               selectedFile: "all",
               availableFiles: this.importedFiles.map((f) => ({
                 filename: f.filename,
@@ -318,12 +319,39 @@ class PMTAImporter {
       }
     });
 
-    this.app.post("/api/files/select", (req, res) => {
+    this.app.post("/api/files/select", async (req, res) => {
       try {
         const { filename } = req.body;
+        console.log(`🔄 File selection request: ${filename}`);
+        console.log(
+          `📋 Available imported files: ${this.importedFiles
+            .map((f) => f.filename)
+            .join(", ")}`
+        );
+
+        // Debug: Check download folder contents
+        try {
+          const folderContents = await fs.readdir(this.localDataPath);
+          console.log(
+            `📂 Download folder contents: ${
+              folderContents.length > 0 ? folderContents.join(", ") : "EMPTY"
+            }`
+          );
+
+          // Check if any CSV files exist
+          const csvFiles = folderContents.filter((f) => f.endsWith(".csv"));
+          console.log(
+            `📄 CSV files in folder: ${
+              csvFiles.length > 0 ? csvFiles.join(", ") : "NONE"
+            }`
+          );
+        } catch (error) {
+          console.log(`❌ Error reading download folder: ${error.message}`);
+        }
 
         if (filename === "all") {
           this.selectedFile = "all";
+          console.log(`✅ Switched to combined view`);
           res.json({
             success: true,
             selectedFile: "all",
@@ -333,10 +361,39 @@ class PMTAImporter {
         } else {
           const file = this.importedFiles.find((f) => f.filename === filename);
           if (!file) {
-            return res.status(404).json({ error: "File not found" });
+            console.log(`❌ File not found in imported files: ${filename}`);
+            console.log(
+              `📂 Available imported files: ${this.importedFiles
+                .map((f) => f.filename)
+                .join(", ")}`
+            );
+            console.log(
+              `💾 Total imported files: ${this.importedFiles.length}`
+            );
+            console.log(`🎯 Cached data records: ${this.cachedData.length}`);
+
+            // Additional debugging - check if file exists in cached data
+            const dataForFile = this.cachedData.filter(
+              (record) => record._filename === filename
+            );
+            console.log(
+              `📊 Records for ${filename} in cache: ${dataForFile.length}`
+            );
+
+            return res.status(404).json({
+              error: `File not found: ${filename}`,
+              details: `File ${filename} is not in the imported files list. Available files: ${this.importedFiles
+                .map((f) => f.filename)
+                .join(", ")}`,
+              importedFilesCount: this.importedFiles.length,
+              cachedDataCount: this.cachedData.length,
+            });
           }
 
           this.selectedFile = filename;
+          console.log(
+            `✅ Switched to file: ${filename} (${file.recordCount} records)`
+          );
           res.json({
             success: true,
             selectedFile: filename,
@@ -345,8 +402,10 @@ class PMTAImporter {
           });
         }
       } catch (error) {
-        console.error("Error selecting file:", error);
-        res.status(500).json({ error: "Failed to select file" });
+        console.error("❌ Error selecting file:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to select file", details: error.message });
       }
     });
 
@@ -471,6 +530,180 @@ class PMTAImporter {
           error: "Failed to import latest file",
           details: error.message,
         });
+      }
+    });
+
+    // Manual cleanup endpoint
+    this.app.post("/api/files/cleanup", async (req, res) => {
+      try {
+        console.log("🧹 Manual cleanup triggered via API...");
+        const result = await this.cleanupAllDownloadedFiles();
+
+        res.json({
+          success: true,
+          message: `Cleaned up ${result.cleaned} downloaded files`,
+          filesDeleted: result.cleaned,
+          error: result.error || null,
+        });
+      } catch (error) {
+        console.error("Error during manual cleanup:", error);
+        res.status(500).json({
+          error: "Failed to cleanup files",
+          details: error.message,
+        });
+      }
+    });
+
+    // Delete specific file endpoint
+    this.app.delete("/api/files/:filename", async (req, res) => {
+      try {
+        const { filename } = req.params;
+        console.log(`🗑️ Delete request for file: ${filename}`);
+
+        // Find the file in imported files
+        const fileIndex = this.importedFiles.findIndex(
+          (f) => f.filename === filename
+        );
+
+        if (fileIndex === -1) {
+          return res.status(404).json({
+            error: "File not found in imported files",
+            available: this.importedFiles.map((f) => f.filename),
+          });
+        }
+
+        const file = this.importedFiles[fileIndex];
+
+        // Remove from imported files array
+        this.importedFiles.splice(fileIndex, 1);
+
+        // Remove from cached data
+        this.cachedData = this.cachedData.filter(
+          (record) => record._filename !== filename
+        );
+
+        // Try to delete physical file if it exists
+        let physicalFileDeleted = false;
+        if (file.localPath) {
+          try {
+            await fs.unlink(file.localPath);
+            console.log(`🗑️ Deleted physical file: ${file.localPath}`);
+            physicalFileDeleted = true;
+          } catch (error) {
+            console.warn(
+              `⚠️ Could not delete physical file ${file.localPath}: ${error.message}`
+            );
+          }
+        }
+
+        // Update available files to mark as not imported
+        if (this.availableFiles) {
+          const availableFileIndex = this.availableFiles.findIndex(
+            (f) => f.filename === filename
+          );
+          if (availableFileIndex !== -1) {
+            this.availableFiles[availableFileIndex].imported = false;
+          }
+        }
+
+        // If the deleted file was selected, switch to "all"
+        if (this.selectedFile === filename) {
+          this.selectedFile = "all";
+        }
+
+        // Update last data update timestamp
+        this.lastDataUpdate = new Date();
+
+        console.log(`✅ Successfully deleted ${filename} from imported files`);
+        console.log(
+          `📊 Remaining imported files: ${this.importedFiles.length}`
+        );
+        console.log(`📋 Remaining records: ${this.cachedData.length}`);
+
+        res.json({
+          success: true,
+          message: `Successfully deleted ${filename}`,
+          filename: filename,
+          physicalFileDeleted: physicalFileDeleted,
+          remainingFiles: this.importedFiles.length,
+          remainingRecords: this.cachedData.length,
+          currentSelection: this.selectedFile,
+        });
+      } catch (error) {
+        console.error(`❌ Error deleting file:`, error);
+        res.status(500).json({
+          error: "Failed to delete file",
+          details: error.message,
+        });
+      }
+    });
+
+    // Debug endpoint to check current state
+    this.app.get("/api/debug/state", async (req, res) => {
+      try {
+        // Check folder contents
+        let folderContents = [];
+        let csvFiles = [];
+        try {
+          folderContents = await fs.readdir(this.localDataPath);
+          csvFiles = folderContents.filter((f) => f.endsWith(".csv"));
+        } catch (error) {
+          console.log(`❌ Error reading folder: ${error.message}`);
+        }
+
+        const debugInfo = {
+          connection: {
+            isConnected: this.isConnected,
+            status: this.importStatus.status,
+            connectionHealth: this.importStatus.connectionHealth,
+            lastError: this.importStatus.lastError,
+          },
+          data: {
+            cachedDataCount: this.cachedData.length,
+            importedFilesCount: this.importedFiles.length,
+            selectedFile: this.selectedFile,
+            lastDataUpdate: this.lastDataUpdate,
+          },
+          importedFiles: this.importedFiles.map((f) => ({
+            filename: f.filename,
+            recordCount: f.recordCount,
+            importTime: f.importTime,
+            hasLocalPath: !!f.localPath,
+            localPath: f.localPath,
+          })),
+          availableFiles: this.availableFiles
+            ? this.availableFiles.map((f) => ({
+                filename: f.filename,
+                imported: f.imported,
+                available: f.available,
+              }))
+            : [],
+          filesystem: {
+            localDataPath: this.localDataPath,
+            folderExists: folderContents.length >= 0,
+            totalFiles: folderContents.length,
+            csvFiles: csvFiles.length,
+            fileList: csvFiles,
+          },
+        };
+
+        console.log(
+          `🔍 Debug state requested - Current imported files: ${this.importedFiles
+            .map((f) => f.filename)
+            .join(", ")}`
+        );
+        console.log(
+          `📂 Folder contains: ${
+            csvFiles.length > 0 ? csvFiles.join(", ") : "NO CSV FILES"
+          }`
+        );
+
+        res.json(debugInfo);
+      } catch (error) {
+        console.error("❌ Error getting debug state:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to get debug state", details: error.message });
       }
     });
 
@@ -678,6 +911,8 @@ class PMTAImporter {
         const ageInMinutes = (Date.now() - stats.mtime.getTime()) / (1000 * 60);
         if (ageInMinutes < 5) {
           console.log(`⏭️ Skipping ${filename} (recently downloaded)`);
+          console.log(`📁 Existing file found at: ${localPath}`);
+          console.log(`🧪 TESTING MODE: Using existing file`);
           return localPath;
         }
       } catch {
@@ -685,12 +920,29 @@ class PMTAImporter {
       }
 
       console.log(`⬇️ Downloading: ${filename}`);
+      console.log(`📍 Local path: ${localPath}`);
       await this.ssh.getFile(localPath, remotePath);
 
       // Verify file was downloaded
       const stats = await fs.stat(localPath);
       if (stats.size > 0) {
         console.log(`✅ Downloaded: ${filename} (${stats.size} bytes)`);
+        console.log(`📁 File saved to: ${localPath}`);
+        console.log(`🧪 TESTING MODE: File will be kept for inspection`);
+
+        // Immediate verification - check if file exists in folder
+        try {
+          const folderContents = await fs.readdir(this.localDataPath);
+          const csvFiles = folderContents.filter((f) => f.endsWith(".csv"));
+          console.log(
+            `📂 Folder now contains ${
+              csvFiles.length
+            } CSV files: ${csvFiles.join(", ")}`
+          );
+        } catch (error) {
+          console.log(`❌ Error verifying folder contents: ${error.message}`);
+        }
+
         return localPath;
       } else {
         throw new Error("Downloaded file is empty");
@@ -748,7 +1000,7 @@ class PMTAImporter {
 
       if (!importAllFiles) {
         console.log(
-          `⚡ Performance mode: Importing only the latest file (${path.basename(
+          `⚡ Performance mode: Downloading only the latest file (${path.basename(
             filesToImport[0]
           )})`
         );
@@ -757,12 +1009,13 @@ class PMTAImporter {
         );
       } else {
         console.log(
-          `📥 Full import mode: Importing all ${filesToImport.length} files`
+          `📥 Full import mode: Downloading all ${filesToImport.length} files`
         );
       }
 
       let allData = [];
       let processedFiles = 0;
+      let downloadedFiles = []; // Track downloaded files for cleanup
 
       // Store available files (even if not imported)
       this.availableFiles = allFiles.map((file) => ({
@@ -779,23 +1032,24 @@ class PMTAImporter {
         const filename = path.basename(remoteFile);
 
         try {
-          console.log(`📖 Reading: ${filename} directly from server`);
+          console.log(`⬇️ Downloading: ${filename} from server`);
 
-          // Read file content directly from server
-          const fileResult = await this.ssh.execCommand(`cat "${remoteFile}"`);
+          // Download file locally first
+          const localPath = await this.downloadFile(remoteFile);
+          downloadedFiles.push(localPath); // Track for cleanup
 
-          if (fileResult.stderr) {
-            console.error(`❌ Error reading ${filename}:`, fileResult.stderr);
-            continue;
-          }
+          console.log(`📖 Reading downloaded file: ${filename}`);
 
-          if (!fileResult.stdout.trim()) {
+          // Read the downloaded local file
+          const fileContent = await fs.readFile(localPath, "utf8");
+
+          if (!fileContent.trim()) {
             console.log(`⚠️ File ${filename} is empty`);
             continue;
           }
 
           // Parse CSV content with proper handling of quoted fields
-          const lines = fileResult.stdout.trim().split("\n");
+          const lines = fileContent.trim().split("\n");
           if (lines.length < 2) {
             console.log(`⚠️ File ${filename} has no data rows`);
             continue;
@@ -849,13 +1103,24 @@ class PMTAImporter {
             recordCount: fileData.length,
             importTime: new Date().toISOString(),
             headers: headers,
+            localPath: localPath, // Store local path for potential cleanup
           });
 
+          console.log(`📋 Added to importedFiles: ${filename}`);
+          console.log(
+            `💾 Current importedFiles count: ${this.importedFiles.length}`
+          );
+          console.log(
+            `📄 All imported files: ${this.importedFiles
+              .map((f) => f.filename)
+              .join(", ")}`
+          );
+
           allData = allData.concat(fileData);
-          console.log(`✅ Read: ${filename} (${fileData.length} records)`);
+          console.log(`✅ Processed: ${filename} (${fileData.length} records)`);
           processedFiles++;
         } catch (error) {
-          console.error(`❌ Failed to read ${filename}:`, error.message);
+          console.error(`❌ Failed to process ${filename}:`, error.message);
         }
       }
 
@@ -867,12 +1132,27 @@ class PMTAImporter {
       });
 
       console.log(
-        `✅ Read completed: ${processedFiles}/${filesToImport.length} files processed, ${allData.length} total records`
+        `✅ Download and processing completed: ${processedFiles}/${filesToImport.length} files processed, ${allData.length} total records`
       );
 
       // Store the data in memory for API access
       this.cachedData = allData;
       this.lastDataUpdate = new Date();
+
+      // Files are kept permanently for user management
+      console.log(`📁 Downloaded files kept in ${this.localDataPath}`);
+
+      // Debug: List files currently in directory
+      try {
+        const currentFiles = await fs.readdir(this.localDataPath);
+        console.log(
+          `📂 Files currently in directory: ${
+            currentFiles.length > 0 ? currentFiles.join(", ") : "EMPTY"
+          }`
+        );
+      } catch (error) {
+        console.log(`❌ Error reading directory: ${error.message}`);
+      }
 
       return {
         success: true,
@@ -883,8 +1163,70 @@ class PMTAImporter {
         availableFiles: allFiles.length,
       };
     } catch (error) {
-      console.error("❌ Read error:", error.message);
+      console.error("❌ Download and read error:", error.message);
       return { success: false, data: [] };
+    }
+  }
+
+  // Clean up downloaded files after processing statistics
+  async cleanupDownloadedFiles(filePaths) {
+    if (!filePaths || filePaths.length === 0) {
+      return;
+    }
+
+    console.log(`🧹 Cleaning up ${filePaths.length} downloaded files...`);
+
+    for (const filePath of filePaths) {
+      try {
+        await fs.unlink(filePath);
+        console.log(`🗑️ Deleted: ${path.basename(filePath)}`);
+      } catch (error) {
+        console.warn(
+          `⚠️ Failed to delete ${path.basename(filePath)}: ${error.message}`
+        );
+      }
+    }
+
+    console.log(`✅ Cleanup completed: ${filePaths.length} files processed`);
+  }
+
+  // Clean up all downloaded files in local directory (manual cleanup)
+  async cleanupAllDownloadedFiles() {
+    try {
+      const files = await fs.readdir(this.localDataPath);
+      const csvFiles = files
+        .filter((f) => f.endsWith(".csv"))
+        .map((f) => path.join(this.localDataPath, f));
+
+      if (csvFiles.length === 0) {
+        console.log("📁 No CSV files found in local directory");
+        return { cleaned: 0 };
+      }
+
+      console.log(
+        `🧹 Cleaning up all ${csvFiles.length} CSV files from local directory...`
+      );
+
+      let cleaned = 0;
+      for (const filePath of csvFiles) {
+        try {
+          await fs.unlink(filePath);
+          console.log(`🗑️ Deleted: ${path.basename(filePath)}`);
+          cleaned++;
+        } catch (error) {
+          console.warn(
+            `⚠️ Failed to delete ${path.basename(filePath)}: ${error.message}`
+          );
+        }
+      }
+
+      console.log(
+        `✅ Manual cleanup completed: ${cleaned}/${csvFiles.length} files deleted`
+      );
+      return { cleaned };
+    } catch (error) {
+      console.error("❌ Error during manual cleanup:", error.message);
+      return { cleaned: 0, error: error.message };
     }
   }
 
@@ -1041,23 +1383,22 @@ class PMTAImporter {
         throw new Error(`File ${filename} not found in available files`);
       }
 
-      console.log(`📖 Importing specific file: ${filename}`);
+      console.log(`⬇️ Downloading and importing specific file: ${filename}`);
 
-      // Read file content directly from server
-      const fileResult = await this.ssh.execCommand(
-        `cat "${availableFile.fullPath}"`
-      );
+      // Download file locally first
+      const localPath = await this.downloadFile(availableFile.fullPath);
 
-      if (fileResult.stderr) {
-        throw new Error(`Error reading ${filename}: ${fileResult.stderr}`);
-      }
+      console.log(`📖 Reading downloaded file: ${filename}`);
 
-      if (!fileResult.stdout.trim()) {
+      // Read the downloaded local file
+      const fileContent = await fs.readFile(localPath, "utf8");
+
+      if (!fileContent.trim()) {
         throw new Error(`File ${filename} is empty`);
       }
 
       // Parse CSV content
-      const lines = fileResult.stdout.trim().split("\n");
+      const lines = fileContent.trim().split("\n");
       if (lines.length < 2) {
         throw new Error(`File ${filename} has no data rows`);
       }
@@ -1107,7 +1448,18 @@ class PMTAImporter {
         importTime: new Date().toISOString(),
         headers: headers,
         imported: true,
+        localPath: localPath, // Store local path for potential cleanup
       });
+
+      console.log(`📋 Added ${filename} to importedFiles (specific import)`);
+      console.log(
+        `💾 Current importedFiles count: ${this.importedFiles.length}`
+      );
+      console.log(
+        `📄 All imported files: ${this.importedFiles
+          .map((f) => f.filename)
+          .join(", ")}`
+      );
 
       // Mark as imported in available files
       availableFile.imported = true;
@@ -1127,6 +1479,21 @@ class PMTAImporter {
       console.log(
         `✅ Successfully imported ${filename} (${fileData.length} records)`
       );
+
+      // Files are kept permanently for user management
+      console.log(`📁 Downloaded file kept at ${localPath}`);
+
+      // Debug: List files currently in directory
+      try {
+        const currentFiles = await fs.readdir(this.localDataPath);
+        console.log(
+          `📂 Files currently in directory: ${
+            currentFiles.length > 0 ? currentFiles.join(", ") : "EMPTY"
+          }`
+        );
+      } catch (error) {
+        console.log(`❌ Error reading directory: ${error.message}`);
+      }
 
       return {
         success: true,

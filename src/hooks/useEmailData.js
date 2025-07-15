@@ -47,7 +47,7 @@ export const useEmailData = () => {
     if (!autoImportEnabled) return;
 
     try {
-      const response = await fetch("http://localhost:3990/api/latest-data");
+      const response = await fetch("http://localhost:3999/api/latest-data");
       if (!response.ok) {
         throw new Error("Failed to fetch auto-import data");
       }
@@ -101,7 +101,7 @@ export const useEmailData = () => {
 
   // Toggle auto-refresh
   const toggleAutoRefresh = useCallback(() => {
-    setAutoRefreshEnabled(prev => !prev);
+    setAutoRefreshEnabled((prev) => !prev);
   }, []);
 
   // Enable auto-refresh
@@ -122,7 +122,7 @@ export const useEmailData = () => {
       try {
         setSelectedFile(filename); // Update UI immediately
 
-        const response = await fetch("http://localhost:3990/api/files/select", {
+        const response = await fetch("http://localhost:3999/api/files/select", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -155,7 +155,7 @@ export const useEmailData = () => {
     if (!autoImportEnabled) return;
 
     try {
-      const response = await fetch("http://localhost:3990/api/files");
+      const response = await fetch("http://localhost:3999/api/files");
       if (response.ok) {
         const result = await response.json();
         setAvailableFiles(result.files);

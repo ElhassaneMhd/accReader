@@ -354,7 +354,7 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 USER nextjs
 
-EXPOSE 3000 3990
+EXPOSE 3000 3999
 
 # Start both services
 CMD ["npm", "start"]
@@ -370,7 +370,7 @@ services:
     build: .
     ports:
       - "3000:3000"
-      - "3990:3990"
+      - "3999:3999"
     environment:
       - NODE_ENV=production
       - PMTA_HOST=${PMTA_HOST}
@@ -433,7 +433,7 @@ module.exports = {
       script: "scripts/pmta-import.js",
       env: {
         NODE_ENV: "production",
-        PORT: "3990",
+        PORT: "3999",
       },
     },
   ],
@@ -474,7 +474,7 @@ server {
 
     # API
     location /api/ {
-        proxy_pass http://localhost:3990/;
+        proxy_pass http://localhost:3999/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -495,7 +495,7 @@ PMTA_HOST=your-production-pmta-server.com
 PMTA_USER=pmta_user
 PMTA_PRIVATE_KEY_PATH=/path/to/production/key
 PMTA_LOG_PATH=/var/log/pmta/
-AUTO_IMPORT_PORT=3990
+AUTO_IMPORT_PORT=3999
 AUTO_IMPORT_INTERVAL=300000
 ```
 

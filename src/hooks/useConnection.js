@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API_BASE_URL = "http://localhost:3990";
+const API_BASE_URL = "http://localhost:3999";
 const SESSION_KEY = "pmta_session";
 
 export const useConnection = () => {
@@ -19,7 +19,7 @@ export const useConnection = () => {
           // Check if session is still valid (within 24 hours)
           const sessionAge = Date.now() - sessionData.timestamp;
           const twentyFourHours = 24 * 60 * 60 * 1000;
-          
+
           if (sessionAge < twentyFourHours) {
             // Verify the connection is still active
             verifyActiveConnection();
@@ -79,13 +79,16 @@ export const useConnection = () => {
         setIsConnected(true);
         setConnectionStatus("connected");
         setConnectionError(null);
-        
+
         // Save session to localStorage
-        localStorage.setItem(SESSION_KEY, JSON.stringify({
-          timestamp: Date.now(),
-          connected: true
-        }));
-        
+        localStorage.setItem(
+          SESSION_KEY,
+          JSON.stringify({
+            timestamp: Date.now(),
+            connected: true,
+          })
+        );
+
         return { success: true, data: result };
       } else {
         setConnectionError(
@@ -96,7 +99,7 @@ export const useConnection = () => {
     } catch (error) {
       console.error("Connection error:", error);
       const errorMessage =
-        "Failed to connect to import service. Make sure the service is running on port 3990.";
+        "Failed to connect to import service. Make sure the service is running on port 3999.";
       setConnectionError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -114,10 +117,10 @@ export const useConnection = () => {
         setIsConnected(false);
         setConnectionStatus("disconnected");
         setConnectionError(null);
-        
+
         // Clear session from localStorage
         localStorage.removeItem(SESSION_KEY);
-        
+
         return { success: true };
       } else {
         const result = await response.json();
@@ -128,10 +131,10 @@ export const useConnection = () => {
       // Force local state update even if API call failed
       setIsConnected(false);
       setConnectionStatus("disconnected");
-      
+
       // Clear session from localStorage
       localStorage.removeItem(SESSION_KEY);
-      
+
       return { success: false, error: error.message };
     }
   };

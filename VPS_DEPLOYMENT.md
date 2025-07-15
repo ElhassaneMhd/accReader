@@ -34,7 +34,7 @@ nano .env
 ### 4. Access your application
 
 - **Frontend**: http://YOUR_VPS_IP:3000
-- **API**: http://YOUR_VPS_IP:3990
+- **API**: http://YOUR_VPS_IP:3999
 
 ## Manual Deployment (Alternative)
 
@@ -80,7 +80,7 @@ nano .env  # Edit with your settings
 
 # Open firewall ports
 sudo firewall-cmd --permanent --add-port=3000/tcp
-sudo firewall-cmd --permanent --add-port=3990/tcp
+sudo firewall-cmd --permanent --add-port=3999/tcp
 sudo firewall-cmd --reload
 
 # Build and start
@@ -141,7 +141,7 @@ sudo systemctl status docker
 
 1. Check your VPS provider's firewall settings
 2. Verify .env ALLOWED_ORIGINS includes your IP
-3. Check if ports 3000 and 3990 are accessible
+3. Check if ports 3000 and 3999 are accessible
 
 ### To enable SSL (recommended for production):
 

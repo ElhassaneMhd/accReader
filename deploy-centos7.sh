@@ -55,7 +55,7 @@ PMTA_LOG_PATTERN=acct-*.csv
 
 # Import Settings
 IMPORT_INTERVAL=30000
-IMPORT_PORT=3990
+IMPORT_PORT=3999
 AUTO_IMPORT_ENABLED=true
 
 # Security (for production) - Add your VPS IP
@@ -67,7 +67,7 @@ echo "📝 Please edit .env file and replace YOUR_VPS_IP with your actual VPS IP
 # Open firewall ports
 echo "🔥 Configuring firewall..."
 sudo firewall-cmd --permanent --add-port=3000/tcp
-sudo firewall-cmd --permanent --add-port=3990/tcp
+sudo firewall-cmd --permanent --add-port=3999/tcp
 sudo firewall-cmd --reload
 
 # Build and start the application
@@ -84,7 +84,7 @@ echo "🎉 Deployment completed!"
 echo ""
 echo "📊 Your PMTA Analytics Dashboard is now running on:"
 echo "   Frontend: http://YOUR_VPS_IP:3000"
-echo "   API:      http://YOUR_VPS_IP:3990"
+echo "   API:      http://YOUR_VPS_IP:3999"
 echo ""
 echo "🔧 Useful commands:"
 echo "   Check logs:    sudo docker-compose logs -f"

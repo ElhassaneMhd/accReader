@@ -5,7 +5,7 @@ export const fetchAvailableFiles = createAsyncThunk(
   "files/fetchAvailableFiles",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:3990/api/files/available");
+      const response = await fetch("http://localhost:3999/api/files/available");
       if (!response.ok) {
         throw new Error("Failed to fetch available files");
       }
@@ -21,7 +21,7 @@ export const importFile = createAsyncThunk(
   "files/importFile",
   async (filename, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:3990/api/files/import", {
+      const response = await fetch("http://localhost:3999/api/files/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename }),
@@ -40,7 +40,7 @@ export const importAllFiles = createAsyncThunk(
   "files/importAllFiles",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:3990/api/files/import", {
+      const response = await fetch("http://localhost:3999/api/files/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ importAll: true }),
@@ -60,7 +60,7 @@ export const importLatestOnly = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        "http://localhost:3990/api/files/import-latest-only",
+        "http://localhost:3999/api/files/import-latest-only",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -80,15 +80,65 @@ export const selectFile = createAsyncThunk(
   "files/selectFile",
   async (filename, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:3990/api/files/select", {
+      console.log(`🔄 Attempting to select file: ${filename}`);
+
+      // First check if the file is imported
+      const filesResponse = await fetch("http://localhost:3999/api/files");
+      if (!filesResponse.ok) {
+        throw new Error("Failed to get current files");
+      }
+      const filesData = await filesResponse.json();
+
+      console.log(
+        `📋 Available imported files: ${filesData.files
+          .map((f) => f.filename)
+          .join(", ")}`
+      );
+
+      if (
+        filename !== "all" &&
+        !filesData.files.some((f) => f.filename === filename)
+      ) {
+        throw new Error(
+          `File ${filename} is not imported. Available files: ${filesData.files
+            .map((f) => f.filename)
+            .join(", ")}`
+        );
+      }
+
+      const response = await fetch("http://localhost:3999/api/files/select", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename }),
       });
       if (!response.ok) {
-        throw new Error(`Failed to select ${filename}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to select ${filename}`);
       }
       return filename;
+    } catch (error) {
+      console.error(`❌ File selection failed for ${filename}:`, error.message);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteFile = createAsyncThunk(
+  "files/deleteFile",
+  async (filename, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3999/api/files/${filename}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to delete ${filename}`);
+      }
+      const data = await response.json();
+      return { filename, ...data };
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -255,6 +305,29 @@ const filesSlice = createSlice({
         state.selectedFile = action.payload;
       })
       .addCase(selectFile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Delete file
+      .addCase(deleteFile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteFile.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update available files to mark as not imported
+        state.availableFiles = state.availableFiles.map((file) =>
+          file.filename === action.payload.filename
+            ? { ...file, imported: false, recordCount: 0 }
+            : file
+        );
+        // If the deleted file was selected, switch to "all"
+        if (state.selectedFile === action.payload.filename) {
+          state.selectedFile = "all";
+        }
+      })
+      .addCase(deleteFile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
