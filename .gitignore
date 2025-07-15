@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Imported data directory
+**/imported-data/
+imported-data/
+
 # Environment variables
 .env
 

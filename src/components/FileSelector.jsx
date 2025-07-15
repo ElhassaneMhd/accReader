@@ -111,7 +111,7 @@ const FileSelector = ({
       console.log(`✅ Successfully imported ${filename}`);
 
       // Small delay to ensure server state consistency
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Auto-select the imported file after successful import
       console.log(`🎯 Auto-selecting ${filename} after successful import`);
@@ -237,146 +237,6 @@ const FileSelector = ({
         </Card>
       )}
 
-      {/* View Selector - Only show when auto-import is enabled */}
-      {isAutoImportEnabled && (
-        <Card className="bg-gray-900 border-gray-700">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye size={20} className="text-green-400" />
-                <CardTitle className="text-lg text-gray-100">
-                  View Selector
-                </CardTitle>
-              </div>
-              <Badge
-                variant="outline"
-                className="bg-green-900/20 text-green-400 border-green-700"
-              >
-                {serverImportedFiles.length} imported
-              </Badge>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            {/* Current Selection */}
-            <div className="p-3 bg-gray-800/50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getFileIcon(selectedFile)}
-                  <div>
-                    <div className="text-sm font-medium text-gray-200">
-                      {formatFileName(selectedFile)}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {getTotalRecordsForFile(selectedFile).toLocaleString()}{" "}
-                      records
-                    </div>
-                  </div>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="bg-blue-900/20 text-blue-400 border-blue-700/50"
-                >
-                  Active View
-                </Badge>
-              </div>
-            </div>
-
-            {/* View Switcher Dropdown */}
-            <div className="relative">
-              <Button
-                onClick={() => dispatch(toggleViewOpen())}
-                variant="outline"
-                className="w-full justify-between bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                <span className="flex items-center gap-2">
-                  <Eye size={16} />
-                  Switch View
-                </span>
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform ${
-                    isViewOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-
-              {isViewOpen && (
-                <div className="absolute z-10 w-full mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
-                  {/* Combined View Option */}
-                  <button
-                    onClick={handleSwitchToAllFiles}
-                    className={`w-full p-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
-                      selectedFile === "all" ? "bg-blue-900/20" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <BarChart3 size={16} className="text-blue-400" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-200">
-                          All Files (Combined)
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {totalRecords.toLocaleString()} total records
-                        </div>
-                      </div>
-                    </div>
-                    {selectedFile === "all" && (
-                      <Check size={16} className="text-blue-400" />
-                    )}
-                  </button>
-
-                  {/* Individual Imported Files */}
-                  {serverImportedFiles.map((file, index) => (
-                    <div
-                      key={`imported-${file.filename}-${index}`}
-                      className={`w-full p-3 flex items-center justify-between ${
-                        selectedFile === file.filename ? "bg-blue-900/20" : ""
-                      }`}
-                    >
-                      <button
-                        onClick={() =>
-                          handleSwitchToSpecificFile(file.filename)
-                        }
-                        className="flex items-center gap-2 flex-1 text-left hover:bg-gray-700/50 rounded px-2 py-1 transition-colors"
-                      >
-                        <FileText size={16} className="text-gray-400" />
-                        <div>
-                          <div className="text-sm font-medium text-gray-200">
-                            {formatFileName(file.filename)}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {(file.recordCount || 0).toLocaleString()} records
-                          </div>
-                        </div>
-                      </button>
-                      <div className="flex items-center gap-2">
-                        {selectedFile === file.filename && (
-                          <Check size={16} className="text-blue-400" />
-                        )}
-                        <button
-                          onClick={() => handleDeleteFile(file.filename)}
-                          className="p-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition-colors"
-                          title={`Delete ${file.filename}`}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {serverImportedFiles.length === 0 && (
-                    <div className="p-3 text-center text-gray-400 text-sm">
-                      No imported files available
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Import Manager - For importing available files */}
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader className="pb-3">
@@ -402,15 +262,21 @@ const FileSelector = ({
             <div className="flex gap-2">
               <Badge
                 variant="outline"
+                className="    bg-blue-900/20 border border-blue-700/50 text-blue-400"
+              >
+                {totalFiles} Total
+              </Badge>
+              <Badge
+                variant="outline"
                 className="bg-green-900/20 text-green-400 border-green-700"
               >
-                {importedCount} imported
+                {importedCount} Imported
               </Badge>
               <Badge
                 variant="outline"
                 className="bg-orange-900/20 text-orange-400 border-orange-700"
               >
-                {notImportedCount} available
+                {notImportedCount} Available
               </Badge>
             </div>
           </div>
@@ -542,30 +408,148 @@ const FileSelector = ({
               </div>
             )}
           </div>
-
-          {/* Import Statistics */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 bg-gray-800/50 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">Total Files</div>
-              <div className="text-lg font-semibold text-gray-200">
-                {totalFiles}
-              </div>
-            </div>
-            <div className="p-3 bg-gray-800/50 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">Imported</div>
-              <div className="text-lg font-semibold text-green-400">
-                {importedCount}
-              </div>
-            </div>
-            <div className="p-3 bg-gray-800/50 rounded-lg">
-              <div className="text-xs text-gray-400 mb-1">Available</div>
-              <div className="text-lg font-semibold text-orange-400">
-                {notImportedCount}
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
+
+      {/* View Selector - Only show when auto-import is enabled */}
+      {isAutoImportEnabled && (
+        <Card className="bg-gray-900 border-gray-700">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye size={20} className="text-green-400" />
+                <CardTitle className="text-lg text-gray-100">
+                  View Selector
+                </CardTitle>
+              </div>
+              <Badge
+                variant="outline"
+                className="bg-green-900/20 text-green-400 border-green-700"
+              >
+                {serverImportedFiles.length} Imported
+              </Badge>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            {/* Current Selection */}
+            <div className="p-3 bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {getFileIcon(selectedFile)}
+                  <div>
+                    <div className="text-sm font-medium text-gray-200">
+                      {formatFileName(selectedFile)}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {getTotalRecordsForFile(selectedFile).toLocaleString()}{" "}
+                      records
+                    </div>
+                  </div>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-900/20 text-blue-400 border-blue-700/50"
+                >
+                  Active View
+                </Badge>
+              </div>
+            </div>
+
+            {/* View Switcher Dropdown */}
+            <div className="relative">
+              <Button
+                onClick={() => dispatch(toggleViewOpen())}
+                variant="outline"
+                className="w-full justify-between bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                <span className="flex items-center gap-2">
+                  <Eye size={16} />
+                  Switch View
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform ${
+                    isViewOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+
+              {isViewOpen && (
+                <div className="absolute z-10 w-full mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                  {/* Combined View Option */}
+                  <button
+                    onClick={handleSwitchToAllFiles}
+                    className={`w-full p-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                      selectedFile === "all" ? "bg-blue-900/20" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <BarChart3 size={16} className="text-blue-400" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-200">
+                          All Files (Combined)
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {totalRecords.toLocaleString()} total records
+                        </div>
+                      </div>
+                    </div>
+                    {selectedFile === "all" && (
+                      <Check size={16} className="text-blue-400" />
+                    )}
+                  </button>
+
+                  {/* Individual Imported Files */}
+                  {serverImportedFiles.map((file, index) => (
+                    <div
+                      key={`imported-${file.filename}-${index}`}
+                      className={`w-full p-3 flex items-center justify-between ${
+                        selectedFile === file.filename ? "bg-blue-900/20" : ""
+                      }`}
+                    >
+                      <button
+                        onClick={() =>
+                          handleSwitchToSpecificFile(file.filename)
+                        }
+                        className="flex items-center gap-2 flex-1 text-left hover:bg-gray-700/50 rounded px-2 py-1 transition-colors"
+                      >
+                        <FileText size={16} className="text-gray-400" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-200">
+                            {formatFileName(file.filename)}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {(file.recordCount || 0).toLocaleString()} records
+                          </div>
+                        </div>
+                      </button>
+                      <div className="flex items-center gap-2">
+                        {selectedFile === file.filename && (
+                          <Check size={16} className="text-blue-400" />
+                        )}
+                        <button
+                          onClick={() => handleDeleteFile(file.filename)}
+                          className="p-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition-colors"
+                          title={`Delete ${file.filename}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {serverImportedFiles.length === 0 && (
+                    <div className="p-3 text-center text-gray-400 text-sm">
+                      No imported files available
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
