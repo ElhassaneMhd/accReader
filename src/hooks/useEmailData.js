@@ -52,7 +52,7 @@ export const useEmailData = () => {
         throw new Error("Failed to fetch auto-import data");
       }
 
-      const { data, totalRecords, source, selectedFile, availableFiles } =
+      const { data, totalRecords, source, selectedFile, importedFiles } =
         await response.json();
       if (data && Array.isArray(data) && data.length > 0) {
         // Data is already parsed JSON from direct server read
@@ -62,7 +62,7 @@ export const useEmailData = () => {
 
         // Update file information
         if (selectedFile !== undefined) setSelectedFile(selectedFile);
-        if (availableFiles) setAvailableFiles(availableFiles);
+        if (importedFiles) setAvailableFiles(importedFiles); // Renamed but same functionality
 
         console.log(
           `Auto-import data loaded: ${totalRecords} records via ${source}`

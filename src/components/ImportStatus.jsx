@@ -72,10 +72,15 @@ const ImportStatus = ({
   };
 
   useEffect(() => {
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Update every 5 seconds
+    fetchStatus(); // Always fetch once on mount
+
+    if (!autoRefreshEnabled) {
+      return; // Don't set up interval if auto-refresh is disabled
+    }
+
+    const interval = setInterval(fetchStatus, 5000); // Update every 5 seconds only if auto-refresh is enabled
     return () => clearInterval(interval);
-  }, []);
+  }, [autoRefreshEnabled]); // Re-run when autoRefreshEnabled changes
 
   const getStatusIcon = () => {
     switch (status.status) {
