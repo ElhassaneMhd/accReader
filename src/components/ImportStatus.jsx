@@ -20,13 +20,13 @@ import {
 const ImportStatus = ({
   autoImportEnabled,
   autoRefreshEnabled,
-  lastAutoUpdate,
-  onEnableAutoImport,
-  onDisableAutoImport,
+  // lastAutoUpdate, // Reserved for future use
+  // onEnableAutoImport, // Reserved for future use
+  // onDisableAutoImport, // Reserved for future use
   onToggleAutoRefresh,
   onForceRefresh,
   onDisconnect,
-  isConnected,
+  // isConnected, // Reserved for future use
 }) => {
   const [status, setStatus] = useState({
     status: "disconnected",

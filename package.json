@@ -16,8 +16,13 @@
     "clean:all": "rm -rf dist node_modules package-lock.json && npm install"
   },
   "dependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@reduxjs/toolkit": "^2.8.2",
+    "@tanstack/react-table": "^8.21.3",
+    "axios": "^1.10.0",
     "chart.js": "^4.5.0",
     "chokidar": "^4.0.1",
     "class-variance-authority": "^0.7.1",
