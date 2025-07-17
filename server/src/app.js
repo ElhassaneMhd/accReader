@@ -18,7 +18,6 @@ const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const mailwizzRoutes = require('./routes/mailwizzRoutes');
 const pmtaRoutes = require('./routes/pmtaRoutes');
-const pmtaIntegrationRoutes = require('./routes/pmtaIntegrationRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
@@ -92,7 +91,6 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/mailwizz', mailwizzRoutes);
 app.use('/api/pmta', pmtaRoutes);
-app.use('/api/pmta', pmtaIntegrationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 
@@ -106,13 +104,13 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       mailwizz: '/api/mailwizz',
       pmta: '/api/pmta',
-      pmtaIntegration: '/api/pmta/integration',
+      pmtaSSH: '/api/pmta/ssh',
       users: '/api/users',
       upload: '/api/upload'
     },
     services: {
       pmtaUpload: 'Built-in PMTA file upload and processing',
-      pmtaImport: 'Integration with PMTA Import Service (port 3999)',
+      pmtaSSHImport: 'SSH-based PMTA import service',
       mailwizz: 'MailWizz API integration',
       auth: 'JWT-based authentication'
     }

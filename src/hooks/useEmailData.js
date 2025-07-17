@@ -47,7 +47,7 @@ export const useEmailData = () => {
     if (!autoImportEnabled) return;
 
     try {
-      const response = await fetch("http://localhost:3999/api/latest-data");
+      const response = await fetch("http://localhost:4000/api/pmta/latest-data");
       if (!response.ok) {
         throw new Error("Failed to fetch auto-import data");
       }
@@ -122,7 +122,7 @@ export const useEmailData = () => {
       try {
         setSelectedFile(filename); // Update UI immediately
 
-        const response = await fetch("http://localhost:3999/api/files/select", {
+        const response = await fetch("http://localhost:4000/api/pmta/files/select", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -155,7 +155,7 @@ export const useEmailData = () => {
     if (!autoImportEnabled) return;
 
     try {
-      const response = await fetch("http://localhost:3999/api/files");
+      const response = await fetch("http://localhost:4000/api/pmta/files");
       if (response.ok) {
         const result = await response.json();
         setAvailableFiles(result.files);

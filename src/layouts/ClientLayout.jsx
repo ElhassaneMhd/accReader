@@ -141,7 +141,7 @@ const ClientLayout = ({ children }) => {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className=" w-full">
         {/* Top navigation bar */}
         <header className="bg-white shadow-sm border-b">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
