@@ -1,0 +1,32 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true,
+    "jest": true,
+    "commonjs": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "script"
+  },
+  "globals": {
+    "process": "readonly",
+    "global": "readonly",
+    "__dirname": "readonly",
+    "__filename": "readonly",
+    "module": "writable",
+    "require": "readonly",
+    "exports": "writable"
+  },
+  "rules": {
+    "indent": ["error", 2],
+    "linebreak-style": ["error", "windows"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "no-console": "warn"
+  }
+}
