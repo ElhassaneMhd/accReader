@@ -241,31 +241,6 @@ const Charts = ({ analysis }) => {
         </Card>
       )}
 
-      {/* VMTA Performance */}
-      {vmtaNames.length > 0 && (
-        <Card className="bg-gray-900 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-gray-100">VMTA Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px] relative">
-              <Bar
-                data={vmtaData}
-                options={{
-                  ...chartOptions,
-                  scales: {
-                    ...chartOptions.scales,
-                    y: {
-                      ...chartOptions.scales.y,
-                      max: 100,
-                    },
-                  },
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
