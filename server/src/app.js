@@ -20,6 +20,7 @@ const mailwizzRoutes = require('./routes/mailwizzRoutes');
 const pmtaRoutes = require('./routes/pmtaRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use('/api/mailwizz', mailwizzRoutes);
 app.use('/api/pmta', pmtaRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -106,7 +108,8 @@ app.get('/', (req, res) => {
       pmta: '/api/pmta',
       pmtaSSH: '/api/pmta/ssh',
       users: '/api/users',
-      upload: '/api/upload'
+      upload: '/api/upload',
+      admin: '/api/admin'
     },
     services: {
       pmtaUpload: 'Built-in PMTA file upload and processing',

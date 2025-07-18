@@ -54,6 +54,33 @@ export const mailwizzApi = {
   // Admin endpoints
   getAllCampaigns: () => api.get('/admin/mailwizz/campaigns'),
   
+  getAllCampaignsWithStats: () => api.get('/admin/mailwizz/campaigns-with-stats'),
+  
+  // List management
+  getAllLists: () => api.get('/admin/mailwizz/lists'),
+  getList: (listUid) => api.get(`/admin/mailwizz/lists/${listUid}`),
+  getListSubscribers: (listUid, page = 1, perPage = 50) => 
+    api.get(`/admin/mailwizz/lists/${listUid}/subscribers?page=${page}&per_page=${perPage}`),
+  
+  // Subscriber management
+  addSubscriber: (listUid, subscriberData) => 
+    api.post(`/admin/mailwizz/lists/${listUid}/subscribers`, subscriberData),
+  updateSubscriber: (listUid, subscriberUid, subscriberData) => 
+    api.put(`/admin/mailwizz/lists/${listUid}/subscribers/${subscriberUid}`, subscriberData),
+  deleteSubscriber: (listUid, subscriberUid) => 
+    api.delete(`/admin/mailwizz/lists/${listUid}/subscribers/${subscriberUid}`),
+  
+  // CSV Import
+  importSubscribersCSV: (listUid, file) => {
+    const formData = new FormData();
+    formData.append('import_file', file);
+    return api.post(`/admin/mailwizz/lists/${listUid}/subscribers/import`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  
   getAllUsers: () => api.get('/admin/users'),
   
   getCampaignAssignments: (userId) => api.get(`/admin/users/${userId}/campaigns`),

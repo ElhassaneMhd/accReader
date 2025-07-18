@@ -13,6 +13,7 @@ import {
   Shield,
   Home,
   Database,
+  List,
 } from "lucide-react";
 import { logoutUser, selectAuth } from "@/store/slices/authSlice";
 
@@ -27,6 +28,7 @@ const AdminLayout = ({ children }) => {
   const navigation = [
     { name: "Overview", href: "/admin", icon: Home },
     { name: "Campaigns", href: "/admin/campaigns", icon: Mail },
+    { name: "Lists", href: "/admin/lists", icon: List },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
     { name: "PMTA Logs", href: "/admin/pmta", icon: Database },

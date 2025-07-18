@@ -8,6 +8,7 @@ import Login from "@/pages/auth/Login";
 import ClientDashboard from "@/pages/mailwizz/ClientDashboard";
 import CampaignManagement from "@/pages/admin/CampaignManagement";
 import UserManagement from "@/pages/admin/UserManagement";
+import ListManagementPage from "@/pages/admin/ListManagementPage";
 
 // Layout components
 import AdminLayout from "@/layouts/AdminLayout";
@@ -94,6 +95,7 @@ const AppRoutes = () => {
                 />
                 <Route path="campaigns" element={<CampaignManagement />} />
                 <Route path="users" element={<UserManagement />} />
+                <Route path="lists" element={<ListManagementPage />} />
                 {/* Add more admin routes here as needed */}
               </Routes>
             </AdminLayout>

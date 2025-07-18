@@ -35,10 +35,26 @@ export const fetchAllCampaigns = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await mailwizzApi.getAllCampaigns();
-      return response.data;
+      // Extract the campaigns array from the nested response structure
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch all campaigns"
+      );
+    }
+  }
+);
+
+export const fetchAllCampaignsWithStats = createAsyncThunk(
+  "mailwizz/fetchAllCampaignsWithStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await mailwizzApi.getAllCampaignsWithStats();
+      // Extract the campaigns array from the nested response structure
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch campaigns with stats"
       );
     }
   }
@@ -78,6 +94,124 @@ export const unassignCampaignFromUser = createAsyncThunk(
   }
 );
 
+// ===============================
+// LIST MANAGEMENT ACTIONS
+// ===============================
+
+export const fetchAllLists = createAsyncThunk(
+  "mailwizz/fetchAllLists",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await mailwizzApi.getAllLists();
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch lists"
+      );
+    }
+  }
+);
+
+export const fetchListDetails = createAsyncThunk(
+  "mailwizz/fetchListDetails",
+  async (listUid, { rejectWithValue }) => {
+    try {
+      const response = await mailwizzApi.getList(listUid);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch list details"
+      );
+    }
+  }
+);
+
+export const fetchListSubscribers = createAsyncThunk(
+  "mailwizz/fetchListSubscribers",
+  async ({ listUid, page = 1, perPage = 50 }, { rejectWithValue }) => {
+    try {
+      const response = await mailwizzApi.getListSubscribers(listUid, page, perPage);
+      return {
+        listUid,
+        data: response.data.data
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch list subscribers"
+      );
+    }
+  }
+);
+
+export const addSubscriber = createAsyncThunk(
+  "mailwizz/addSubscriber",
+  async ({ listUid, subscriberData }, { rejectWithValue }) => {
+    try {
+      const response = await mailwizzApi.addSubscriber(listUid, subscriberData);
+      return {
+        listUid,
+        subscriber: response.data.data
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to add subscriber"
+      );
+    }
+  }
+);
+
+export const updateSubscriber = createAsyncThunk(
+  "mailwizz/updateSubscriber",
+  async ({ listUid, subscriberUid, subscriberData }, { rejectWithValue }) => {
+    try {
+      const response = await mailwizzApi.updateSubscriber(listUid, subscriberUid, subscriberData);
+      return {
+        listUid,
+        subscriberUid,
+        subscriber: response.data.data
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update subscriber"
+      );
+    }
+  }
+);
+
+export const deleteSubscriber = createAsyncThunk(
+  "mailwizz/deleteSubscriber",
+  async ({ listUid, subscriberUid }, { rejectWithValue }) => {
+    try {
+      await mailwizzApi.deleteSubscriber(listUid, subscriberUid);
+      return {
+        listUid,
+        subscriberUid
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete subscriber"
+      );
+    }
+  }
+);
+
+export const importSubscribersCSV = createAsyncThunk(
+  "mailwizz/importSubscribersCSV",
+  async ({ listUid, file }, { rejectWithValue }) => {
+    try {
+      const response = await mailwizzApi.importSubscribersCSV(listUid, file);
+      return {
+        listUid,
+        result: response.data
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to import CSV"
+      );
+    }
+  }
+);
+
 const mailwizzSlice = createSlice({
   name: "mailwizz",
   initialState: {
@@ -89,6 +223,12 @@ const mailwizzSlice = createSlice({
     // Admin data
     allCampaigns: [],
     campaignAssignments: [],
+
+    // List management
+    allLists: [],
+    selectedList: null,
+    listSubscribers: {},
+    importStatus: null,
 
     // UI state
     loading: false,
@@ -180,9 +320,25 @@ const mailwizzSlice = createSlice({
       })
       .addCase(fetchAllCampaigns.fulfilled, (state, action) => {
         state.loading = false;
-        state.allCampaigns = action.payload;
+        // Extract the campaigns array from the response data
+        state.allCampaigns = action.payload?.records || action.payload || [];
       })
       .addCase(fetchAllCampaigns.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Fetch all campaigns with stats (admin)
+      .addCase(fetchAllCampaignsWithStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllCampaignsWithStats.fulfilled, (state, action) => {
+        state.loading = false;
+        // Extract the campaigns array from the response data
+        state.allCampaigns = action.payload?.records || action.payload || [];
+      })
+      .addCase(fetchAllCampaignsWithStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -202,6 +358,106 @@ const mailwizzSlice = createSlice({
               assignment.campaignUid === action.payload.campaignUid
             )
         );
+      })
+
+      // ===============================
+      // LIST MANAGEMENT REDUCERS
+      // ===============================
+
+      // Fetch all lists
+      .addCase(fetchAllLists.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllLists.fulfilled, (state, action) => {
+        state.loading = false;
+        // Handle nested response structure: payload.data.records
+        const records = action.payload?.data?.records || action.payload?.records || action.payload || [];
+        // Transform the nested structure to flatten the general info
+        state.allLists = records.map(record => ({
+          list_uid: record.general?.list_uid,
+          name: record.general?.name,
+          display_name: record.general?.display_name,
+          description: record.general?.description,
+          from_email: record.defaults?.from_email,
+          from_name: record.defaults?.from_name,
+          company_name: record.company?.name,
+          ...record.general // Include all general fields
+        }));
+      })
+      .addCase(fetchAllLists.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Fetch list details
+      .addCase(fetchListDetails.fulfilled, (state, action) => {
+        state.selectedList = action.payload;
+      })
+
+      // Fetch list subscribers
+      .addCase(fetchListSubscribers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchListSubscribers.fulfilled, (state, action) => {
+        state.loading = false;
+        const { listUid, data } = action.payload;
+        state.listSubscribers[listUid] = data?.records || [];
+      })
+      .addCase(fetchListSubscribers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Add subscriber
+      .addCase(addSubscriber.fulfilled, (state, action) => {
+        const { listUid, subscriber } = action.payload;
+        if (state.listSubscribers[listUid]) {
+          state.listSubscribers[listUid].push(subscriber);
+        }
+      })
+
+      // Update subscriber
+      .addCase(updateSubscriber.fulfilled, (state, action) => {
+        const { listUid, subscriberUid, subscriber } = action.payload;
+        if (state.listSubscribers[listUid]) {
+          const index = state.listSubscribers[listUid].findIndex(
+            (s) => s.subscriber_uid === subscriberUid
+          );
+          if (index !== -1) {
+            state.listSubscribers[listUid][index] = subscriber;
+          }
+        }
+      })
+
+      // Delete subscriber
+      .addCase(deleteSubscriber.fulfilled, (state, action) => {
+        const { listUid, subscriberUid } = action.payload;
+        if (state.listSubscribers[listUid]) {
+          state.listSubscribers[listUid] = state.listSubscribers[listUid].filter(
+            (s) => s.subscriber_uid !== subscriberUid
+          );
+        }
+      })
+
+      // Import CSV
+      .addCase(importSubscribersCSV.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.importStatus = 'uploading';
+      })
+      .addCase(importSubscribersCSV.fulfilled, (state, action) => {
+        state.loading = false;
+        state.importStatus = 'success';
+        // Refresh subscribers for the list
+        const { listUid } = action.payload;
+        // Note: You might want to refetch subscribers after import
+      })
+      .addCase(importSubscribersCSV.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.importStatus = 'error';
       });
   },
 });
@@ -251,5 +507,11 @@ export const selectFilteredCampaigns = (state) => {
 export const selectAggregatedStats = (state) => state.mailwizz.aggregatedStats;
 export const selectMailwizzLoading = (state) => state.mailwizz.loading;
 export const selectMailwizzError = (state) => state.mailwizz.error;
+
+// List selectors
+export const selectAllLists = (state) => state.mailwizz.allLists;
+export const selectSelectedList = (state) => state.mailwizz.selectedList;
+export const selectListSubscribers = (state) => state.mailwizz.listSubscribers;
+export const selectImportStatus = (state) => state.mailwizz.importStatus;
 
 export default mailwizzSlice.reducer;

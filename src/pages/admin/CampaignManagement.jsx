@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import {
   fetchAllCampaigns,
+  fetchAllCampaignsWithStats,
   assignCampaignToUser,
   // unassignCampaignFromUser, // Reserved for future use
   // fetchCampaignDetails, // Reserved for future use
@@ -60,12 +61,12 @@ const CampaignManagement = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchAllCampaigns());
+    dispatch(fetchAllCampaignsWithStats());
   }, [dispatch]);
 
-  const filteredCampaigns = campaigns.filter((campaign) => {
+  const filteredCampaigns = (campaigns || []).filter((campaign) => {
     const matchesSearch =
-      campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.subject?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || campaign.status === statusFilter;
