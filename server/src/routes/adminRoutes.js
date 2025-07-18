@@ -529,16 +529,38 @@ router.post('/mailwizz/lists/:listUid/subscribers/import', upload.single('import
   try {
     const { listUid } = req.params;
     
+    logger.info(`CSV import request for list ${listUid}. File uploaded: ${req.file ? req.file.originalname : 'none'}`);
+    
     if (!req.file) {
+      logger.error('No CSV file provided in request');
       return res.status(400).json({
         status: 'error',
         message: 'No CSV file provided. Please upload a CSV file with import_file field name.'
       });
     }
     
+    logger.info(`Processing CSV file: ${req.file.originalname}, size: ${req.file.size} bytes`);
+    
+    // Validate environment variables
+    if (!process.env.MAILWIZZ_API_URL || !process.env.MAILWIZZ_PUBLIC_KEY || !process.env.MAILWIZZ_PRIVATE_KEY) {
+      logger.error('Missing MailWizz environment variables');
+      return res.status(500).json({
+        status: 'error',
+        message: 'MailWizz configuration is incomplete'
+      });
+    }
+    
     const fs = require('fs');
     const FormData = require('form-data');
-    const axios = require('axios');
+    
+    // Validate file exists and is readable
+    if (!fs.existsSync(req.file.path)) {
+      logger.error(`Uploaded file not found at ${req.file.path}`);
+      return res.status(400).json({
+        status: 'error',
+        message: 'Uploaded file could not be processed'
+      });
+    }
     
     // Create form data for MailWizz API
     const formData = new FormData();
@@ -547,27 +569,113 @@ router.post('/mailwizz/lists/:listUid/subscribers/import', upload.single('import
       contentType: 'text/csv'
     });
     
-    // Make direct API call to MailWizz import endpoint
-    const response = await axios.post(
-      `${process.env.MAILWIZZ_API_URL}/lists/${listUid}/subscribers/import`,
-      formData,
-      {
-        headers: {
-          'X-MW-PUBLIC-KEY': process.env.MAILWIZZ_PUBLIC_KEY,
-          'X-MW-PRIVATE-KEY': process.env.MAILWIZZ_PRIVATE_KEY,
-          ...formData.getHeaders()
+    // Use MailWizz service for the import
+    const mailwizzService = createMailWizzService(
+      process.env.MAILWIZZ_API_URL,
+      process.env.MAILWIZZ_PUBLIC_KEY,
+      process.env.MAILWIZZ_PRIVATE_KEY
+    );
+    logger.info(`MailWizz Service created with API URL: ${process.env.MAILWIZZ_API_URL}`);
+    logger.info(`Public Key (first 10 chars): ${process.env.MAILWIZZ_PUBLIC_KEY?.substring(0, 10)}...`);
+    logger.info(`Importing CSV to MailWizz list: ${listUid}`);
+    
+    let response;
+    try {
+      response = await mailwizzService.importSubscribersCSV(listUid, formData);
+    } catch (error) {
+      // If direct import fails, try parsing CSV and adding subscribers individually
+      logger.warn('Direct CSV import failed, trying individual subscriber import');
+      
+      const csv = require('csv-parser');
+      const subscribers = [];
+      
+      // Parse CSV file with header preservation
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(req.file.path)
+          .pipe(csv({
+            // Preserve original header case and format
+            mapHeaders: ({ header }) => header.trim()
+          }))
+          .on('data', (data) => {
+            logger.info(`Parsed CSV row: ${JSON.stringify(data)}`);
+            // Log all available keys to debug field mapping
+            logger.info(`Available CSV fields: ${Object.keys(data).join(', ')}`);
+            subscribers.push(data);
+          })
+          .on('end', resolve)
+          .on('error', reject);
+      });
+      
+      logger.info(`Parsed ${subscribers.length} subscribers from CSV`);
+      
+      // Debug: Log the entire subscribers array
+      logger.info(`Full subscribers array:`, subscribers);
+      
+      // Add subscribers individually
+      const results = [];
+      for (let i = 0; i < subscribers.length; i++) {
+        const subscriber = subscribers[i];
+        try {
+          logger.info(`Processing subscriber ${i}:`, subscriber);
+          logger.info(`Subscriber keys:`, Object.keys(subscriber));
+          logger.info(`EMAIL value:`, subscriber.EMAIL);
+          logger.info(`FNAME value:`, subscriber.FNAME);
+          logger.info(`LNAME value:`, subscriber.LNAME);
+          
+          // Map CSV fields to MailWizz format - handle all possible field name variations
+          const subscriberData = {
+            EMAIL: subscriber.EMAIL || subscriber.email || '',
+            FNAME: subscriber.FNAME || subscriber.fname || subscriber.first_name || subscriber['First Name'] || '',
+            LNAME: subscriber.LNAME || subscriber.lname || subscriber.last_name || subscriber['Last Name'] || ''
+          };
+          
+          logger.info(`Before field cleanup:`, subscriberData);
+          
+          // Remove any empty fields to avoid confusing MailWizz
+          Object.keys(subscriberData).forEach(key => {
+            if (subscriberData[key] === '' || subscriberData[key] === null || subscriberData[key] === undefined) {
+              delete subscriberData[key];
+            }
+          });
+          
+          logger.info(`After field cleanup:`, subscriberData);
+          
+          // Validate email is present
+          if (!subscriberData.EMAIL) {
+            throw new Error('Email address is required');
+          }
+          
+          logger.info(`Adding subscriber: ${subscriberData.EMAIL}`);
+          logger.info(`Final subscriber data:`, subscriberData);
+          
+          const result = await mailwizzService.addSubscriber(listUid, subscriberData);
+          results.push({ success: true, email: subscriberData.EMAIL, result });
+        } catch (subError) {
+          logger.error(`Failed to add subscriber ${subscriber.email || subscriber.EMAIL}: ${subError.message}`);
+          results.push({ 
+            success: false, 
+            email: subscriber.email || subscriber.EMAIL || 'unknown', 
+            error: subError.message 
+          });
         }
       }
-    );
+      
+      const successCount = results.filter(r => r.success).length;
+      response = {
+        status: 'success',
+        message: `Imported ${successCount}/${subscribers.length} subscribers`,
+        results
+      };
+    }
     
     // Clean up uploaded file
     fs.unlinkSync(req.file.path);
     
-    logger.info(`Successfully imported CSV file to list ${listUid}. File: ${req.file.originalname}`);
+    logger.info(`Successfully imported CSV file to list ${listUid}. File: ${req.file.originalname}. Response: ${JSON.stringify(response)}`);
     
     res.json({
       status: 'success',
-      data: response.data,
+      data: response,
       message: `Successfully imported subscribers from ${req.file.originalname} to list ${listUid}`,
       fileInfo: {
         originalName: req.file.originalname,
@@ -586,11 +694,21 @@ router.post('/mailwizz/lists/:listUid/subscribers/import', upload.single('import
       }
     }
     
-    logger.error(`Error importing CSV to list ${req.params.listUid}:`, error.message);
+    logger.error(`Error importing CSV to list ${req.params.listUid}:`, {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      headers: error.response?.headers
+    });
+    
     res.status(500).json({
       status: 'error',
       message: 'Failed to import subscribers to MailWizz list',
-      error: error.response?.data || error.message
+      error: error.response?.data || error.message,
+      details: {
+        file: req.file ? req.file.originalname : 'unknown',
+        listUid: req.params.listUid
+      }
     });
   }
 });

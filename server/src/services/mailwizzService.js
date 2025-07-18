@@ -10,7 +10,6 @@ class MailWizzService {
       baseURL: apiUrl,
       headers: {
         'X-MW-PUBLIC-KEY': publicKey,
-        'X-MW-PRIVATE-KEY': privateKey,
         'Content-Type': 'application/json'
       }
     });
@@ -127,10 +126,21 @@ class MailWizzService {
 
   async addSubscriber(listId, subscriberData) {
     try {
+      logger.info(`MailWizz addSubscriber - ListId: ${listId}`);
+      logger.info(`MailWizz addSubscriber - Data being sent:`, JSON.stringify(subscriberData, null, 2));
+      
+      // Use direct format - same as manual add which works
       const response = await this.client.post(`/lists/${listId}/subscribers`, subscriberData);
+      logger.info(`MailWizz addSubscriber - Success response:`, JSON.stringify(response.data, null, 2));
       return response.data;
     } catch (error) {
-      logger.error('MailWizz addSubscriber error:', error.response?.data || error.message);
+      logger.error('MailWizz addSubscriber error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       throw new Error('Failed to add subscriber to MailWizz');
     }
   }
@@ -152,6 +162,59 @@ class MailWizzService {
     } catch (error) {
       logger.error('MailWizz deleteSubscriber error:', error.response?.data || error.message);
       throw new Error('Failed to delete subscriber from MailWizz');
+    }
+  }
+
+  async importSubscribersCSV(listId, formData) {
+    try {
+      // For file uploads, we need to use a different approach
+      const axios = require('axios');
+      
+      // Try different possible endpoint formats for MailWizz import
+      const possibleEndpoints = [
+        `${this.apiUrl}/lists/${listId}/subscribers/import`,
+        `${this.apiUrl}/lists/${listId}/import`
+      ];
+      
+      let lastError = null;
+      
+      for (const endpoint of possibleEndpoints) {
+        try {
+          logger.info(`Trying MailWizz import endpoint: ${endpoint}`);
+          
+          // Get FormData headers first
+          const formHeaders = formData.getHeaders();
+          
+          // Combine with authentication headers
+          const headers = {
+            'X-MW-PUBLIC-KEY': this.publicKey,
+            ...formHeaders
+          };
+          
+          logger.info(`Headers being sent: ${JSON.stringify(Object.keys(headers))}`);
+          
+          const response = await axios.post(
+            endpoint,
+            formData,
+            {
+              headers,
+              timeout: 30000
+            }
+          );
+          logger.info(`Success with endpoint: ${endpoint}`);
+          return response.data;
+        } catch (error) {
+          lastError = error;
+          logger.warn(`Failed with endpoint ${endpoint}: ${error.response?.data?.error || error.message}`);
+          continue;
+        }
+      }
+      
+      // If all endpoints failed, throw the last error
+      throw lastError;
+    } catch (error) {
+      logger.error('MailWizz importSubscribersCSV error:', error.response?.data || error.message);
+      throw new Error('Failed to import subscribers CSV to MailWizz');
     }
   }
 

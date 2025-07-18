@@ -18,6 +18,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const mailwizzRoutes = require('./routes/mailwizzRoutes');
 const pmtaRoutes = require('./routes/pmtaRoutes');
+const pmtaPublicRoutes = require('./routes/pmtaPublicRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -91,7 +92,8 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/mailwizz', mailwizzRoutes);
-app.use('/api/pmta', pmtaRoutes);
+app.use('/api/pmta-admin', pmtaRoutes); // Admin-only PMTA routes
+app.use('/api/pmta', pmtaPublicRoutes); // Public PMTA routes (no auth required)
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
