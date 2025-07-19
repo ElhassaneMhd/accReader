@@ -206,25 +206,25 @@ const CampaignManagement = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gray-950 min-h-screen p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-white">
             Campaign Management
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-400">
             Manage MailWizz campaigns and user assignments
           </p>
         </div>
-        <Button onClick={() => setShowAssignModal(true)}>
+        <Button onClick={() => setShowAssignModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
           <Plus className="h-4 w-4 mr-2" />
           Assign Campaign
         </Button>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardContent className="pt-6">
           <div className="flex items-center space-x-4">
             <div className="flex-1">
@@ -234,21 +234,21 @@ const CampaignManagement = () => {
                   placeholder="Search campaigns..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                 />
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-white">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="sending">Sending</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectItem value="all" className="text-white hover:bg-gray-600">All Statuses</SelectItem>
+                <SelectItem value="draft" className="text-white hover:bg-gray-600">Draft</SelectItem>
+                <SelectItem value="sending" className="text-white hover:bg-gray-600">Sending</SelectItem>
+                <SelectItem value="sent" className="text-white hover:bg-gray-600">Sent</SelectItem>
+                <SelectItem value="paused" className="text-white hover:bg-gray-600">Paused</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -257,15 +257,15 @@ const CampaignManagement = () => {
 
       {/* Error Display */}
       {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" className="bg-red-900/20 border-red-700">
+          <AlertDescription className="text-red-300">{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Campaigns Table */}
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-white">
             <Mail className="h-5 w-5 mr-2" />
             MailWizz Campaigns ({filteredCampaigns.length})
           </CardTitle>

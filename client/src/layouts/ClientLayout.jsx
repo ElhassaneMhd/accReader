@@ -45,11 +45,11 @@ const ClientLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-950 flex">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-75 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -57,43 +57,43 @@ const ClientLayout = ({ children }) => {
       {/* Sidebar */}
       <div
         className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 border-r border-gray-700 transform transition-transform duration-300 ease-in-out
         lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between h-16 px-6 border-b">
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-700">
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Mail className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-lg font-semibold text-white">
                 Client Portal
               </span>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-400 hover:text-gray-600"
+              className="lg:hidden text-gray-400 hover:text-gray-200"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* User info */}
-          <div className="px-6 py-4 border-b bg-gray-50">
+          <div className="px-6 py-4 border-b border-gray-700 bg-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-medium">
+              <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-medium">
                   {user?.username?.[0]?.toUpperCase() || "C"}
                 </span>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-white">
                   {user?.username}
                 </p>
-                <p className="text-xs text-gray-500">Client User</p>
+                <p className="text-xs text-gray-400">Client User</p>
               </div>
             </div>
           </div>
@@ -111,8 +111,8 @@ const ClientLayout = ({ children }) => {
                         flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                         ${
                           isActive(item.href)
-                            ? "bg-blue-100 text-blue-700"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-300 hover:text-white hover:bg-gray-700"
                         }
                       `}
                       onClick={() => setSidebarOpen(false)}
@@ -127,11 +127,11 @@ const ClientLayout = ({ children }) => {
           </nav>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t">
+          <div className="px-6 py-4 border-t border-gray-700">
             <Button
               variant="ghost"
               onClick={handleLogout}
-              className="w-full justify-start text-gray-600 hover:text-gray-900"
+              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
             >
               <LogOut className="h-5 w-5 mr-3" />
               Sign Out
@@ -141,21 +141,21 @@ const ClientLayout = ({ children }) => {
       </div>
 
       {/* Main content */}
-      <div className=" w-full">
+      <div className="flex-1 flex flex-col">
         {/* Top navigation bar */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-700">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-400 hover:text-gray-600"
+              className="lg:hidden text-gray-400 hover:text-gray-200"
             >
               <Menu className="h-6 w-6" />
             </button>
 
             {/* Page title - will be dynamic based on current route */}
             <div className="hidden lg:block">
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-lg font-semibold text-white">
                 {location.pathname === "/dashboard" && "Dashboard Overview"}
                 {location.pathname.startsWith("/dashboard/campaigns") &&
                   "My Campaigns"}
@@ -171,18 +171,18 @@ const ClientLayout = ({ children }) => {
             {/* Right side */}
             <div className="flex items-center space-x-4">
               {/* Notifications */}
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-200">
                 <Bell className="h-5 w-5" />
               </Button>
 
               {/* Settings */}
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-200">
                 <Settings className="h-5 w-5" />
               </Button>
 
               {/* User menu - mobile */}
               <div className="lg:hidden">
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-400 hover:text-gray-200">
                   <LogOut className="h-5 w-5" />
                 </Button>
               </div>
@@ -191,7 +191,7 @@ const ClientLayout = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="p-6">{children}</main>
+        <main className="flex-1 bg-gray-950">{children}</main>
       </div>
     </div>
   );

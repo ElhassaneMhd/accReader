@@ -25,12 +25,12 @@ const MailWizzDashboard = () => {
   // Check if user has permission to access MailWizz
   if (!permissions.canAccessMailWizz) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2">
             Access Denied
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-400">
             You don't have permission to access the MailWizz dashboard.
           </p>
         </div>
@@ -40,23 +40,23 @@ const MailWizzDashboard = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
         <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-950">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-xl font-semibold text-white">
                 Campaign Dashboard
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Welcome back, {user?.username}
               </p>
             </div>
@@ -64,14 +64,14 @@ const MailWizzDashboard = () => {
             {/* User info */}
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-sm font-medium text-white">
                   {user?.username}
                 </div>
-                <div className="text-xs text-gray-500 capitalize">
+                <div className="text-xs text-gray-400 capitalize">
                   {user?.role} Account
                 </div>
               </div>
-              <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {user?.username?.charAt(0).toUpperCase()}
               </div>
             </div>

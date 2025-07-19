@@ -82,28 +82,28 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-xl flex items-center justify-center">
             <Mail className="h-6 w-6 text-white" />
           </div>
-          <h2 className="mt-4 text-3xl font-bold text-gray-900">
+          <h2 className="mt-4 text-3xl font-bold text-white">
             Email Analytics Platform
           </h2>
-          <p className="mt-2 text-gray-600">Sign in to access your dashboard</p>
+          <p className="mt-2 text-gray-300">Sign in to access your dashboard</p>
         </div>
 
         {/* Login Type Selector */}
-        <div className="flex space-x-1 p-1 bg-gray-100 rounded-lg">
+        <div className="flex space-x-1 p-1 bg-gray-800 rounded-lg">
           <button
             type="button"
             onClick={() => handleLoginTypeChange("admin")}
             className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               loginType === "admin"
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+                ? "bg-gray-700 text-blue-400 shadow-sm"
+                : "text-gray-400 hover:text-gray-200"
             }`}
           >
             <Shield className="h-4 w-4" />
@@ -114,8 +114,8 @@ const Login = () => {
             onClick={() => handleLoginTypeChange("client")}
             className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               loginType === "client"
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+                ? "bg-gray-700 text-blue-400 shadow-sm"
+                : "text-gray-400 hover:text-gray-200"
             }`}
           >
             <Building className="h-4 w-4" />
@@ -124,22 +124,22 @@ const Login = () => {
         </div>
 
         {/* Login Form */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-center">
+            <CardTitle className="text-center text-white">
               {loginType === "admin" ? "Administrator Login" : "Client Login"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive" className="bg-red-900/20 border-red-700">
+                  <AlertDescription className="text-red-300">{error}</AlertDescription>
                 </Alert>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username" className="text-gray-300">Username</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -149,7 +149,7 @@ const Login = () => {
                     value={formData.username}
                     onChange={handleInputChange}
                     placeholder="Enter your username"
-                    className="pl-10"
+                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                     required
                     disabled={loading}
                   />
@@ -157,7 +157,7 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-gray-300">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -167,14 +167,14 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="Enter your password"
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                     required
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -187,7 +187,7 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={loading || !formData.username || !formData.password}
               >
                 {loading ? (
@@ -205,11 +205,11 @@ const Login = () => {
             </form>
 
             {/* Access Info */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">
+            <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+              <h4 className="text-sm font-medium text-white mb-2">
                 {loginType === "admin" ? "Admin Access" : "Client Access"}
               </h4>
-              <ul className="text-xs text-gray-600 space-y-1">
+              <ul className="text-xs text-gray-300 space-y-1">
                 {loginType === "admin" ? (
                   <>
                     <li>• Full access to PMTA analytics</li>
@@ -231,7 +231,7 @@ const Login = () => {
         </Card>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-xs text-gray-400">
           © 2025 Email Analytics Platform. All rights reserved.
         </p>
       </div>

@@ -285,21 +285,21 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gray-950 min-h-screen p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600">Manage users, roles, and permissions</p>
+          <h1 className="text-2xl font-bold text-white">User Management</h1>
+          <p className="text-gray-400">Manage users, roles, and permissions</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
+        <Button onClick={() => setShowCreateModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
           <UserPlus className="h-4 w-4 mr-2" />
           Create User
         </Button>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardContent className="pt-6">
           <div className="flex items-center space-x-4">
             <div className="flex-1">
@@ -309,33 +309,33 @@ const UserManagement = () => {
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                 />
               </div>
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40 bg-gray-700 border-gray-600 text-white">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
-                <SelectItem value="pmta_user">PMTA User</SelectItem>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectItem value="all" className="text-white hover:bg-gray-600">All Roles</SelectItem>
+                <SelectItem value="admin" className="text-white hover:bg-gray-600">Admin</SelectItem>
+                <SelectItem value="client" className="text-white hover:bg-gray-600">Client</SelectItem>
+                <SelectItem value="pmta_user" className="text-white hover:bg-gray-600">PMTA User</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40 bg-gray-700 border-gray-600 text-white">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="suspended">Suspended</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectItem value="all" className="text-white hover:bg-gray-600">All Status</SelectItem>
+                <SelectItem value="active" className="text-white hover:bg-gray-600">Active</SelectItem>
+                <SelectItem value="inactive" className="text-white hover:bg-gray-600">Inactive</SelectItem>
+                <SelectItem value="suspended" className="text-white hover:bg-gray-600">Suspended</SelectItem>
+                <SelectItem value="pending" className="text-white hover:bg-gray-600">Pending</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -344,15 +344,15 @@ const UserManagement = () => {
 
       {/* Error Display */}
       {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" className="bg-red-900/20 border-red-700">
+          <AlertDescription className="text-red-300">{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Users Table */}
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-white">
             <Users className="h-5 w-5 mr-2" />
             Users ({filteredUsers.length})
           </CardTitle>
@@ -370,16 +370,16 @@ const UserManagement = () => {
 
       {/* Create User Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle>Create New User</CardTitle>
+              <CardTitle className="text-white">Create New User</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username" className="text-gray-300">Username</Label>
                   <Input
                     id="username"
                     value={newUser.username}
@@ -390,10 +390,11 @@ const UserManagement = () => {
                       }))
                     }
                     placeholder="Enter username"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-300">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -402,13 +403,14 @@ const UserManagement = () => {
                       setNewUser((prev) => ({ ...prev, email: e.target.value }))
                     }
                     placeholder="Enter email"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-gray-300">Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -420,21 +422,22 @@ const UserManagement = () => {
                       }))
                     }
                     placeholder="Enter password"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="role" className="text-gray-300">Role</Label>
                   <Select
                     value={newUser.role}
                     onValueChange={(value) =>
                       setNewUser((prev) => ({ ...prev, role: value }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="client">Client</SelectItem>
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectItem value="client" className="text-white hover:bg-gray-600">Client</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="pmta_user">PMTA User</SelectItem>
                     </SelectContent>
