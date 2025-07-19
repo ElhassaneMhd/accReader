@@ -284,22 +284,23 @@ const CampaignManagement = () => {
       {/* Assignment Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md bg-gray-800 border-gray-700 text-white">
             <CardHeader>
-              <CardTitle>Assign Campaign to User</CardTitle>
+              <CardTitle className="text-white">Assign Campaign to User</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="campaign">Selected Campaign</Label>
+                <Label htmlFor="campaign" className="text-gray-300">Selected Campaign</Label>
                 <Input
                   id="campaign"
                   value={selectedCampaign?.name || "No campaign selected"}
                   disabled
+                  className="bg-gray-700 border-gray-600 text-white"
                 />
               </div>
 
               <div>
-                <Label htmlFor="userId">User ID</Label>
+                <Label htmlFor="userId" className="text-gray-300">User ID</Label>
                 <Input
                   id="userId"
                   placeholder="Enter user ID"
@@ -310,11 +311,12 @@ const CampaignManagement = () => {
                       userId: e.target.value,
                     }))
                   }
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 />
               </div>
 
               <div>
-                <Label>Permissions</Label>
+                <Label className="text-gray-300">Permissions</Label>
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2">
                     <input
@@ -329,8 +331,9 @@ const CampaignManagement = () => {
                           },
                         }))
                       }
+                      className="rounded border-gray-600 bg-gray-700"
                     />
-                    <span>View Campaign</span>
+                    <span className="text-gray-300">View Campaign</span>
                   </label>
                   <label className="flex items-center space-x-2">
                     <input
@@ -345,8 +348,9 @@ const CampaignManagement = () => {
                           },
                         }))
                       }
+                      className="rounded border-gray-600 bg-gray-700"
                     />
-                    <span>Export Data</span>
+                    <span className="text-gray-300">Export Data</span>
                   </label>
                   <label className="flex items-center space-x-2">
                     <input
@@ -361,14 +365,15 @@ const CampaignManagement = () => {
                           },
                         }))
                       }
+                      className="rounded border-gray-600 bg-gray-700"
                     />
-                    <span>Advanced Analytics</span>
+                    <span className="text-gray-300">Advanced Analytics</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Label htmlFor="notes" className="text-gray-300">Notes (Optional)</Label>
                 <Textarea
                   id="notes"
                   placeholder="Add any notes about this assignment..."
@@ -379,6 +384,7 @@ const CampaignManagement = () => {
                       notes: e.target.value,
                     }))
                   }
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 />
               </div>
 

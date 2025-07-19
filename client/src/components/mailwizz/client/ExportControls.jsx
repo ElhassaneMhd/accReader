@@ -170,7 +170,7 @@ const ExportControls = ({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56">
-        <div className="px-3 py-2 text-sm text-gray-600">
+        <div className="px-3 py-2 text-sm text-gray-400">
           Export {exportCount} campaign{exportCount !== 1 ? "s" : ""}
         </div>
         <DropdownMenuSeparator />

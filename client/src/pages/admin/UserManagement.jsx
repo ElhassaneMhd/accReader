@@ -252,9 +252,9 @@ const UserManagement = () => {
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(section, permission, e.target.checked)}
-        className="rounded border-gray-300"
+        className="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
       />
-      <span>{label}</span>
+      <span className="text-gray-300">{label}</span>
     </label>
   );
 
@@ -536,18 +536,18 @@ const UserManagement = () => {
 
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle>Edit User: {selectedUser.username}</CardTitle>
+              <CardTitle className="text-white">Edit User: {selectedUser.username}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* User Info */}
-              <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="p-4 bg-gray-700 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">{selectedUser.username}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-white">{selectedUser.username}</p>
+                    <p className="text-sm text-gray-300">
                       {selectedUser.email}
                     </p>
                   </div>

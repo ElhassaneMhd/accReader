@@ -33,22 +33,22 @@ const CampaignCard = ({ campaign, isAssigned, onAssign, onUnassign }) => {
       case "paused":
         return "bg-yellow-100 text-yellow-800";
       case "draft":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-600 text-gray-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-600 text-gray-200";
     }
   };
 
   return (
     <Card
       className={`transition-all hover:shadow-md ${
-        isAssigned ? "border-green-200 bg-green-50" : ""
+        isAssigned ? "border-green-500 bg-green-900/20" : "border-gray-700 bg-gray-800 hover:bg-gray-700"
       }`}
     >
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">
-            <h4 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
+            <h4 className="font-semibold text-sm text-white mb-1 line-clamp-2">
               {campaign.name}
             </h4>
             <Badge className={`${getStatusColor(campaign.status)} text-xs`}>
@@ -79,13 +79,13 @@ const CampaignCard = ({ campaign, isAssigned, onAssign, onUnassign }) => {
         </div>
 
         {campaign.stats && (
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+          <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
             <div>Sent: {campaign.stats.sent?.toLocaleString() || 0}</div>
             <div>Opened: {campaign.stats.opened?.toLocaleString() || 0}</div>
           </div>
         )}
 
-        <div className="text-xs text-gray-500 mt-2">
+        <div className="text-xs text-gray-400 mt-2">
           Created: {new Date(campaign.created_at).toLocaleDateString()}
         </div>
       </CardContent>
@@ -103,9 +103,9 @@ const UserSelector = ({ users, selectedUser, onUserSelect }) => {
   );
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md bg-gray-800 border-gray-700">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center space-x-2">
+        <CardTitle className="text-lg flex items-center space-x-2 text-white">
           <Users className="h-5 w-5" />
           <span>Select Client</span>
         </CardTitle>
@@ -117,7 +117,7 @@ const UserSelector = ({ users, selectedUser, onUserSelect }) => {
             placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
           />
         </div>
 
@@ -128,12 +128,12 @@ const UserSelector = ({ users, selectedUser, onUserSelect }) => {
               onClick={() => onUserSelect(user)}
               className={`p-3 rounded-lg border cursor-pointer transition-all ${
                 selectedUser?.id === user.id
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  ? "border-blue-500 bg-blue-900/20"
+                  : "border-gray-700 hover:border-gray-600 hover:bg-gray-700"
               }`}
             >
-              <div className="font-medium text-sm">{user.username}</div>
-              <div className="text-xs text-gray-600">{user.email}</div>
+              <div className="font-medium text-sm text-white">{user.username}</div>
+              <div className="text-xs text-gray-300">{user.email}</div>
               <Badge
                 variant={user.role === "admin" ? "default" : "secondary"}
                 className="text-xs mt-1"
@@ -144,7 +144,7 @@ const UserSelector = ({ users, selectedUser, onUserSelect }) => {
           ))}
 
           {filteredUsers.length === 0 && (
-            <div className="text-center text-gray-500 py-4">No users found</div>
+            <div className="text-center text-gray-400 py-4">No users found</div>
           )}
         </div>
       </CardContent>
@@ -188,7 +188,7 @@ const CampaignGrid = ({ campaigns, assignments, onAssign, onUnassign }) => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md"
+          className="px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
         >
           <option value="">All Status</option>
           <option value="sent">Sent</option>
@@ -215,7 +215,7 @@ const CampaignGrid = ({ campaigns, assignments, onAssign, onUnassign }) => {
               />
             ))}
             {availableCampaigns.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-gray-400 py-8">
                 No available campaigns
               </div>
             )}
@@ -238,7 +238,7 @@ const CampaignGrid = ({ campaigns, assignments, onAssign, onUnassign }) => {
               />
             ))}
             {assignedCampaigns.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-gray-400 py-8">
                 No assigned campaigns
               </div>
             )}
@@ -395,13 +395,13 @@ const CampaignAssignment = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-gray-950 min-h-screen">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-white">
             Campaign Assignment
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-400 mt-1">
             Assign campaigns to client users for their dashboard access
           </p>
         </div>
@@ -420,9 +420,9 @@ const CampaignAssignment = () => {
         {/* Campaign Management */}
         <div className="lg:col-span-3">
           {selectedUser ? (
-            <Card>
+            <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
+                <CardTitle className="flex items-center space-x-2 text-white">
                   <Settings className="h-5 w-5" />
                   <span>Managing campaigns for {selectedUser.username}</span>
                 </CardTitle>
@@ -437,9 +437,9 @@ const CampaignAssignment = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card>
+            <Card className="bg-gray-800 border-gray-700">
               <CardContent className="flex items-center justify-center h-64">
-                <div className="text-center text-gray-500">
+                <div className="text-center text-gray-400">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Select a client to manage their campaign assignments</p>
                 </div>

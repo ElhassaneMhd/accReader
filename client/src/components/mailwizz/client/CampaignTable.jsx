@@ -113,9 +113,9 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
       case "paused":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "draft":
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-600 text-gray-200 border-gray-500";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-600 text-gray-200 border-gray-500";
     }
   };
 
@@ -197,7 +197,7 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
       </div>
 
       {/* Results count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-400">
         Showing {processedCampaigns.length} of {campaigns.length} campaigns
       </div>
 
@@ -221,7 +221,7 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
               )}
 
               <TableHead
-                className="cursor-pointer hover:bg-gray-50"
+                className="cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("name")}
               >
                 <div className="flex items-center space-x-1">
@@ -233,7 +233,7 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
               <TableHead>Status</TableHead>
 
               <TableHead
-                className="cursor-pointer hover:bg-gray-50"
+                className="cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("stats.sent")}
               >
                 <div className="flex items-center space-x-1">
@@ -247,7 +247,7 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
               <TableHead>Click Rate</TableHead>
 
               <TableHead
-                className="cursor-pointer hover:bg-gray-50"
+                className="cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("created_at")}
               >
                 <div className="flex items-center space-x-1">
@@ -270,7 +270,7 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
               return (
                 <TableRow
                   key={campaign.uid}
-                  className={`hover:bg-gray-50 ${
+                  className={`hover:bg-gray-700 ${
                     selectable && selectedRows.has(campaign.uid)
                       ? "bg-blue-50"
                       : ""
@@ -293,7 +293,7 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
                         {campaign.name}
                       </div>
                       {campaign.subject && (
-                        <div className="text-xs text-gray-500 truncate">
+                        <div className="text-xs text-gray-400 truncate">
                           {campaign.subject}
                         </div>
                       )}
@@ -369,7 +369,7 @@ const CampaignTable = ({ campaigns, onCampaignSelect, selectable = false }) => {
         </Table>
 
         {processedCampaigns.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-400">
             No campaigns found matching your criteria
           </div>
         )}

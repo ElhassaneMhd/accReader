@@ -103,14 +103,14 @@ const SubscriberManagement = ({ listId }) => {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg">
+    <div className="bg-gray-800 border border-gray-700 shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
+            <h3 className="text-lg leading-6 font-medium text-white">
               Subscribers for {selectedList?.name || 'List'}
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-400">
               Manage subscribers in this list
             </p>
           </div>
@@ -132,14 +132,14 @@ const SubscriberManagement = ({ listId }) => {
 
         {/* Add/Edit Form */}
         {showAddForm && (
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
-            <h4 className="text-md font-medium text-gray-900 mb-4">
+          <div className="bg-gray-700 p-4 rounded-lg mb-6">
+            <h4 className="text-md font-medium text-white mb-4">
               {editingSubscriber ? 'Edit Subscriber' : 'Add New Subscriber'}
             </h4>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-300">
                     Email *
                   </label>
                   <input
@@ -148,11 +148,11 @@ const SubscriberManagement = ({ listId }) => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-300">
                     First Name
                   </label>
                   <input
@@ -160,11 +160,11 @@ const SubscriberManagement = ({ listId }) => {
                     name="first_name"
                     value={formData.first_name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-300">
                     Last Name
                   </label>
                   <input
@@ -172,7 +172,7 @@ const SubscriberManagement = ({ listId }) => {
                     name="last_name"
                     value={formData.last_name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -180,7 +180,7 @@ const SubscriberManagement = ({ listId }) => {
                 <button
                   type="button"
                   onClick={cancelEdit}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                 >
                   Cancel
                 </button>
@@ -202,11 +202,11 @@ const SubscriberManagement = ({ listId }) => {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+          <div className="bg-red-900 border border-red-700 rounded-md p-4 mb-4">
             <div className="flex">
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
+                <h3 className="text-sm font-medium text-red-200">Error</h3>
+                <div className="mt-2 text-sm text-red-300">{error}</div>
               </div>
             </div>
           </div>
@@ -214,46 +214,46 @@ const SubscriberManagement = ({ listId }) => {
 
         {!loading && subscribers.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No subscribers found in this list</p>
+            <p className="text-gray-400">No subscribers found in this list</p>
           </div>
         )}
 
         {!loading && subscribers.length > 0 && (
-          <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+          <div className="overflow-x-auto shadow ring-1 ring-gray-700 ring-opacity-5 md:rounded-lg">
             <div className="min-w-full inline-block align-middle">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-600">
+                <thead className="bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       First Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Last Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Added
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Actions
                     </th>
                   </tr>
                 </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-gray-800 divide-y divide-gray-600">
                 {subscribers.map((subscriber) => (
-                  <tr key={subscriber.subscriber_uid} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={subscriber.subscriber_uid} className="hover:bg-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                       {subscriber.EMAIL || subscriber.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                       {subscriber.FNAME || subscriber.first_name || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                       {subscriber.LNAME || subscriber.last_name || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -263,25 +263,25 @@ const SubscriberManagement = ({ listId }) => {
                           : subscriber.status === 'unsubscribed'
                           ? 'bg-red-100 text-red-800'
                           : subscriber.status === 'blacklisted'
-                          ? 'bg-gray-100 text-gray-800'
+                          ? 'bg-gray-600 text-gray-200'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
                         {subscriber.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                       {formatDate(subscriber.date_added)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleEdit(subscriber)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="text-blue-400 hover:text-blue-300 mr-4"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(subscriber.subscriber_uid)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-400 hover:text-red-300"
                       >
                         Delete
                       </button>

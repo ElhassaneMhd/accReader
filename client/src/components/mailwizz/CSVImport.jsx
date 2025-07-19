@@ -73,21 +73,21 @@ const CSVImport = ({ listId }) => {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg">
+    <div className="bg-gray-800 border border-gray-700 shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
         <div className="mb-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">
+          <h3 className="text-lg leading-6 font-medium text-white mb-2">
             CSV Import
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-400">
             Import subscribers from a CSV file. The CSV should have columns: email, first_name, last_name
           </p>
         </div>
 
         {/* CSV Format Instructions */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">CSV Format Requirements:</h4>
-          <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+        <div className="bg-blue-900/20 border border-blue-700 rounded-md p-4 mb-6">
+          <h4 className="text-sm font-medium text-blue-300 mb-2">CSV Format Requirements:</h4>
+          <ul className="text-sm text-blue-200 list-disc list-inside space-y-1">
             <li>First row should contain headers: <code>email,first_name,last_name</code></li>
             <li>Email column is required</li>
             <li>First name and last name are optional</li>
@@ -105,7 +105,7 @@ const CSVImport = ({ listId }) => {
               ? 'border-blue-400 bg-blue-50' 
               : selectedFile 
                 ? 'border-green-400 bg-green-50' 
-                : 'border-gray-300'
+                : 'border-gray-600'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -138,7 +138,7 @@ const CSVImport = ({ listId }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Drag and drop your CSV file here, or{' '}
                 <label className="text-blue-600 hover:text-blue-800 cursor-pointer underline">
                   browse
@@ -150,7 +150,7 @@ const CSVImport = ({ listId }) => {
                   />
                 </label>
               </p>
-              <p className="text-xs text-gray-500">CSV files only, max 10MB</p>
+              <p className="text-xs text-gray-400">CSV files only, max 10MB</p>
             </div>
           )}
         </div>

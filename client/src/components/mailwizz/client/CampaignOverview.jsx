@@ -32,7 +32,7 @@ const MetricCard = ({ title, value, percentage, icon, color, description }) => {
     purple: "border-purple-200 bg-purple-50 text-purple-700",
     orange: "border-orange-200 bg-orange-50 text-orange-700",
     red: "border-red-200 bg-red-50 text-red-700",
-    gray: "border-gray-200 bg-gray-50 text-gray-700",
+    gray: "border-gray-700 bg-gray-800 text-gray-300",
   };
 
   return (
@@ -48,7 +48,7 @@ const MetricCard = ({ title, value, percentage, icon, color, description }) => {
               </p>
             )}
           </div>
-          <div className="p-3 rounded-full bg-white shadow-sm">{icon}</div>
+          <div className="p-3 rounded-full bg-gray-800 shadow-sm">{icon}</div>
         </div>
       </CardContent>
     </Card>
@@ -111,14 +111,14 @@ const CampaignOverview = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-gray-950 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-white">
             Campaign Dashboard
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-400 mt-1">
             Monitor your email campaign performance and analytics
           </p>
         </div>
@@ -126,7 +126,7 @@ const CampaignOverview = () => {
           <Button
             onClick={handleRefresh}
             variant="outline"
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
           >
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
@@ -225,7 +225,7 @@ const CampaignOverview = () => {
                     className="flex justify-between items-center"
                   >
                     <span className="capitalize font-medium">{status}</span>
-                    <span className="bg-gray-100 px-2 py-1 rounded text-sm">
+                    <span className="bg-gray-600 px-2 py-1 rounded text-sm text-white">
                       {count}
                     </span>
                   </div>

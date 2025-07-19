@@ -43,10 +43,10 @@ const ListManagement = () => {
   };
 
   const renderListsTab = () => (
-    <div className="bg-white shadow rounded-lg">
+    <div className="bg-gray-800 border border-gray-700 shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
+          <h3 className="text-lg leading-6 font-medium text-white">
             MailWizz Lists
           </h3>
           <button
@@ -64,11 +64,11 @@ const ListManagement = () => {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+          <div className="bg-red-900/20 border border-red-700 rounded-md p-4 mb-4">
             <div className="flex">
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
+                <h3 className="text-sm font-medium text-red-300">Error</h3>
+                <div className="mt-2 text-sm text-red-200">{error}</div>
               </div>
             </div>
           </div>
@@ -76,34 +76,34 @@ const ListManagement = () => {
 
         {!loading && allLists.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No lists found</p>
+            <p className="text-gray-400">No lists found</p>
           </div>
         )}
 
         {!loading && allLists.length > 0 && (
-          <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+          <div className="overflow-x-auto shadow ring-1 ring-gray-700 ring-opacity-50 md:rounded-lg">
             <div className="min-w-full inline-block align-middle">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-600">
+                <thead className="bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       List Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Display Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Subscribers
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Actions
                     </th>
                   </tr>
                 </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-gray-800 divide-y divide-gray-600">
                 {allLists.map((list) => {
                   // Handle both flattened and nested structures
                   const listUid = list.list_uid || list.general?.list_uid;
@@ -111,17 +111,17 @@ const ListManagement = () => {
                   const displayName = list.display_name || list.general?.display_name;
                   
                   return (
-                    <tr key={listUid} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <tr key={listUid} className="hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                         {listName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {displayName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {list.subscribers_count || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {list.date_added ? formatDate(list.date_added) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -147,14 +147,14 @@ const ListManagement = () => {
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-700 bg-gray-800">
+        <nav className="-mb-px flex space-x-8 px-6">
           <button
             onClick={() => setActiveTab('lists')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'lists'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-blue-500 text-blue-400'
+                : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
             }`}
           >
             Lists Overview
@@ -165,8 +165,8 @@ const ListManagement = () => {
                 onClick={() => setActiveTab('subscribers')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'subscribers'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-blue-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
                 }`}
               >
                 Subscribers
@@ -175,8 +175,8 @@ const ListManagement = () => {
                 onClick={() => setActiveTab('import')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'import'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-blue-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
                 }`}
               >
                 CSV Import
