@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DataTable } from "@/components/ui/data-table";
+import DataTable from "@/components/DataTable";
 import {
   Select,
   SelectContent,
@@ -292,7 +292,10 @@ const UserManagement = () => {
           <h1 className="text-2xl font-bold text-white">User Management</h1>
           <p className="text-gray-400">Manage users, roles, and permissions</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Create User
         </Button>
@@ -319,10 +322,30 @@ const UserManagement = () => {
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent className="bg-gray-700 border-gray-600">
-                <SelectItem value="all" className="text-white hover:bg-gray-600">All Roles</SelectItem>
-                <SelectItem value="admin" className="text-white hover:bg-gray-600">Admin</SelectItem>
-                <SelectItem value="client" className="text-white hover:bg-gray-600">Client</SelectItem>
-                <SelectItem value="pmta_user" className="text-white hover:bg-gray-600">PMTA User</SelectItem>
+                <SelectItem
+                  value="all"
+                  className="text-white hover:bg-gray-600"
+                >
+                  All Roles
+                </SelectItem>
+                <SelectItem
+                  value="admin"
+                  className="text-white hover:bg-gray-600"
+                >
+                  Admin
+                </SelectItem>
+                <SelectItem
+                  value="client"
+                  className="text-white hover:bg-gray-600"
+                >
+                  Client
+                </SelectItem>
+                <SelectItem
+                  value="pmta_user"
+                  className="text-white hover:bg-gray-600"
+                >
+                  PMTA User
+                </SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -331,11 +354,36 @@ const UserManagement = () => {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="bg-gray-700 border-gray-600">
-                <SelectItem value="all" className="text-white hover:bg-gray-600">All Status</SelectItem>
-                <SelectItem value="active" className="text-white hover:bg-gray-600">Active</SelectItem>
-                <SelectItem value="inactive" className="text-white hover:bg-gray-600">Inactive</SelectItem>
-                <SelectItem value="suspended" className="text-white hover:bg-gray-600">Suspended</SelectItem>
-                <SelectItem value="pending" className="text-white hover:bg-gray-600">Pending</SelectItem>
+                <SelectItem
+                  value="all"
+                  className="text-white hover:bg-gray-600"
+                >
+                  All Status
+                </SelectItem>
+                <SelectItem
+                  value="active"
+                  className="text-white hover:bg-gray-600"
+                >
+                  Active
+                </SelectItem>
+                <SelectItem
+                  value="inactive"
+                  className="text-white hover:bg-gray-600"
+                >
+                  Inactive
+                </SelectItem>
+                <SelectItem
+                  value="suspended"
+                  className="text-white hover:bg-gray-600"
+                >
+                  Suspended
+                </SelectItem>
+                <SelectItem
+                  value="pending"
+                  className="text-white hover:bg-gray-600"
+                >
+                  Pending
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -362,8 +410,7 @@ const UserManagement = () => {
             columns={userColumns}
             data={filteredUsers}
             loading={loading}
-            searchable={false}
-            filterable={false}
+            title="Users"
           />
         </CardContent>
       </Card>
@@ -379,7 +426,9 @@ const UserManagement = () => {
               {/* Basic Information */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="username" className="text-gray-300">Username</Label>
+                  <Label htmlFor="username" className="text-gray-300">
+                    Username
+                  </Label>
                   <Input
                     id="username"
                     value={newUser.username}
@@ -394,7 +443,9 @@ const UserManagement = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email" className="text-gray-300">Email</Label>
+                  <Label htmlFor="email" className="text-gray-300">
+                    Email
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -410,7 +461,9 @@ const UserManagement = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="password" className="text-gray-300">Password</Label>
+                  <Label htmlFor="password" className="text-gray-300">
+                    Password
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -426,7 +479,9 @@ const UserManagement = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="role" className="text-gray-300">Role</Label>
+                  <Label htmlFor="role" className="text-gray-300">
+                    Role
+                  </Label>
                   <Select
                     value={newUser.role}
                     onValueChange={(value) =>
@@ -437,7 +492,12 @@ const UserManagement = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
-                      <SelectItem value="client" className="text-white hover:bg-gray-600">Client</SelectItem>
+                      <SelectItem
+                        value="client"
+                        className="text-white hover:bg-gray-600"
+                      >
+                        Client
+                      </SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="pmta_user">PMTA User</SelectItem>
                     </SelectContent>
@@ -539,14 +599,18 @@ const UserManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle className="text-white">Edit User: {selectedUser.username}</CardTitle>
+              <CardTitle className="text-white">
+                Edit User: {selectedUser.username}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* User Info */}
               <div className="p-4 bg-gray-700 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-white">{selectedUser.username}</p>
+                    <p className="font-medium text-white">
+                      {selectedUser.username}
+                    </p>
                     <p className="text-sm text-gray-300">
                       {selectedUser.email}
                     </p>

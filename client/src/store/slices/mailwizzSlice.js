@@ -130,11 +130,15 @@ export const fetchListSubscribers = createAsyncThunk(
   "mailwizz/fetchListSubscribers",
   async ({ listUid, page = 1, perPage = 50 }, { rejectWithValue }) => {
     try {
-      const response = await mailwizzApi.getListSubscribers(listUid, page, perPage);
-      console.log('fetchListSubscribers response:', response.data);
+      const response = await mailwizzApi.getListSubscribers(
+        listUid,
+        page,
+        perPage
+      );
+      console.log("fetchListSubscribers response:", response.data);
       return {
         listUid,
-        data: response.data.data
+        data: response.data.data,
       };
     } catch (error) {
       return rejectWithValue(
@@ -151,7 +155,7 @@ export const addSubscriber = createAsyncThunk(
       const response = await mailwizzApi.addSubscriber(listUid, subscriberData);
       return {
         listUid,
-        subscriber: response.data.data
+        subscriber: response.data.data,
       };
     } catch (error) {
       return rejectWithValue(
@@ -165,11 +169,15 @@ export const updateSubscriber = createAsyncThunk(
   "mailwizz/updateSubscriber",
   async ({ listUid, subscriberUid, subscriberData }, { rejectWithValue }) => {
     try {
-      const response = await mailwizzApi.updateSubscriber(listUid, subscriberUid, subscriberData);
+      const response = await mailwizzApi.updateSubscriber(
+        listUid,
+        subscriberUid,
+        subscriberData
+      );
       return {
         listUid,
         subscriberUid,
-        subscriber: response.data.data
+        subscriber: response.data.data,
       };
     } catch (error) {
       return rejectWithValue(
@@ -186,7 +194,7 @@ export const deleteSubscriber = createAsyncThunk(
       await mailwizzApi.deleteSubscriber(listUid, subscriberUid);
       return {
         listUid,
-        subscriberUid
+        subscriberUid,
       };
     } catch (error) {
       return rejectWithValue(
@@ -203,7 +211,7 @@ export const importSubscribersCSV = createAsyncThunk(
       const response = await mailwizzApi.importSubscribersCSV(listUid, file);
       return {
         listUid,
-        result: response.data
+        result: response.data,
       };
     } catch (error) {
       return rejectWithValue(
@@ -373,18 +381,13 @@ const mailwizzSlice = createSlice({
       .addCase(fetchAllLists.fulfilled, (state, action) => {
         state.loading = false;
         // Handle nested response structure: payload.data.records
-        const records = action.payload?.data?.records || action.payload?.records || action.payload || [];
-        // Transform the nested structure to flatten the general info
-        state.allLists = records.map(record => ({
-          list_uid: record.general?.list_uid,
-          name: record.general?.name,
-          display_name: record.general?.display_name,
-          description: record.general?.description,
-          from_email: record.defaults?.from_email,
-          from_name: record.defaults?.from_name,
-          company_name: record.company?.name,
-          ...record.general // Include all general fields
-        }));
+        const records =
+          action.payload?.data?.records ||
+          action.payload?.records ||
+          action.payload ||
+          [];
+        // Store the records as-is to preserve all nested fields
+        state.allLists = records;
       })
       .addCase(fetchAllLists.rejected, (state, action) => {
         state.loading = false;
@@ -404,9 +407,12 @@ const mailwizzSlice = createSlice({
       .addCase(fetchListSubscribers.fulfilled, (state, action) => {
         state.loading = false;
         const { listUid, data } = action.payload;
-        console.log('Reducer - listUid:', listUid, 'data:', data);
+        console.log("Reducer - listUid:", listUid, "data:", data);
         state.listSubscribers[listUid] = data?.records || [];
-        console.log('Reducer - stored subscribers:', state.listSubscribers[listUid]);
+        console.log(
+          "Reducer - stored subscribers:",
+          state.listSubscribers[listUid]
+        );
       })
       .addCase(fetchListSubscribers.rejected, (state, action) => {
         state.loading = false;
@@ -438,9 +444,9 @@ const mailwizzSlice = createSlice({
       .addCase(deleteSubscriber.fulfilled, (state, action) => {
         const { listUid, subscriberUid } = action.payload;
         if (state.listSubscribers[listUid]) {
-          state.listSubscribers[listUid] = state.listSubscribers[listUid].filter(
-            (s) => s.subscriber_uid !== subscriberUid
-          );
+          state.listSubscribers[listUid] = state.listSubscribers[
+            listUid
+          ].filter((s) => s.subscriber_uid !== subscriberUid);
         }
       })
 
@@ -448,11 +454,11 @@ const mailwizzSlice = createSlice({
       .addCase(importSubscribersCSV.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.importStatus = 'uploading';
+        state.importStatus = "uploading";
       })
       .addCase(importSubscribersCSV.fulfilled, (state, action) => {
         state.loading = false;
-        state.importStatus = 'success';
+        state.importStatus = "success";
         // Refresh subscribers for the list
         const { listUid } = action.payload;
         // Note: You might want to refetch subscribers after import
@@ -460,7 +466,7 @@ const mailwizzSlice = createSlice({
       .addCase(importSubscribersCSV.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.importStatus = 'error';
+        state.importStatus = "error";
       });
   },
 });
@@ -515,7 +521,7 @@ export const selectMailwizzError = (state) => state.mailwizz.error;
 export const selectAllLists = (state) => state.mailwizz.allLists;
 export const selectSelectedList = (state) => state.mailwizz.selectedList;
 export const selectListSubscribers = (state) => state.mailwizz.listSubscribers;
-export const selectListSubscribersByListId = (listId) => (state) => 
+export const selectListSubscribersByListId = (listId) => (state) =>
   state.mailwizz.listSubscribers[listId] || [];
 export const selectImportStatus = (state) => state.mailwizz.importStatus;
 

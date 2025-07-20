@@ -1,15 +1,15 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import OverviewStats from "../components/OverviewStats";
-import Charts from "../components/Charts";
-import VmtaPerformance from "../components/VmtaPerformance";
-import SearchAndFilters from "../components/SearchAndFilters";
-import DataTable from "../components/DataTable";
-import ImportStatus from "../components/ImportStatus";
-import FileSelector from "../components/FileSelector";
-import { useEmailDataContext } from "../hooks/useEmailDataContext";
-import { useConnectionContext } from "../hooks/useConnectionContext";
+import Header from "../../components/Header";
+import OverviewStats from "../../components/OverviewStats";
+import Charts from "../../components/Charts";
+import VmtaPerformance from "../../components/VmtaPerformance";
+import SearchAndFilters from "../../components/SearchAndFilters";
+import DataTable from "../../components/DataTable";
+import ImportStatus from "../../components/ImportStatus";
+import FileSelector from "../../components/FileSelector";
+import { useEmailDataContext } from "../../hooks/useEmailDataContext";
+import { useConnectionContext } from "../../hooks/useConnectionContext";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -68,13 +68,13 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 w-[100%] m-0 p-0">
+      {/* Admin Overview Section */}
       <Header
         onFileUpload={loadCSVFile}
         loading={loading}
         error={error}
         dataInfo={dataInfo}
       />
-
       <div className="py-6 px-4 md:px-6 w-full">
         {/* Import Status - Always visible */}
         <div className="mb-6">
@@ -90,7 +90,6 @@ const DashboardPage = () => {
             isConnected={true}
           />
         </div>
-
         {/* File Selector - Only visible for auto-import mode */}
         {autoImportEnabled && (
           <div className="mb-6">
@@ -103,18 +102,14 @@ const DashboardPage = () => {
             />
           </div>
         )}
-
         {rawData.length > 0 ? (
           <>
             {/* Overview Statistics */}
             <OverviewStats overview={analysis.overview} />
-
             {/* Charts */}
             <Charts analysis={analysis} />
-
             {/* VMTA Performance */}
             <VmtaPerformance data={rawData} />
-
             {/* Search and Filters */}
             <SearchAndFilters
               searchTerm={searchTerm}
@@ -128,7 +123,6 @@ const DashboardPage = () => {
               filteredData={filteredData}
               analysis={analysis}
             />
-
             {/* Data Table */}
             <DataTable data={filteredData} />
           </>
@@ -136,7 +130,7 @@ const DashboardPage = () => {
           <div className="text-center w-full py-16">
             <div className="max-w-xl mx-auto bg-gray-900 border border-gray-700 rounded-lg p-8">
               <h2 className="text-2xl font-bold text-white mb-4">
-                � No Data Available
+                No Data Available
               </h2>
               <p className="text-gray-300 mb-4">
                 {autoImportEnabled

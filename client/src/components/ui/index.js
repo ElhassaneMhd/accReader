@@ -41,7 +41,6 @@ export {
   SelectValue,
 } from "./select";
 export { Textarea } from "./textarea";
-export { DataTable } from "./data-table";
 export {
   DropdownMenu,
   DropdownMenuContent,

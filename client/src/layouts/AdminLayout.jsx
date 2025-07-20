@@ -28,7 +28,7 @@ const AdminLayout = ({ children }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const navigation = [
-    { name: "Overview", href: "/admin", icon: Home },
+    { name: "Overview", href: "/admin/overview", icon: Home },
     { name: "Campaigns", href: "/admin/campaigns", icon: Mail },
     { name: "Lists", href: "/admin/lists", icon: List },
     { name: "Users", href: "/admin/users", icon: Users },
@@ -122,7 +122,7 @@ const AdminLayout = ({ children }) => {
                         flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                         ${
                           isActive(item.href)
-                            ? "bg-blue-600 text-white"
+                            ? "bg-gray-700 text-white"
                             : "text-gray-300 hover:text-white hover:bg-gray-700"
                         }
                       `}
@@ -141,7 +141,7 @@ const AdminLayout = ({ children }) => {
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium w-full transition-colors focus:outline-none justify-between
                     ${
                       location.pathname.startsWith("/admin/settings")
-                        ? "bg-blue-600 text-white"
+                        ? "bg-gray-700 text-white"
                         : "text-gray-300 hover:text-white hover:bg-gray-700"
                     }
                   `}
@@ -169,7 +169,7 @@ const AdminLayout = ({ children }) => {
                               location.search.includes(
                                 `tab=${sub.href.split("=")[1]}`
                               )
-                                ? "bg-blue-500 text-white"
+                                ? "bg-gray-700 text-white"
                                 : "text-gray-300 hover:text-white hover:bg-gray-700"
                             }
                           `}

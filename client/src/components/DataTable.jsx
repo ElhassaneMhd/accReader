@@ -9,68 +9,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, FileText, Copy } from "lucide-react";
-import { formatDate } from "../utils/csvParser";
+import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
 
-const DataTable = ({ data, title = "Email Records" }) => {
+const DataTable = ({ columns, data, title = "Records", loading }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [expandedRows, setExpandedRows] = useState(new Set());
 
-  const toggleRowExpansion = (index) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(index)) {
-      newExpanded.delete(index);
-    } else {
-      newExpanded.add(index);
-    }
-    setExpandedRows(newExpanded);
-  };
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "delivered":
-      case "relayed":
-        return "bg-green-900/20 text-green-400 border-green-700/50";
-      case "failed":
-      case "bounced":
-        return "bg-red-900/20 text-red-400 border-red-700/50";
-      case "delayed":
-      case "deferred":
-        return "bg-yellow-900/20 text-yellow-400 border-yellow-700/50";
-      default:
-        return "bg-gray-800 text-gray-300 border-gray-600";
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status?.toLowerCase()) {
-      case "relayed":
-        return "Delivered";
-      case "failed":
-        return "Failed";
-      case "bounced":
-        return "Bounced";
-      case "delayed":
-        return "Delayed";
-      case "deferred":
-        return "Deferred";
-      default:
-        return status || "Unknown";
-    }
-  };
-
-  const truncateText = (text, maxLength = 30) => {
-    if (!text) return "";
-    return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
-      : text;
-  };
+  if (loading) {
+    return (
+      <Card className="bg-gray-900 border-gray-700">
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h3 className="text-lg font-semibold text-gray-100 mb-2">
+            Loading...
+          </h3>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!data || data.length === 0) {
     return (
@@ -80,9 +36,6 @@ const DataTable = ({ data, title = "Email Records" }) => {
           <h3 className="text-lg font-semibold text-gray-100 mb-2">
             No data to display
           </h3>
-          <p className="text-sm text-gray-400">
-            Upload a CSV file to see email records
-          </p>
         </CardContent>
       </Card>
     );
@@ -106,167 +59,36 @@ const DataTable = ({ data, title = "Email Records" }) => {
           <Table>
             <TableHeader>
               <TableRow className="border-gray-700 hover:bg-gray-800/50">
-                <TableHead className="text-gray-300 font-semibold">
-                  Time
-                </TableHead>
-                <TableHead className="text-gray-300 font-semibold">
-                  Status
-                </TableHead>
-                <TableHead className="text-gray-300 font-semibold">
-                  Recipient
-                </TableHead>
-                <TableHead className="text-gray-300 font-semibold">
-                  Sender
-                </TableHead>
-                <TableHead className="text-gray-300 font-semibold">
-                  VMTA
-                </TableHead>
-                <TableHead className="text-gray-300 font-semibold">
-                  DSN Code
-                </TableHead>
-                <TableHead className="text-gray-300 font-semibold">
-                  Diagnostic
-                </TableHead>
+                {columns.map((col) => (
+                  <TableHead
+                    key={col.accessorKey || col.id}
+                    className="text-gray-300 font-semibold"
+                  >
+                    {col.header}
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.map((row, index) => {
-                const globalIndex = page * rowsPerPage + index;
-                const isExpanded = expandedRows.has(globalIndex);
-
-                return (
-                  <React.Fragment key={globalIndex}>
-                    <TableRow
-                      className="border-gray-700 hover:bg-gray-800/50 cursor-pointer"
-                      onClick={() => toggleRowExpansion(globalIndex)}
+              {paginatedData.map((row, rowIndex) => (
+                <TableRow
+                  key={row.id || row.campaign_uid || rowIndex}
+                  className="border-gray-700 hover:bg-gray-800/50"
+                >
+                  {columns.map((col) => (
+                    <TableCell
+                      key={col.accessorKey || col.id}
+                      className="text-gray-300 text-sm"
                     >
-                      <TableCell className="text-gray-300 text-sm">
-                        {formatDate(row.timeLoggedParsed || row.timeLogged)}
-                      </TableCell>
-
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={`${getStatusColor(row.dsnAction)} text-xs`}
-                        >
-                          {getStatusLabel(row.dsnAction)}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell className="text-gray-300 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span>{truncateText(row.rcpt)}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyToClipboard(row.rcpt);
-                            }}
-                            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-                          >
-                            <Copy size={12} />
-                          </Button>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="text-gray-300 text-sm">
-                        {truncateText(row.orig)}
-                      </TableCell>
-
-                      <TableCell className="text-gray-300 text-sm">
-                        {row.vmta || "N/A"}
-                      </TableCell>
-
-                      <TableCell className="text-gray-300 text-sm">
-                        {row.dsnStatus || "N/A"}
-                      </TableCell>
-
-                      <TableCell className="text-gray-300 text-sm">
-                        {truncateText(row.dsnDiag)}
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Expanded Row */}
-                    {isExpanded && (
-                      <TableRow className="border-gray-700">
-                        <TableCell colSpan={7} className="bg-gray-800/30 p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <h4 className="font-semibold text-gray-200 mb-2">
-                                Email Details
-                              </h4>
-                              <div className="space-y-1 text-gray-300">
-                                <p>
-                                  <span className="text-gray-400">
-                                    Full Recipient:
-                                  </span>{" "}
-                                  {row.rcpt}
-                                </p>
-                                <p>
-                                  <span className="text-gray-400">Sender:</span>{" "}
-                                  {row.orig}
-                                </p>
-                                <p>
-                                  <span className="text-gray-400">
-                                    Time Queued:
-                                  </span>{" "}
-                                  {formatDate(
-                                    row.timeQueuedParsed || row.timeQueued
-                                  )}
-                                </p>
-                                <p>
-                                  <span className="text-gray-400">
-                                    Subject:
-                                  </span>{" "}
-                                  {row.subject || "N/A"}
-                                </p>
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-200 mb-2">
-                                Technical Details
-                              </h4>
-                              <div className="space-y-1 text-gray-300">
-                                <p>
-                                  <span className="text-gray-400">VMTA:</span>{" "}
-                                  {row.vmta || "N/A"}
-                                </p>
-                                <p>
-                                  <span className="text-gray-400">
-                                    DSN Status:
-                                  </span>{" "}
-                                  {row.dsnStatus || "N/A"}
-                                </p>
-                                <p>
-                                  <span className="text-gray-400">
-                                    Message ID:
-                                  </span>{" "}
-                                  {truncateText(row.mxid, 50) || "N/A"}
-                                </p>
-                                <p>
-                                  <span className="text-gray-400">Job ID:</span>{" "}
-                                  {row.jobId || "N/A"}
-                                </p>
-                              </div>
-                            </div>
-                            {row.dsnDiag && (
-                              <div className="md:col-span-2">
-                                <h4 className="font-semibold text-gray-200 mb-2">
-                                  Diagnostic Message
-                                </h4>
-                                <p className="text-gray-300 bg-gray-800 p-3 rounded border border-gray-600">
-                                  {row.dsnDiag}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                );
-              })}
+                      {col.cell
+                        ? col.cell(row)
+                        : col.accessorKey
+                        ? row[col.accessorKey]
+                        : null}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>
@@ -285,7 +107,7 @@ const DataTable = ({ data, title = "Email Records" }) => {
                 value={rowsPerPage}
                 onChange={(e) => {
                   setRowsPerPage(parseInt(e.target.value, 10));
-                  setPage(0); // Reset to first page when changing rows per page
+                  setPage(0);
                 }}
                 className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               >

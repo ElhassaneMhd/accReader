@@ -10,10 +10,10 @@ import CampaignManagement from "@/pages/admin/CampaignManagement";
 import UserManagement from "@/pages/admin/UserManagement";
 import ListManagementPage from "@/pages/admin/ListManagementPage";
 import Settings from "@/pages/admin/Settings";
+import OverviewPage from "@/pages/admin/OverviewPage";
 
 // PowerMTA pages
-import LoginPage from "@/pages/LoginPage";
-import DashboardPage from "@/pages/DashboardPage";
+import DashboardPage from "@/pages/admin/DashboardPage";
 import PublicUploadPage from "@/pages/PublicUploadPage";
 
 // Context providers
@@ -73,16 +73,6 @@ const AppRoutes = () => {
         element={
           <ConnectionProvider>
             <EmailDataProvider>
-              <LoginPage />
-            </EmailDataProvider>
-          </ConnectionProvider>
-        }
-      />
-      <Route
-        path="/pmta"
-        element={
-          <ConnectionProvider>
-            <EmailDataProvider>
               <DashboardPage />
             </EmailDataProvider>
           </ConnectionProvider>
@@ -122,10 +112,8 @@ const AppRoutes = () => {
           <ProtectedRoute requiredRole="admin">
             <AdminLayout>
               <Routes>
-                <Route
-                  index
-                  element={<Navigate to="/admin/campaigns" replace />}
-                />
+                <Route index element={<OverviewPage />} />
+                <Route path="overview" element={<OverviewPage />} />
                 <Route path="campaigns" element={<CampaignManagement />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="lists" element={<ListManagementPage />} />

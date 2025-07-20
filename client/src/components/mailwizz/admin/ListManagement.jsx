@@ -5,7 +5,6 @@ import {
   fetchListDetails,
   selectAllLists,
   selectMailwizzLoading,
-  selectMailwizzError,
 } from "../../../store/slices/mailwizzSlice";
 import SubscriberManagement from "./SubscriberManagement";
 import CSVImport from "../CSVImport";
@@ -14,12 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter, List as ListIcon } from "lucide-react";
+import DataTable from "@/components/DataTable";
 
 const ListManagement = () => {
   const dispatch = useDispatch();
   const allLists = useSelector(selectAllLists);
   const loading = useSelector(selectMailwizzLoading);
-  const error = useSelector(selectMailwizzError);
 
   const [activeTab, setActiveTab] = useState("lists");
   const [selectedListId, setSelectedListId] = useState(null);
@@ -35,10 +34,6 @@ const ListManagement = () => {
     setActiveTab("subscribers");
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
   // Filtered lists logic
   const filteredLists = (allLists || []).filter((list) => {
     const listName = list.name || list.general?.name || "";
@@ -49,6 +44,49 @@ const ListManagement = () => {
     return matchesSearch;
   });
 
+  // DataTable columns
+  const listColumns = [
+    {
+      accessorKey: "name",
+      header: "List Name",
+      cell: (row) => row.general?.name ?? "-",
+    },
+    {
+      accessorKey: "display_name",
+      header: "Display Name",
+      cell: (row) => row.general?.display_name ?? "-",
+    },
+    {
+      accessorKey: "from_email",
+      header: "From Email",
+      cell: (row) => row.defaults?.from_email ?? "-",
+    },
+    {
+      accessorKey: "company_name",
+      header: "Company Name",
+      cell: (row) => row.company?.name ?? "-",
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: (row) => row.general?.description ?? "-",
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: (row) => (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-blue-400 hover:text-blue-600"
+          onClick={() => handleListSelect(row.general?.list_uid ?? "")}
+        >
+          Manage Subscribers
+        </Button>
+      ),
+    },
+  ];
+
   const renderListsTable = () => (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
@@ -58,85 +96,12 @@ const ListManagement = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {loading && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        )}
-        {error && (
-          <Alert
-            variant="destructive"
-            className="bg-red-900/20 border-red-700 mb-4"
-          >
-            <AlertDescription className="text-red-300">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-        {!loading && filteredLists.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-400">No lists found</p>
-          </div>
-        )}
-        {!loading && filteredLists.length > 0 && (
-          <div className="overflow-x-auto shadow ring-1 ring-gray-700 ring-opacity-50 md:rounded-lg">
-            <div className="min-w-full inline-block align-middle">
-              <table className="min-w-full divide-y divide-gray-600">
-                <thead className="bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
-                      List Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
-                      Display Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
-                      Subscribers
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-600">
-                  {filteredLists.map((list) => {
-                    const listUid = list.list_uid || list.general?.list_uid;
-                    const listName = list.name || list.general?.name;
-                    const displayName =
-                      list.display_name || list.general?.display_name;
-                    return (
-                      <tr key={listUid} className="hover:bg-gray-700">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                          {listName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {displayName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {list.subscribers_count || "-"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {list.date_added ? formatDate(list.date_added) : "-"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleListSelect(listUid)}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
-                          >
-                            Manage Subscribers
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        <DataTable
+          columns={listColumns}
+          data={filteredLists}
+          loading={loading}
+          title="MailWizz Lists"
+        />
       </CardContent>
     </Card>
   );

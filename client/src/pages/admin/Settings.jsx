@@ -23,7 +23,7 @@ const Settings = () => {
             <h3 className="text-2xl font-semibold text-gray-100 mb-6 flex items-center gap-2">
               <KeyRound className="h-6 w-6 text-blue-400" /> SSH Connection
             </h3>
-            <div className="max-w-lg">
+            <div className="w-full">
               <LoginForm
                 onConnect={connect}
                 isConnecting={isConnecting}

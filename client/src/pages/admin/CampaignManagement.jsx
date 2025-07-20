@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DataTable } from "@/components/ui/data-table";
+import DataTable from "@/components/DataTable";
 import {
   Users,
   Mail,
@@ -29,7 +29,6 @@ import {
   Settings,
 } from "lucide-react";
 import {
-  fetchAllCampaigns,
   fetchAllCampaignsWithStats,
   assignCampaignToUser,
   // unassignCampaignFromUser, // Reserved for future use
@@ -42,7 +41,7 @@ import {
 
 const CampaignManagement = () => {
   const dispatch = useDispatch();
-  const campaigns = useSelector(selectAllCampaigns);
+  const campaigns = useSelector(selectAllCampaigns) || [];
   const loading = useSelector(selectMailwizzLoading);
   const error = useSelector(selectMailwizzError);
 
@@ -64,7 +63,7 @@ const CampaignManagement = () => {
     dispatch(fetchAllCampaignsWithStats());
   }, [dispatch]);
 
-  const filteredCampaigns = (campaigns || []).filter((campaign) => {
+  const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch =
       campaign.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       campaign.subject?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -137,35 +136,35 @@ const CampaignManagement = () => {
     {
       accessorKey: "name",
       header: "Campaign Name",
-      cell: ({ row }) => (
+      cell: (row) => (
         <div className="flex flex-col">
-          <span className="font-medium">{row.getValue("name")}</span>
-          <span className="text-sm text-gray-500">{row.original.subject}</span>
+          <span className="font-medium text-gray-100">{row.name}</span>
+          <span className="text-sm text-gray-400">{row.subject ?? ""}</span>
         </div>
       ),
     },
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => getStatusBadge(row.getValue("status")),
+      cell: (row) => getStatusBadge(row.status),
     },
     {
       accessorKey: "list_name",
       header: "List",
-      cell: ({ row }) => (
-        <span className="text-sm">{row.getValue("list_name") || "N/A"}</span>
+      cell: (row) => (
+        <span className="text-sm text-gray-300">{row.list_name ?? "N/A"}</span>
       ),
     },
     {
       accessorKey: "stats",
       header: "Performance",
-      cell: ({ row }) => {
-        const stats = row.original.stats || {};
+      cell: (row) => {
+        const stats = row.stats || {};
         return (
-          <div className="text-sm">
-            <div>Sent: {stats.processed_count || 0}</div>
-            <div>Opens: {stats.unique_opens_count || 0}</div>
-            <div>Clicks: {stats.unique_clicks_count || 0}</div>
+          <div className="text-sm text-gray-300">
+            <div>Sent: {stats.processed_count ?? 0}</div>
+            <div>Opens: {stats.unique_opens_count ?? 0}</div>
+            <div>Clicks: {stats.unique_clicks_count ?? 0}</div>
           </div>
         );
       },
@@ -173,31 +172,38 @@ const CampaignManagement = () => {
     {
       accessorKey: "assigned_users_count",
       header: "Assigned Users",
-      cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.getValue("assigned_users_count") || 0} users
-        </Badge>
+      cell: (row) => (
+        <Badge variant="outline">{row.assigned_users_count ?? 0} users</Badge>
       ),
     },
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
+      cell: (row) => (
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              setSelectedCampaign(row.original);
+              setSelectedCampaign(row);
               setShowAssignModal(true);
             }}
+            className="text-gray-300 hover:text-white"
           >
             <UserCheck className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 hover:text-white"
+          >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 hover:text-white"
+          >
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -210,14 +216,15 @@ const CampaignManagement = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
-            Campaign Management
-          </h1>
+          <h1 className="text-2xl font-bold text-white">Campaign Management</h1>
           <p className="text-gray-400">
             Manage MailWizz campaigns and user assignments
           </p>
         </div>
-        <Button onClick={() => setShowAssignModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button
+          onClick={() => setShowAssignModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Assign Campaign
         </Button>
@@ -234,21 +241,46 @@ const CampaignManagement = () => {
                   placeholder="Search campaigns..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  className="pl-10 bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-blue-500"
                 />
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-white">
+              <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-gray-100">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                <SelectItem value="all" className="text-white hover:bg-gray-600">All Statuses</SelectItem>
-                <SelectItem value="draft" className="text-white hover:bg-gray-600">Draft</SelectItem>
-                <SelectItem value="sending" className="text-white hover:bg-gray-600">Sending</SelectItem>
-                <SelectItem value="sent" className="text-white hover:bg-gray-600">Sent</SelectItem>
-                <SelectItem value="paused" className="text-white hover:bg-gray-600">Paused</SelectItem>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectItem
+                  value="all"
+                  className="text-gray-100 hover:bg-gray-700"
+                >
+                  All Statuses
+                </SelectItem>
+                <SelectItem
+                  value="draft"
+                  className="text-gray-100 hover:bg-gray-700"
+                >
+                  Draft
+                </SelectItem>
+                <SelectItem
+                  value="sending"
+                  className="text-gray-100 hover:bg-gray-700"
+                >
+                  Sending
+                </SelectItem>
+                <SelectItem
+                  value="sent"
+                  className="text-gray-100 hover:bg-gray-700"
+                >
+                  Sent
+                </SelectItem>
+                <SelectItem
+                  value="paused"
+                  className="text-gray-100 hover:bg-gray-700"
+                >
+                  Paused
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -265,7 +297,7 @@ const CampaignManagement = () => {
       {/* Campaigns Table */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center text-white">
+          <CardTitle className="flex items-center text-gray-100">
             <Mail className="h-5 w-5 mr-2" />
             MailWizz Campaigns ({filteredCampaigns.length})
           </CardTitle>
@@ -275,8 +307,7 @@ const CampaignManagement = () => {
             columns={campaignColumns}
             data={filteredCampaigns}
             loading={loading}
-            searchable={false} // We have custom search
-            filterable={false} // We have custom filters
+            title="MailWizz Campaigns"
           />
         </CardContent>
       </Card>
@@ -284,13 +315,17 @@ const CampaignManagement = () => {
       {/* Assignment Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md bg-gray-800 border-gray-700 text-white">
+          <Card className="w-full max-w-md bg-gray-900 border-gray-700 text-gray-100">
             <CardHeader>
-              <CardTitle className="text-white">Assign Campaign to User</CardTitle>
+              <CardTitle className="text-gray-100">
+                Assign Campaign to User
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="campaign" className="text-gray-300">Selected Campaign</Label>
+                <Label htmlFor="campaign" className="text-gray-300">
+                  Selected Campaign
+                </Label>
                 <Input
                   id="campaign"
                   value={selectedCampaign?.name || "No campaign selected"}
@@ -300,7 +335,9 @@ const CampaignManagement = () => {
               </div>
 
               <div>
-                <Label htmlFor="userId" className="text-gray-300">User ID</Label>
+                <Label htmlFor="userId" className="text-gray-300">
+                  User ID
+                </Label>
                 <Input
                   id="userId"
                   placeholder="Enter user ID"
@@ -373,7 +410,9 @@ const CampaignManagement = () => {
               </div>
 
               <div>
-                <Label htmlFor="notes" className="text-gray-300">Notes (Optional)</Label>
+                <Label htmlFor="notes" className="text-gray-300">
+                  Notes (Optional)
+                </Label>
                 <Textarea
                   id="notes"
                   placeholder="Add any notes about this assignment..."
