@@ -212,9 +212,9 @@ const Charts = ({ analysis }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       {/* Timeline Chart */}
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-1">
         <Card className="bg-gray-900 border-gray-700">
           <CardHeader>
             <CardTitle className="text-gray-100">

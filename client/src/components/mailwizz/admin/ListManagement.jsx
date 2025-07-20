@@ -107,21 +107,7 @@ const ListManagement = () => {
   );
 
   return (
-    <div className="space-y-6 bg-gray-950 min-h-screen p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">List Management</h1>
-          <p className="text-gray-400">Manage MailWizz lists and subscribers</p>
-        </div>
-        <Button
-          onClick={() => dispatch(fetchAllLists())}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          Refresh Lists
-        </Button>
-      </div>
-
+    <>
       {/* Search & Filter Bar */}
       <Card className="bg-gray-800 border-gray-700">
         <CardContent className="pt-6">
@@ -160,7 +146,7 @@ const ListManagement = () => {
       {activeTab === "import" &&
         selectedListId &&
         selectedListId !== "undefined" && <CSVImport listId={selectedListId} />}
-    </div>
+    </>
   );
 };
 

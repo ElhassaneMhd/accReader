@@ -66,6 +66,17 @@ const DashboardPage = () => {
     }
   }, [rawData, lastAutoUpdate]);
 
+  // Define columns for the DataTable (PMTA/email log fields)
+  const columns = [
+    { header: "Time", accessorKey: "timeLogged" },
+    { header: "Status", accessorKey: "dsnAction" },
+    { header: "Recipient", accessorKey: "rcpt" },
+    { header: "Sender", accessorKey: "orig" },
+    { header: "VMTA", accessorKey: "vmta" },
+    { header: "DSN Code", accessorKey: "dsnStatus" },
+    { header: "Diagnostic", accessorKey: "dsnDiag" },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-950 w-[100%] m-0 p-0">
       {/* Admin Overview Section */}
@@ -124,7 +135,7 @@ const DashboardPage = () => {
               analysis={analysis}
             />
             {/* Data Table */}
-            <DataTable data={filteredData} />
+            <DataTable columns={columns} data={filteredData} />
           </>
         ) : (
           <div className="text-center w-full py-16">

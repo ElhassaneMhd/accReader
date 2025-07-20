@@ -27,6 +27,8 @@ import {
   Edit,
   Trash2,
   Settings,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   fetchAllCampaignsWithStats,
@@ -37,7 +39,9 @@ import {
   selectAllCampaigns,
   selectMailwizzLoading,
   selectMailwizzError,
+  selectCampaignsPagination,
 } from "@/store/slices/mailwizzSlice";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const CampaignManagement = () => {
   const dispatch = useDispatch();
@@ -48,7 +52,12 @@ const CampaignManagement = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 400);
+  const { count: totalCount = 0, total_pages: totalPages = 1 } =
+    useSelector(selectCampaignsPagination) || {};
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
   const [assignmentData, setAssignmentData] = useState({
     userId: "",
     permissions: {
@@ -60,17 +69,18 @@ const CampaignManagement = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchAllCampaignsWithStats());
-  }, [dispatch]);
+    dispatch(
+      fetchAllCampaignsWithStats({
+        page,
+        perPage,
+        search: debouncedSearch,
+        status: statusFilter,
+      })
+    );
+  }, [dispatch, page, perPage, debouncedSearch, statusFilter]);
 
-  const filteredCampaigns = campaigns.filter((campaign) => {
-    const matchesSearch =
-      campaign.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.subject?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || campaign.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // No need to filter on frontend, backend does it
+  const filteredCampaigns = campaigns;
 
   const handleAssignCampaign = async () => {
     if (!selectedCampaign || !assignmentData.userId) return;
@@ -173,7 +183,9 @@ const CampaignManagement = () => {
       accessorKey: "assigned_users_count",
       header: "Assigned Users",
       cell: (row) => (
-        <Badge variant="outline">{row.assigned_users_count ?? 0} users</Badge>
+        <Badge className="text-white" variant="outline">
+          {row.assigned_users_count ?? 0} users
+        </Badge>
       ),
     },
     {
@@ -188,22 +200,14 @@ const CampaignManagement = () => {
               setSelectedCampaign(row);
               setShowAssignModal(true);
             }}
-            className="text-gray-300 hover:text-white"
+            className="text-gray-300 "
           >
             <UserCheck className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white"
-          >
+          <Button variant="ghost" size="sm" className="text-gray-300 ">
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white"
-          >
+          <Button variant="ghost" size="sm" className="text-gray-300 ">
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -240,12 +244,21 @@ const CampaignManagement = () => {
                 <Input
                   placeholder="Search campaigns..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
                   className="pl-10 bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-blue-500"
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-gray-100">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
@@ -295,11 +308,11 @@ const CampaignManagement = () => {
       )}
 
       {/* Campaigns Table */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-gray-800 border-gray-700 min-h-[50vh]  ">
         <CardHeader>
           <CardTitle className="flex items-center text-gray-100">
             <Mail className="h-5 w-5 mr-2" />
-            MailWizz Campaigns ({filteredCampaigns.length})
+            MailWizz Campaigns ({totalCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -308,6 +321,65 @@ const CampaignManagement = () => {
             data={filteredCampaigns}
             loading={loading}
             title="MailWizz Campaigns"
+            footer={
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border-t border-gray-700 bg-gray-900 rounded-b-lg">
+                <div className="text-gray-400 text-sm">
+                  Showing{" "}
+                  <span className="font-semibold text-gray-100">
+                    {(page - 1) * perPage + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-semibold text-gray-100">
+                    {Math.min(page * perPage, totalCount)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-gray-100">
+                    {totalCount}
+                  </span>{" "}
+                  records
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+                  >
+                    <ChevronLeft size={16} />
+                    <span className="hidden md:inline">Previous</span>
+                  </button>
+                  <span className="text-gray-400 text-sm px-2">
+                    Page{" "}
+                    <span className="font-semibold text-gray-100">{page}</span>{" "}
+                    of{" "}
+                    <span className="font-semibold text-gray-100">
+                      {totalPages}
+                    </span>
+                  </span>
+                  <button
+                    onClick={() => setPage(page + 1)}
+                    disabled={page === totalPages}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+                  >
+                    <span className="hidden md:inline">Next</span>
+                    <ChevronRight size={16} />
+                  </button>
+                  <select
+                    value={perPage}
+                    onChange={(e) => {
+                      setPerPage(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="ml-2 px-2 py-1.5 rounded-md border border-gray-600 bg-gray-800 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none hover:bg-gray-700 transition"
+                  >
+                    {[10, 20, 50, 100].map((n) => (
+                      <option key={n} value={n}>
+                        {n} / page
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            }
           />
         </CardContent>
       </Card>

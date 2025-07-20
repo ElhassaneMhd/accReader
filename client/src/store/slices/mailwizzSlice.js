@@ -47,11 +47,18 @@ export const fetchAllCampaigns = createAsyncThunk(
 
 export const fetchAllCampaignsWithStats = createAsyncThunk(
   "mailwizz/fetchAllCampaignsWithStats",
-  async (_, { rejectWithValue }) => {
+  async (
+    { page = 1, perPage = 20, search = "", status = "" } = {},
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await mailwizzApi.getAllCampaignsWithStats();
-      // Extract the campaigns array from the nested response structure
-      return response.data.data;
+      const response = await mailwizzApi.getAllCampaignsWithStats(
+        page,
+        perPage,
+        search,
+        status
+      );
+      return response.data.data; // { count, total_pages, current_page, records }
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch campaigns with stats"
@@ -232,6 +239,7 @@ const mailwizzSlice = createSlice({
     // Admin data
     allCampaigns: [],
     campaignAssignments: [],
+    campaignsPagination: {}, // Added for pagination info
 
     // List management
     allLists: [],
@@ -344,8 +352,13 @@ const mailwizzSlice = createSlice({
       })
       .addCase(fetchAllCampaignsWithStats.fulfilled, (state, action) => {
         state.loading = false;
-        // Extract the campaigns array from the response data
-        state.allCampaigns = action.payload?.records || action.payload || [];
+        // Store both records and pagination info
+        state.allCampaigns = action.payload?.records || [];
+        state.campaignsPagination = {
+          count: action.payload?.count || 0,
+          total_pages: action.payload?.total_pages || 1,
+          current_page: action.payload?.current_page || 1,
+        };
       })
       .addCase(fetchAllCampaignsWithStats.rejected, (state, action) => {
         state.loading = false;
@@ -524,5 +537,9 @@ export const selectListSubscribers = (state) => state.mailwizz.listSubscribers;
 export const selectListSubscribersByListId = (listId) => (state) =>
   state.mailwizz.listSubscribers[listId] || [];
 export const selectImportStatus = (state) => state.mailwizz.importStatus;
+
+// Add a selector for pagination info
+export const selectCampaignsPagination = (state) =>
+  state.mailwizz.campaignsPagination;
 
 export default mailwizzSlice.reducer;

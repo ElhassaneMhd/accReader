@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -8,13 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 
-const DataTable = ({ columns, data, title = "Records", loading }) => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-
+const DataTable = ({ columns, data, title = "Records", loading, footer }) => {
   if (loading) {
     return (
       <Card className="bg-gray-900 border-gray-700">
@@ -41,11 +37,6 @@ const DataTable = ({ columns, data, title = "Records", loading }) => {
     );
   }
 
-  const paginatedData = data.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-
   return (
     <Card className="bg-gray-900 border-gray-700">
       <CardHeader className="border-b border-gray-700">
@@ -70,7 +61,7 @@ const DataTable = ({ columns, data, title = "Records", loading }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.map((row, rowIndex) => (
+              {data.map((row, rowIndex) => (
                 <TableRow
                   key={row.id || row.campaign_uid || rowIndex}
                   className="border-gray-700 hover:bg-gray-800/50"
@@ -92,62 +83,8 @@ const DataTable = ({ columns, data, title = "Records", loading }) => {
             </TableBody>
           </Table>
         </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between p-4 border-t border-gray-700">
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-400">
-              Showing {page * rowsPerPage + 1} to{" "}
-              {Math.min((page + 1) * rowsPerPage, data.length)} of {data.length}{" "}
-              records
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Rows per page:</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10));
-                  setPage(0);
-                }}
-                className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(Math.max(0, page - 1))}
-              disabled={page === 0}
-              className="border-gray-600 text-gray-100 bg-gray-800 hover:bg-gray-700 hover:text-gray-300"
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </Button>
-            <span className="text-sm text-gray-400">
-              Page {page + 1} of {Math.ceil(data.length / rowsPerPage)}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setPage(
-                  Math.min(Math.ceil(data.length / rowsPerPage) - 1, page + 1)
-                )
-              }
-              disabled={page >= Math.ceil(data.length / rowsPerPage) - 1}
-              className="border-gray-600 text-gray-100 bg-gray-800 hover:bg-gray-700 hover:text-gray-300"
-            >
-              Next
-              <ChevronRight size={16} />
-            </Button>
-          </div>
-        </div>
+        {/* Render custom footer if provided */}
+        {footer && footer}
       </CardContent>
     </Card>
   );
