@@ -14,6 +14,7 @@ import {
   Home,
   Database,
   List,
+  ChevronDown,
 } from "lucide-react";
 import { logoutUser, selectAuth } from "@/store/slices/authSlice";
 
@@ -24,6 +25,7 @@ const AdminLayout = ({ children }) => {
   const { user } = useSelector(selectAuth);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const navigation = [
     { name: "Overview", href: "/admin", icon: Home },
@@ -31,8 +33,14 @@ const AdminLayout = ({ children }) => {
     { name: "Lists", href: "/admin/lists", icon: List },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-    { name: "PMTA Logs", href: "/admin/pmta", icon: Database },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "PMTA Dashboard", href: "/admin/pmta", icon: Database },
+    // Settings will be handled as a nested menu below
+  ];
+
+  const settingsSubmenu = [
+    { name: "SSH Connection", href: "/admin/settings?tab=ssh" },
+    { name: "General", href: "/admin/settings?tab=general" },
+    { name: "Notifications", href: "/admin/settings?tab=notifications" },
   ];
 
   const handleLogout = () => {
@@ -126,6 +134,54 @@ const AdminLayout = ({ children }) => {
                   </li>
                 );
               })}
+              {/* Settings Nested Menu */}
+              <li>
+                <button
+                  type="button"
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium w-full transition-colors focus:outline-none justify-between
+                    ${
+                      location.pathname.startsWith("/admin/settings")
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-300 hover:text-white hover:bg-gray-700"
+                    }
+                  `}
+                  onClick={() => setSettingsOpen((open) => !open)}
+                  aria-expanded={settingsOpen}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Settings className="h-5 w-5" />
+                    <span className="">Settings</span>
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 ml-96 transition-transform  ${
+                      settingsOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+                {settingsOpen && (
+                  <ul className="ml-8 mt-1 space-y-1">
+                    {settingsSubmenu.map((sub) => (
+                      <li key={sub.name}>
+                        <Link
+                          to={sub.href}
+                          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                            ${
+                              location.search.includes(
+                                `tab=${sub.href.split("=")[1]}`
+                              )
+                                ? "bg-blue-500 text-white"
+                                : "text-gray-300 hover:text-white hover:bg-gray-700"
+                            }
+                          `}
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          <span>{sub.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
             </ul>
           </nav>
 

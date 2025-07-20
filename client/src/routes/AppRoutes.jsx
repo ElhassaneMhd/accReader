@@ -9,6 +9,7 @@ import ClientDashboard from "@/pages/mailwizz/ClientDashboard";
 import CampaignManagement from "@/pages/admin/CampaignManagement";
 import UserManagement from "@/pages/admin/UserManagement";
 import ListManagementPage from "@/pages/admin/ListManagementPage";
+import Settings from "@/pages/admin/Settings";
 
 // PowerMTA pages
 import LoginPage from "@/pages/LoginPage";
@@ -67,30 +68,27 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* PowerMTA Analytics Routes */}
-      <Route 
-        path="/pmta" 
+      <Route
+        path="/pmta"
         element={
           <ConnectionProvider>
             <EmailDataProvider>
               <LoginPage />
             </EmailDataProvider>
           </ConnectionProvider>
-        } 
+        }
       />
-      <Route 
-        path="/pmta-dashboard" 
+      <Route
+        path="/pmta"
         element={
           <ConnectionProvider>
             <EmailDataProvider>
               <DashboardPage />
             </EmailDataProvider>
           </ConnectionProvider>
-        } 
+        }
       />
-      <Route 
-        path="/pmta-upload" 
-        element={<PublicUploadPage />} 
-      />
+      <Route path="/pmta-upload" element={<PublicUploadPage />} />
 
       {/* MailWizz Admin/Client Authentication Routes */}
       <Route
@@ -131,6 +129,24 @@ const AppRoutes = () => {
                 <Route path="campaigns" element={<CampaignManagement />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="lists" element={<ListManagementPage />} />
+                <Route
+                  path="settings"
+                  element={
+                    <ConnectionProvider>
+                      <Settings />
+                    </ConnectionProvider>
+                  }
+                />
+                <Route
+                  path="pmta"
+                  element={
+                    <ConnectionProvider>
+                      <EmailDataProvider>
+                        <DashboardPage />
+                      </EmailDataProvider>
+                    </ConnectionProvider>
+                  }
+                />
                 {/* Add more admin routes here as needed */}
               </Routes>
             </AdminLayout>

@@ -9,7 +9,7 @@ import {
   selectSelectedList,
   selectMailwizzLoading,
   selectMailwizzError
-} from '../../store/slices/mailwizzSlice';
+} from '../../../store/slices/mailwizzSlice';
 
 const SubscriberManagement = ({ listId }) => {
   const dispatch = useDispatch();

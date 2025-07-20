@@ -5,13 +5,14 @@ import { useConnectionContext } from "../hooks/useConnectionContext";
 import { Mail, Server, Upload } from "lucide-react";
 
 const LoginPage = () => {
-  const { isConnected, isConnecting, connectionError, connect } = useConnectionContext();
+  const { isConnected, isConnecting, connectionError, connect } =
+    useConnectionContext();
   const navigate = useNavigate();
 
   // Check if already connected and redirect
   useEffect(() => {
     if (isConnected) {
-      navigate("/pmta-dashboard");
+      navigate("/pmta");
     }
   }, [isConnected, navigate]);
 
@@ -19,7 +20,7 @@ const LoginPage = () => {
     const result = await connect(connectionData);
     if (result.success) {
       // Navigate to dashboard on successful connection
-      navigate("/pmta-dashboard");
+      navigate("/pmta");
     }
     return result;
   };
@@ -29,42 +30,8 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <div className="w-full h-full max-w-6xl flex flex-col md:flex-row items-center gap-8">
-        {/* Welcome Section - Hidden on mobile, shown on md+ screens */}
-        <div className="hidden h-full md:block  flex-1">
-          <div className="bg-gray-900 border border-gray-700 rounded-lg p-8">
-            <h1 className="text-4xl font-bold text-white mb-4 flex items-center gap-3">
-              <div className="flex justify-center mb-4">
-                <Server className="h-12 w-12 text-blue-500" />
-              </div>{" "}
-              Email Campaign Analytics
-            </h1>
-            <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-              Upload your PowerMTA CSV files to analyze email delivery
-              performance, bounce rates, VMTA statistics, and diagnostic
-              information.
-            </p>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Supports CSV files with PowerMTA log format including columns like
-              type, timeLogged, timeQueued, orig, rcpt, dsnAction, dsnStatus,
-              vmta, and more.
-            </p>
-            <div className="mt-8">
-              <button
-                onClick={handleGetStarted}
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-              >
-                <Upload className="h-5 w-5" />
-                Get Started
-              </button>
-              <p className="text-xs text-gray-500 mt-2">
-                Try the public upload without authentication
-              </p>
-            </div>
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="w-full flex flex-col items-center justify-center gap-8">
         {/* Login Form */}
         <div className="w-full md:max-w-md">
           <div className="md:hidden mb-6">
@@ -88,11 +55,7 @@ const LoginPage = () => {
               Or connect to your dashboard
             </div>
           </div>
-          <LoginForm
-            onConnect={handleConnect}
-            isConnecting={isConnecting}
-            error={connectionError}
-          />
+          {/* Remove SSH connection form here */}
         </div>
       </div>
     </div>
