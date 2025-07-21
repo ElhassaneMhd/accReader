@@ -418,168 +418,263 @@ const UserManagement = () => {
       {/* Create User Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Create New User</CardTitle>
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-900 border border-gray-700 shadow-2xl">
+            <CardHeader className="bg-gray-800 rounded-t-lg p-6 flex flex-col items-start border-b border-gray-700">
+              <CardTitle className="text-white text-2xl flex items-center gap-2">
+                <UserPlus className="h-6 w-6 mr-2" />
+                Create New User
+              </CardTitle>
+              <p className="text-gray-300 mt-2 text-sm">
+                Fill in the details to add a new admin or client user. All
+                fields are required.
+              </p>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="username" className="text-gray-300">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    value={newUser.username}
-                    onChange={(e) =>
-                      setNewUser((prev) => ({
-                        ...prev,
-                        username: e.target.value,
-                      }))
-                    }
-                    placeholder="Enter username"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email" className="text-gray-300">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) =>
-                      setNewUser((prev) => ({ ...prev, email: e.target.value }))
-                    }
-                    placeholder="Enter email"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="password" className="text-gray-300">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) =>
-                      setNewUser((prev) => ({
-                        ...prev,
-                        password: e.target.value,
-                      }))
-                    }
-                    placeholder="Enter password"
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="role" className="text-gray-300">
-                    Role
-                  </Label>
-                  <Select
-                    value={newUser.role}
-                    onValueChange={(value) =>
-                      setNewUser((prev) => ({ ...prev, role: value }))
-                    }
-                  >
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600">
-                      <SelectItem
-                        value="client"
-                        className="text-white hover:bg-gray-600"
-                      >
-                        Client
-                      </SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="pmta_user">PMTA User</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Permissions */}
-              <div>
-                <Label className="text-base font-medium">Permissions</Label>
-                <div className="mt-4 space-y-4">
-                  {/* Campaigns */}
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-3 flex items-center">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Campaigns
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <PermissionCheckbox
-                        section="campaigns"
-                        permission="view"
-                        checked={newUser.permissions.campaigns.view}
-                        onChange={updatePermission}
-                        label="View"
-                      />
-                      <PermissionCheckbox
-                        section="campaigns"
-                        permission="create"
-                        checked={newUser.permissions.campaigns.create}
-                        onChange={updatePermission}
-                        label="Create"
-                      />
-                      <PermissionCheckbox
-                        section="campaigns"
-                        permission="edit"
-                        checked={newUser.permissions.campaigns.edit}
-                        onChange={updatePermission}
-                        label="Edit"
-                      />
-                      <PermissionCheckbox
-                        section="campaigns"
-                        permission="delete"
-                        checked={newUser.permissions.campaigns.delete}
-                        onChange={updatePermission}
-                        label="Delete"
-                      />
-                    </div>
+            <CardContent className="space-y-8 p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* User Info */}
+                <div className="space-y-6">
+                  <div>
+                    <Label
+                      htmlFor="username"
+                      className="text-gray-300 font-semibold"
+                    >
+                      Username
+                    </Label>
+                    <Input
+                      id="username"
+                      value={newUser?.username || ""}
+                      onChange={(e) =>
+                        setNewUser((prev) => ({
+                          ...prev,
+                          username: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter username"
+                      className="bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 mt-1"
+                    />
                   </div>
-
-                  {/* Analytics */}
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-3">Analytics</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <PermissionCheckbox
-                        section="analytics"
-                        permission="view"
-                        checked={newUser.permissions.analytics.view}
-                        onChange={updatePermission}
-                        label="View"
-                      />
-                      <PermissionCheckbox
-                        section="analytics"
-                        permission="export"
-                        checked={newUser.permissions.analytics.export}
-                        onChange={updatePermission}
-                        label="Export"
-                      />
-                      <PermissionCheckbox
-                        section="analytics"
-                        permission="advanced"
-                        checked={newUser.permissions.analytics.advanced}
-                        onChange={updatePermission}
-                        label="Advanced"
-                      />
-                    </div>
+                  <div>
+                    <Label
+                      htmlFor="email"
+                      className="text-gray-300 font-semibold"
+                    >
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newUser?.email || ""}
+                      onChange={(e) =>
+                        setNewUser((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter email"
+                      className="bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="password"
+                      className="text-gray-300 font-semibold"
+                    >
+                      Password
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={newUser?.password || ""}
+                      onChange={(e) =>
+                        setNewUser((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter password"
+                      className="bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="role"
+                      className="text-gray-300 font-semibold"
+                    >
+                      Role
+                    </Label>
+                    <Select
+                      value={newUser?.role || "client"}
+                      onValueChange={(value) =>
+                        setNewUser((prev) => ({ ...prev, role: value }))
+                      }
+                    >
+                      <SelectTrigger className="bg-gray-800 border border-gray-700 text-white mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border border-gray-700">
+                        <SelectItem
+                          value="client"
+                          className="text-white hover:bg-gray-700"
+                        >
+                          <Users className="h-4 w-4 inline mr-1 text-blue-400" />{" "}
+                          Client
+                        </SelectItem>
+                        <SelectItem
+                          value="admin"
+                          className="text-white hover:bg-gray-700"
+                        >
+                          <Shield className="h-4 w-4 inline mr-1 text-red-400" />{" "}
+                          Admin
+                        </SelectItem>
+                        <SelectItem
+                          value="pmta_user"
+                          className="text-white hover:bg-gray-700"
+                        >
+                          <Mail className="h-4 w-4 inline mr-1 text-green-400" />{" "}
+                          PMTA User
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+                {/* Permissions & Summary */}
+                <div className="space-y-6">
+                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <Label className="text-base font-semibold mb-2 block">
+                      Permissions
+                    </Label>
+                    <div className="mt-2 space-y-4">
+                      {/* Campaigns */}
+                      <div className="border rounded-lg p-3 bg-gray-900 border-gray-700">
+                        <h4 className="font-medium mb-2 flex items-center text-blue-300">
+                          <Mail className="h-4 w-4 mr-2" /> Campaigns
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <PermissionCheckbox
+                            section="campaigns"
+                            permission="view"
+                            checked={
+                              newUser?.permissions?.campaigns?.view || false
+                            }
+                            onChange={updatePermission}
+                            label="View"
+                          />
+                          <PermissionCheckbox
+                            section="campaigns"
+                            permission="create"
+                            checked={
+                              newUser?.permissions?.campaigns?.create || false
+                            }
+                            onChange={updatePermission}
+                            label="Create"
+                          />
+                          <PermissionCheckbox
+                            section="campaigns"
+                            permission="edit"
+                            checked={
+                              newUser?.permissions?.campaigns?.edit || false
+                            }
+                            onChange={updatePermission}
+                            label="Edit"
+                          />
+                          <PermissionCheckbox
+                            section="campaigns"
+                            permission="delete"
+                            checked={
+                              newUser?.permissions?.campaigns?.delete || false
+                            }
+                            onChange={updatePermission}
+                            label="Delete"
+                          />
+                        </div>
+                      </div>
+                      {/* Analytics */}
+                      <div className="border rounded-lg p-3 bg-gray-900 border-gray-700">
+                        <h4 className="font-medium mb-2 text-green-300">
+                          Analytics
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <PermissionCheckbox
+                            section="analytics"
+                            permission="view"
+                            checked={
+                              newUser?.permissions?.analytics?.view || false
+                            }
+                            onChange={updatePermission}
+                            label="View"
+                          />
+                          <PermissionCheckbox
+                            section="analytics"
+                            permission="export"
+                            checked={
+                              newUser?.permissions?.analytics?.export || false
+                            }
+                            onChange={updatePermission}
+                            label="Export"
+                          />
+                          <PermissionCheckbox
+                            section="analytics"
+                            permission="advanced"
+                            checked={
+                              newUser?.permissions?.analytics?.advanced || false
+                            }
+                            onChange={updatePermission}
+                            label="Advanced"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              <div className="flex space-x-2">
-                <Button onClick={handleCreateUser} className="flex-1">
-                  Create User
+              {/* Copy Credentials Button */}
+              <CopyCredentialsButton newUser={newUser} />
+              {/* Error/Validation */}
+              {(!newUser?.username ||
+                !newUser?.email ||
+                !newUser?.password) && (
+                <div className="text-red-400 text-sm font-medium text-center">
+                  All fields are required.
+                </div>
+              )}
+              {/* Actions */}
+              <div className="flex space-x-2 justify-end pt-4 border-t border-gray-700">
+                <Button
+                  onClick={async () => {
+                    await handleCreateUser();
+                    setNewUser({
+                      username: "",
+                      email: "",
+                      password: "",
+                      role: "client",
+                      permissions: {
+                        campaigns: {
+                          view: true,
+                          create: false,
+                          edit: false,
+                          delete: false,
+                        },
+                        analytics: {
+                          view: true,
+                          export: false,
+                          advanced: false,
+                        },
+                        users: {
+                          view: false,
+                          create: false,
+                          edit: false,
+                          delete: false,
+                        },
+                        system: { view: false, configure: false, logs: false },
+                      },
+                    });
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-lg py-2"
+                  disabled={
+                    !newUser?.username || !newUser?.email || !newUser?.password
+                  }
+                >
+                  <UserPlus className="h-5 w-5 mr-2" /> Create User
                 </Button>
                 <Button
                   variant="outline"
@@ -732,3 +827,35 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
+
+// Add CopyCredentialsButton component
+function CopyCredentialsButton({ newUser }) {
+  const [copied, setCopied] = useState(false);
+  const credentialsText = `Username: ${newUser?.username || ""}\nEmail: ${
+    newUser?.email || ""
+  }\nPassword: ${newUser?.password || ""}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(credentialsText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-4 mb-2">
+      <Button
+        type="button"
+        onClick={handleCopy}
+        className="bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 px-4 py-2 rounded"
+        disabled={!newUser?.username || !newUser?.email || !newUser?.password}
+      >
+        Copy Credentials
+      </Button>
+      {copied && <span className="text-green-400 text-sm">Copied!</span>}
+    </div>
+  );
+}
