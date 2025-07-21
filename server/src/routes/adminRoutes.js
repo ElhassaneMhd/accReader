@@ -579,7 +579,7 @@ router.get("/mailwizz/lists/:listUid", async (req, res) => {
 router.get("/mailwizz/lists/:listUid/subscribers", async (req, res) => {
   try {
     const { listUid } = req.params;
-    const { page = 1, per_page = 50 } = req.query;
+    const { page = 1, per_page = 50, search = "" } = req.query;
 
     // Create MailWizz service instance
     const mailwizzService = createMailWizzService(
@@ -588,20 +588,27 @@ router.get("/mailwizz/lists/:listUid/subscribers", async (req, res) => {
       process.env.MAILWIZZ_PRIVATE_KEY
     );
 
-    // Fetch subscribers from MailWizz API
+    // Fetch subscribers from MailWizz API (with search if provided)
     const subscribersResponse = await mailwizzService.getListSubscribers(
       listUid,
       page,
-      per_page
+      per_page,
+      search
     );
 
     logger.info(
       `Fetched ${subscribersResponse.data?.records?.length || 0} subscribers for list ${listUid}`
     );
 
+    // Return pagination info in a consistent format
     res.json({
       status: "success",
-      data: subscribersResponse.data,
+      data: {
+        count: subscribersResponse.data?.count || 0,
+        total_pages: subscribersResponse.data?.total_pages || 1,
+        current_page: Number(page),
+        records: subscribersResponse.data?.records || [],
+      },
       message: `Successfully fetched subscribers for list ${listUid}`,
     });
   } catch (error) {

@@ -28,27 +28,44 @@ const SubscriberManagement = ({ listId }) => {
   });
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Pagination logic
-  const totalSubscribers = subscribers.length;
-  const totalPages = Math.ceil(totalSubscribers / perPage);
-  const paginatedSubscribers = subscribers.slice(
-    (page - 1) * perPage,
-    page * perPage
-  );
+  // Server-side pagination info
+  const [totalSubscribers, setTotalSubscribers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
+  // Fetch subscribers when page or perPage changes (no search)
   useEffect(() => {
-    console.log("SubscriberManagement: listId changed to:", listId);
     if (listId && listId !== "undefined") {
-      console.log("Fetching subscribers for listId:", listId);
-      dispatch(fetchListSubscribers({ listUid: listId }));
+      dispatch(fetchListSubscribers({ listUid: listId, page, perPage })).then(
+        (action) => {
+          const data = action.payload?.data;
+          if (
+            data &&
+            typeof data.count === "number" &&
+            typeof data.total_pages === "number"
+          ) {
+            setTotalSubscribers(data.count);
+            setTotalPages(data.total_pages);
+          } else if (Array.isArray(action.payload?.records)) {
+            setTotalSubscribers(action.payload.records.length);
+            setTotalPages(1);
+          }
+        }
+      );
     }
-  }, [dispatch, listId]);
+  }, [dispatch, listId, page, perPage]);
 
   useEffect(() => {
     console.log("Subscribers data:", subscribers);
     console.log("Subscribers length:", subscribers?.length);
   }, [subscribers]);
+
+  useEffect(() => {
+    // Reset search and page when listId changes
+    setSearchTerm("");
+    setPage(1);
+  }, [listId]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -182,6 +199,17 @@ const SubscriberManagement = ({ listId }) => {
     },
   ];
 
+  // Client-side filtering of loaded subscribers
+  const filteredSubscribers = (subscribers || []).filter((sub) => {
+    const email = (sub.EMAIL || sub.email || "").toLowerCase();
+    const fname = (sub.FNAME || sub.first_name || "").toLowerCase();
+    const lname = (sub.LNAME || sub.last_name || "").toLowerCase();
+    const search = searchTerm.toLowerCase();
+    return (
+      email.includes(search) || fname.includes(search) || lname.includes(search)
+    );
+  });
+
   return (
     <div className="bg-gray-800 border border-gray-700 shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
@@ -189,15 +217,35 @@ const SubscriberManagement = ({ listId }) => {
           <div>
             <h3 className="text-lg leading-6 font-medium text-white">
               Subscribers for {selectedList?.name || "List"}
+              {totalSubscribers ? (
+                <span className="ml-2 text-blue-400 text-base font-semibold">
+                  ({totalSubscribers})
+                </span>
+              ) : null}
             </h3>
             <p className="mt-1 text-sm text-gray-400">
               Manage subscribers in this list
             </p>
           </div>
           <div className="flex space-x-2">
+            {/* Old search component: client-side filtering */}
+            {/* You can re-add your original search/filter logic here if needed */}
+            <input
+              type="text"
+              placeholder="Search subscribers..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
+              className="bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              style={{ minWidth: 200 }}
+            />
             <button
               onClick={() =>
-                dispatch(fetchListSubscribers({ listUid: listId }))
+                dispatch(
+                  fetchListSubscribers({ listUid: listId, page, perPage })
+                )
               }
               className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
             >
@@ -303,7 +351,7 @@ const SubscriberManagement = ({ listId }) => {
         {!loading && subscribers.length > 0 && (
           <DataTable
             columns={subscriberColumns}
-            data={paginatedSubscribers}
+            data={filteredSubscribers}
             title={`Subscribers for ${selectedList?.name || "List"}`}
             loading={loading}
             footer={
@@ -315,11 +363,11 @@ const SubscriberManagement = ({ listId }) => {
                   </span>{" "}
                   to{" "}
                   <span className="font-semibold text-gray-100">
-                    {Math.min(page * perPage, totalSubscribers)}
+                    {Math.min(page * perPage, filteredSubscribers.length)}
                   </span>{" "}
                   of{" "}
                   <span className="font-semibold text-gray-100">
-                    {totalSubscribers}
+                    {filteredSubscribers.length}
                   </span>{" "}
                   subscribers
                 </div>
@@ -333,8 +381,11 @@ const SubscriberManagement = ({ listId }) => {
                   </button>
                   <span className="text-gray-400 text-sm px-2">
                     Page{" "}
-                    <span className="font-semibold text-gray-100">{page}</span>{" "}of{" "}
-                    <span className="font-semibold text-gray-100">{totalPages}</span>
+                    <span className="font-semibold text-gray-100">{page}</span>{" "}
+                    of{" "}
+                    <span className="font-semibold text-gray-100">
+                      {totalPages}
+                    </span>
                   </span>
                   <button
                     onClick={() => setPage(page + 1)}

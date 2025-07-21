@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAllLists,
-  fetchListDetails,
   selectAllLists,
   selectMailwizzLoading,
 } from "../../../store/slices/mailwizzSlice";
@@ -14,14 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter, List as ListIcon } from "lucide-react";
 import DataTable from "@/components/DataTable";
+import { useNavigate } from "react-router-dom";
 
 const ListManagement = () => {
   const dispatch = useDispatch();
   const allLists = useSelector(selectAllLists);
   const loading = useSelector(selectMailwizzLoading);
+  const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("lists");
-  const [selectedListId, setSelectedListId] = useState(null);
+  const [activeTab] = useState("lists");
+  const [selectedListId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -29,12 +30,6 @@ const ListManagement = () => {
   useEffect(() => {
     dispatch(fetchAllLists());
   }, [dispatch]);
-
-  const handleListSelect = (listId) => {
-    setSelectedListId(listId);
-    dispatch(fetchListDetails(listId));
-    setActiveTab("subscribers");
-  };
 
   // Filtered lists logic
   const filteredLists = (allLists || []).filter((list) => {
@@ -89,7 +84,9 @@ const ListManagement = () => {
           size="sm"
           variant="ghost"
           className="text-blue-400 hover:text-blue-600"
-          onClick={() => handleListSelect(row.general?.list_uid ?? "")}
+          onClick={() =>
+            navigate(`/admin/lists/${row.general?.list_uid ?? ""}`)
+          }
         >
           Manage Subscribers
         </Button>

@@ -11,6 +11,7 @@ import UserManagement from "@/pages/admin/UserManagement";
 import ListManagementPage from "@/pages/admin/ListManagementPage";
 import Settings from "@/pages/admin/Settings";
 import OverviewPage from "@/pages/admin/OverviewPage";
+import ListSubscribersPage from "@/pages/admin/ListSubscribersPage";
 
 // PowerMTA pages
 import DashboardPage from "@/pages/admin/DashboardPage";
@@ -104,6 +105,10 @@ const AppRoutes = () => {
                 <Route path="campaigns" element={<CampaignManagement />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="lists" element={<ListManagementPage />} />
+                <Route
+                  path="lists/:listUid"
+                  element={<ListSubscribersPage />}
+                />
                 <Route
                   path="settings"
                   element={
