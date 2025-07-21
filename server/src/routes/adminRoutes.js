@@ -142,19 +142,18 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
       process.env.MAILWIZZ_PRIVATE_KEY
     );
 
-    // Fetch campaigns from MailWizz API
-    const campaignsResponse = await mailwizzService.getAllCampaigns(
-      page,
-      per_page
-    );
+    // Fetch all campaigns from MailWizz (loop through all pages)
+    let allCampaigns = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    do {
+      const resp = await mailwizzService.getAllCampaigns(currentPage, 50);
+      allCampaigns = allCampaigns.concat(resp.data?.records || []);
+      totalPages = resp.data?.total_pages || 1;
+      currentPage++;
+    } while (currentPage <= totalPages);
 
-    logger.info(`MailWizz API response:`, {
-      status: campaignsResponse.status,
-      count: campaignsResponse.data?.count,
-      records: campaignsResponse.data?.records?.length,
-    });
-
-    let campaigns = campaignsResponse.data?.records || [];
+    let campaigns = allCampaigns;
 
     // Server-side filtering
     if (search) {
@@ -171,8 +170,11 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
 
     // Pagination after filtering
     const totalFiltered = campaigns.length;
-    const startIdx = (page - 1) * per_page;
-    const endIdx = startIdx + Number(per_page);
+    const pageNum = Number(page);
+    const perPageNum = Number(per_page);
+    const totalPagesFiltered = Math.ceil(totalFiltered / perPageNum);
+    const startIdx = (pageNum - 1) * perPageNum;
+    const endIdx = startIdx + perPageNum;
     const paginatedCampaigns = campaigns.slice(startIdx, endIdx);
 
     // Fetch stats and details for only these campaigns (no Redis caching)
@@ -243,8 +245,8 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
       status: "success",
       data: {
         count: totalFiltered,
-        total_pages: Math.ceil(totalFiltered / per_page),
-        current_page: Number(page),
+        total_pages: totalPagesFiltered,
+        current_page: pageNum,
         records: processedCampaigns,
       },
     });
