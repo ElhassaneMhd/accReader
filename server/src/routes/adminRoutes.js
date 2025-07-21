@@ -175,7 +175,7 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
     const endIdx = startIdx + Number(per_page);
     const paginatedCampaigns = campaigns.slice(startIdx, endIdx);
 
-    // Fetch stats for only these campaigns (no Redis caching)
+    // Fetch stats and details for only these campaigns (no Redis caching)
     const campaignsWithStats = await Promise.allSettled(
       paginatedCampaigns.map(async (campaign) => {
         try {
@@ -183,56 +183,29 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
             campaign.campaign_uid
           );
 
-          // Flatten/normalize important fields for frontend
-          const getField = (obj, keys, fallback = null) => {
-            for (const key of keys) {
-              if (obj && obj[key] !== undefined && obj[key] !== null)
-                return obj[key];
-            }
-            return fallback;
-          };
+          // Fetch campaign details for full info
+          let details = {};
+          try {
+            const detailsResponse = await mailwizzService.getCampaign(
+              campaign.campaign_uid
+            );
+            details =
+              detailsResponse.data?.record || detailsResponse.data || {};
+          } catch (err) {
+            logger.warn(
+              `Failed to fetch details for campaign ${campaign.campaign_uid}:`,
+              err.message
+            );
+          }
 
-          // Try to extract from_name, from_email, reply_to, send_at, etc.
-          const from_name =
-            getField(campaign, ["from_name"]) ||
-            getField(campaign.general || campaign.campaign || {}, [
-              "from_name",
-            ]);
-          const from_email =
-            getField(campaign, ["from_email"]) ||
-            getField(campaign.general || campaign.campaign || {}, [
-              "from_email",
-            ]);
-          const reply_to =
-            getField(campaign, ["reply_to"]) ||
-            getField(campaign.general || campaign.campaign || {}, ["reply_to"]);
-          const send_at =
-            getField(campaign, ["send_at"]) ||
-            getField(campaign.general || campaign.campaign || {}, ["send_at"]);
-          const created_at =
-            getField(campaign, ["created_at"]) ||
-            getField(campaign.general || campaign.campaign || {}, [
-              "created_at",
-            ]);
-          const updated_at =
-            getField(campaign, ["updated_at"]) ||
-            getField(campaign.general || campaign.campaign || {}, [
-              "updated_at",
-            ]);
-          const type =
-            getField(campaign, ["type"]) ||
-            getField(campaign.general || campaign.campaign || {}, ["type"]);
-          // List name (if available)
-          let list_name = null;
-          if (campaign.list_name) list_name = campaign.list_name;
-          else if (campaign.list && campaign.list.name)
-            list_name = campaign.list.name;
-          else if (
-            campaign.list &&
-            campaign.list.general &&
-            campaign.list.general.name
-          )
-            list_name = campaign.list.general.name;
+          // Extract fields from details (use top-level fields directly)
+          const from_name = details.from_name ?? null;
+          const from_email = details.from_email ?? null;
+          const reply_to = details.reply_to ?? null;
+          const send_at = details.send_at ?? null;
+          const created_at = details.created_at ?? null;
+          const updated_at = details.updated_at ?? null;
+          const list_name = details.list?.name ?? null;
 
           return {
             ...campaign,
@@ -243,12 +216,12 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
             send_at,
             created_at,
             updated_at,
-            type,
+            type: details.type || campaign.type,
             list_name,
           };
         } catch (error) {
           logger.warn(
-            `Failed to get stats for campaign ${campaign.campaign_uid}:`,
+            `Failed to get stats/details for campaign ${campaign.campaign_uid}:`,
             error.message
           );
           return { ...campaign, stats: null, statsError: error.message };
