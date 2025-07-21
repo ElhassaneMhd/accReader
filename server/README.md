@@ -32,22 +32,25 @@ src/
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository and navigate to the server directory:
+
 ```bash
 cd server
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create environment file:
+
 ```bash
 cp .env.example .env
 ```
@@ -58,15 +61,16 @@ cp .env.example .env
    - Set database connection details
 
 5. Start the development server:
+
 ```bash
 npm run dev
 ```
 
-The server will start on `http://localhost:3999`
+The server will start on `http://localhost:4000`
 
 ### API Documentation
 
-Once the server is running, visit `http://localhost:3999/api-docs` for interactive API documentation.
+Once the server is running, visit `http://localhost:4000/api-docs` for interactive API documentation.
 
 ## Available Scripts
 
@@ -79,6 +83,7 @@ Once the server is running, visit `http://localhost:3999/api-docs` for interacti
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/signup` - Register new user
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
@@ -86,12 +91,14 @@ Once the server is running, visit `http://localhost:3999/api-docs` for interacti
 - `PATCH /api/auth/updatePassword` - Update password
 
 ### User Management
+
 - `GET /api/users` - Get all users (Admin only)
 - `GET /api/users/:id` - Get user by ID
 - `PATCH /api/users/:id` - Update user
 - `DELETE /api/users/:id` - Delete user (Admin only)
 
 ### MailWizz Integration
+
 - `GET /api/mailwizz/campaigns` - Get all campaigns
 - `GET /api/mailwizz/campaigns/:id` - Get campaign details
 - `POST /api/mailwizz/campaigns` - Create campaign
@@ -102,6 +109,7 @@ Once the server is running, visit `http://localhost:3999/api-docs` for interacti
 - `GET /api/mailwizz/templates` - Get all templates
 
 ### PMTA Import Server
+
 - `GET /api/pmta/health` - Health check
 - `POST /api/pmta/upload/log` - Upload PMTA log file
 - `POST /api/pmta/upload/accounting` - Upload accounting file
@@ -109,6 +117,7 @@ Once the server is running, visit `http://localhost:3999/api-docs` for interacti
 - `POST /api/pmta/analyze` - Analyze uploaded data
 
 ### File Upload
+
 - `POST /api/upload/file` - General file upload
 
 ## User Roles
@@ -134,6 +143,7 @@ See `.env.example` for all available configuration options.
 ## Database Models
 
 ### User
+
 - Basic user information
 - Role-based access control
 - MailWizz API key storage
@@ -142,6 +152,7 @@ See `.env.example` for all available configuration options.
 ## Error Handling
 
 The application uses centralized error handling with:
+
 - Custom AppError class
 - Global error middleware
 - Structured error responses
@@ -150,6 +161,7 @@ The application uses centralized error handling with:
 ## Logging
 
 Winston-based logging with:
+
 - Console output in development
 - File logging in production
 - Different log levels (error, warn, info, debug)
@@ -158,11 +170,13 @@ Winston-based logging with:
 ## Testing
 
 The project includes Jest setup for:
+
 - Unit tests
 - Integration tests
 - API endpoint testing
 
 Run tests with:
+
 ```bash
 npm test
 ```

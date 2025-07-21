@@ -1,16 +1,15 @@
 const express = require("express");
 const multer = require("multer");
-const {
-  getAllCampaigns,
-  getCampaign,
-  getCampaignStats,
-  getAllLists,
-  getAllTemplates,
-} = require("../controllers/mailwizzController");
+// const {
+//   getAllCampaigns,
+//   getCampaign,
+//   getCampaignStats,
+//   getAllLists,
+//   getAllTemplates,
+// } = require("../controllers/mailwizzController");
 const { createMailWizzService } = require("../services/mailwizzService");
 const { protect, restrictTo } = require("../middleware/auth");
 const logger = require("../utils/logger");
-const redis = require("../utils/redisClient"); // Add this import at the top
 
 const router = express.Router();
 
@@ -36,12 +35,66 @@ const upload = multer({
  *   description: Admin-only endpoints for system management
  */
 
-// Protect all routes and restrict to admin
+// Test endpoint (no auth required) - for debugging
+router.get("/test-mailwizz", async (req, res) => {
+  try {
+    logger.info("Testing MailWizz connectivity...");
+
+    const mailwizzService = createMailWizzService(
+      process.env.MAILWIZZ_API_URL,
+      process.env.MAILWIZZ_PUBLIC_KEY,
+      process.env.MAILWIZZ_PRIVATE_KEY
+    );
+
+    // Test with a simple API call
+    const campaigns = await mailwizzService.getAllCampaigns(1, 5);
+
+    logger.info("MailWizz test successful:", {
+      status: campaigns.status,
+      count: campaigns.data?.count,
+      records: campaigns.data?.records?.length,
+    });
+
+    res.json({
+      status: "success",
+      message: "MailWizz connection test successful",
+      data: {
+        apiUrl: process.env.MAILWIZZ_API_URL,
+        publicKey: process.env.MAILWIZZ_PUBLIC_KEY
+          ? "***configured***"
+          : "missing",
+        privateKey: process.env.MAILWIZZ_PRIVATE_KEY
+          ? "***configured***"
+          : "missing",
+        campaignsCount: campaigns.data?.count || 0,
+        sampleCampaigns: campaigns.data?.records?.slice(0, 2) || [],
+      },
+    });
+  } catch (error) {
+    logger.error("MailWizz test failed:", error);
+    res.status(500).json({
+      status: "error",
+      message: "MailWizz connection test failed",
+      error: error.message,
+      config: {
+        apiUrl: process.env.MAILWIZZ_API_URL,
+        publicKey: process.env.MAILWIZZ_PUBLIC_KEY
+          ? "***configured***"
+          : "missing",
+        privateKey: process.env.MAILWIZZ_PRIVATE_KEY
+          ? "***configured***"
+          : "missing",
+      },
+    });
+  }
+});
+
+// Protect all routes and restrict to admin (except /test-mailwizz)
 router.use(protect);
 router.use(restrictTo("admin"));
 
 // MailWizz admin routes
-router.get("/mailwizz/campaigns", async (req, res, next) => {
+router.get("/mailwizz/campaigns", async (req, res) => {
   try {
     const { page = 1, per_page = 50 } = req.query;
 
@@ -75,9 +128,14 @@ router.get("/mailwizz/campaigns", async (req, res, next) => {
 });
 
 // New endpoint to fetch campaigns with their stats
-router.get("/mailwizz/campaigns-with-stats", async (req, res, next) => {
+router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
   try {
     const { page = 1, per_page = 50, search = "", status = "" } = req.query;
+
+    logger.info(
+      `Fetching campaigns with stats: page=${page}, per_page=${per_page}, search=\"${search}\", status=\"${status}\"`
+    );
+
     const mailwizzService = createMailWizzService(
       process.env.MAILWIZZ_API_URL,
       process.env.MAILWIZZ_PUBLIC_KEY,
@@ -89,9 +147,14 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res, next) => {
       page,
       per_page
     );
-    let campaigns = campaignsResponse.data.records || [];
-    const total = campaignsResponse.data.count || 0;
-    const totalPages = campaignsResponse.data.total_pages || 1;
+
+    logger.info(`MailWizz API response:`, {
+      status: campaignsResponse.status,
+      count: campaignsResponse.data?.count,
+      records: campaignsResponse.data?.records?.length,
+    });
+
+    let campaigns = campaignsResponse.data?.records || [];
 
     // Server-side filtering
     if (search) {
@@ -112,28 +175,82 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res, next) => {
     const endIdx = startIdx + Number(per_page);
     const paginatedCampaigns = campaigns.slice(startIdx, endIdx);
 
-    // Redis cache TTL (in seconds)
-    const CACHE_TTL = 300; // 5 minutes
-
-    // Helper to get/set stats in Redis
-    async function getCachedCampaignStats(campaign_uid) {
-      const cacheKey = `campaign_stats:${campaign_uid}`;
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-      const statsResponse = await mailwizzService.getCampaignStats(campaign_uid);
-      await redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(statsResponse.data));
-      return statsResponse.data;
-    }
-
-    // Fetch stats for only these campaigns (with Redis caching)
+    // Fetch stats for only these campaigns (no Redis caching)
     const campaignsWithStats = await Promise.allSettled(
       paginatedCampaigns.map(async (campaign) => {
         try {
-          const stats = await getCachedCampaignStats(campaign.campaign_uid);
-          return { ...campaign, stats: stats || null };
+          const statsResponse = await mailwizzService.getCampaignStats(
+            campaign.campaign_uid
+          );
+
+          // Flatten/normalize important fields for frontend
+          const getField = (obj, keys, fallback = null) => {
+            for (const key of keys) {
+              if (obj && obj[key] !== undefined && obj[key] !== null)
+                return obj[key];
+            }
+            return fallback;
+          };
+
+          // Try to extract from_name, from_email, reply_to, send_at, etc.
+          const from_name =
+            getField(campaign, ["from_name"]) ||
+            getField(campaign.general || campaign.campaign || {}, [
+              "from_name",
+            ]);
+          const from_email =
+            getField(campaign, ["from_email"]) ||
+            getField(campaign.general || campaign.campaign || {}, [
+              "from_email",
+            ]);
+          const reply_to =
+            getField(campaign, ["reply_to"]) ||
+            getField(campaign.general || campaign.campaign || {}, ["reply_to"]);
+          const send_at =
+            getField(campaign, ["send_at"]) ||
+            getField(campaign.general || campaign.campaign || {}, ["send_at"]);
+          const created_at =
+            getField(campaign, ["created_at"]) ||
+            getField(campaign.general || campaign.campaign || {}, [
+              "created_at",
+            ]);
+          const updated_at =
+            getField(campaign, ["updated_at"]) ||
+            getField(campaign.general || campaign.campaign || {}, [
+              "updated_at",
+            ]);
+          const type =
+            getField(campaign, ["type"]) ||
+            getField(campaign.general || campaign.campaign || {}, ["type"]);
+          // List name (if available)
+          let list_name = null;
+          if (campaign.list_name) list_name = campaign.list_name;
+          else if (campaign.list && campaign.list.name)
+            list_name = campaign.list.name;
+          else if (
+            campaign.list &&
+            campaign.list.general &&
+            campaign.list.general.name
+          )
+            list_name = campaign.list.general.name;
+
+          return {
+            ...campaign,
+            stats: statsResponse.data || null,
+            from_name,
+            from_email,
+            reply_to,
+            send_at,
+            created_at,
+            updated_at,
+            type,
+            list_name,
+          };
         } catch (error) {
+          logger.warn(
+            `Failed to get stats for campaign ${campaign.campaign_uid}:`,
+            error.message
+          );
           return { ...campaign, stats: null, statsError: error.message };
         }
       })
@@ -143,6 +260,10 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res, next) => {
       result.status === "fulfilled"
         ? result.value
         : { ...result.reason, stats: null }
+    );
+
+    logger.info(
+      `Successfully processed ${processedCampaigns.length} campaigns with stats`
     );
 
     res.json({
@@ -155,11 +276,16 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    logger.error("Error in campaigns-with-stats endpoint:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch campaigns with stats",
+      error: error.message,
+    });
   }
 });
 
-router.get("/mailwizz/campaigns/:id", async (req, res, next) => {
+router.get("/mailwizz/campaigns/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -171,11 +297,48 @@ router.get("/mailwizz/campaigns/:id", async (req, res, next) => {
     );
 
     // Fetch specific campaign from MailWizz API
-    const campaign = await mailwizzService.getCampaign(id);
+    const campaignResp = await mailwizzService.getCampaign(id);
+    const campaign = campaignResp.data?.record || campaignResp.data;
+
+    // Try to get list info if available
+    let list = null;
+    if (
+      campaign &&
+      (campaign.list_uid ||
+        (campaign.list_uid === undefined && campaign.list_uid !== null))
+    ) {
+      // Some APIs may return list_uid directly, others may nest it
+      const listUid = campaign.list_uid || campaign.list_uid;
+      if (listUid) {
+        try {
+          const listResp = await mailwizzService.getList(listUid);
+          const listData = listResp.data?.record || listResp.data;
+          if (listData) {
+            list = {
+              list_uid:
+                listData.list_uid || listData.general?.list_uid || listUid,
+              name: listData.name || listData.general?.name || "",
+              subscribers_count:
+                listData.subscribers_count ||
+                listData.general?.subscribers_count ||
+                0,
+            };
+          }
+        } catch (listErr) {
+          logger.warn(
+            `Could not fetch list details for campaign ${id}:`,
+            listErr.message
+          );
+        }
+      }
+    }
+
+    // Merge list info into campaign
+    const campaignWithList = { ...campaign, list };
 
     res.json({
       status: "success",
-      data: campaign.data,
+      data: campaignWithList,
       message: `Successfully fetched campaign ${id} from MailWizz`,
     });
   } catch (error) {
@@ -191,7 +354,7 @@ router.get("/mailwizz/campaigns/:id", async (req, res, next) => {
   }
 });
 
-router.get("/mailwizz/campaigns/:id/stats", async (req, res, next) => {
+router.get("/mailwizz/campaigns/:id/stats", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -223,7 +386,7 @@ router.get("/mailwizz/campaigns/:id/stats", async (req, res, next) => {
   }
 });
 
-router.get("/mailwizz/lists", async (req, res, next) => {
+router.get("/mailwizz/lists", async (req, res) => {
   try {
     const { page = 1, per_page = 50 } = req.query;
 
@@ -252,7 +415,7 @@ router.get("/mailwizz/lists", async (req, res, next) => {
   }
 });
 
-router.get("/mailwizz/templates", async (req, res, next) => {
+router.get("/mailwizz/templates", async (req, res) => {
   try {
     const { page = 1, per_page = 50 } = req.query;
 
@@ -404,42 +567,8 @@ router.get("/system/health", (req, res) => {
 // MAILWIZZ LISTS MANAGEMENT
 // ===============================
 
-// Get all lists with detailed information
-router.get("/mailwizz/lists", async (req, res, next) => {
-  try {
-    const { page = 1, per_page = 50 } = req.query;
-
-    // Create MailWizz service instance
-    const mailwizzService = createMailWizzService(
-      process.env.MAILWIZZ_API_URL,
-      process.env.MAILWIZZ_PUBLIC_KEY,
-      process.env.MAILWIZZ_PRIVATE_KEY
-    );
-
-    // Fetch lists from MailWizz API
-    const listsResponse = await mailwizzService.getAllLists(page, per_page);
-
-    logger.info(
-      `Fetched ${listsResponse.data?.records?.length || 0} lists from MailWizz`
-    );
-
-    res.json({
-      status: "success",
-      data: listsResponse.data,
-      message: "Successfully fetched lists from MailWizz",
-    });
-  } catch (error) {
-    logger.error("Error fetching lists from MailWizz:", error.message);
-    res.status(500).json({
-      status: "error",
-      message: "Failed to fetch lists from MailWizz",
-      error: error.message,
-    });
-  }
-});
-
 // Get specific list details
-router.get("/mailwizz/lists/:listUid", async (req, res, next) => {
+router.get("/mailwizz/lists/:listUid", async (req, res) => {
   try {
     const { listUid } = req.params;
 
@@ -472,7 +601,7 @@ router.get("/mailwizz/lists/:listUid", async (req, res, next) => {
 });
 
 // Get list subscribers
-router.get("/mailwizz/lists/:listUid/subscribers", async (req, res, next) => {
+router.get("/mailwizz/lists/:listUid/subscribers", async (req, res) => {
   try {
     const { listUid } = req.params;
     const { page = 1, per_page = 50 } = req.query;
@@ -514,7 +643,7 @@ router.get("/mailwizz/lists/:listUid/subscribers", async (req, res, next) => {
 });
 
 // Add single subscriber to list
-router.post("/mailwizz/lists/:listUid/subscribers", async (req, res, next) => {
+router.post("/mailwizz/lists/:listUid/subscribers", async (req, res) => {
   try {
     const { listUid } = req.params;
     const subscriberData = req.body;

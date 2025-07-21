@@ -29,6 +29,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  BarChart2,
+  MousePointerClick,
+  Send,
 } from "lucide-react";
 import {
   fetchAllCampaignsWithStats,
@@ -42,6 +45,7 @@ import {
   selectCampaignsPagination,
 } from "@/store/slices/mailwizzSlice";
 import { useDebounce } from "@/hooks/useDebounce";
+import { mailwizzApi } from "@/services/mailwizz/mailwizzApi";
 
 const CampaignManagement = () => {
   const dispatch = useDispatch();
@@ -67,6 +71,10 @@ const CampaignManagement = () => {
     },
     notes: "",
   });
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsCampaign, setDetailsCampaign] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState(null);
 
   useEffect(() => {
     dispatch(
@@ -74,7 +82,7 @@ const CampaignManagement = () => {
         page,
         perPage,
         search: debouncedSearch,
-        status: statusFilter,
+        status: statusFilter === "all" ? "" : statusFilter,
       })
     );
   }, [dispatch, page, perPage, debouncedSearch, statusFilter]);
@@ -105,6 +113,23 @@ const CampaignManagement = () => {
       setSelectedCampaign(null);
     } catch (error) {
       console.error("Failed to assign campaign:", error);
+    }
+  };
+
+  const handleShowDetails = async (campaign) => {
+    setDetailsLoading(true);
+    setDetailsError(null);
+    setShowDetailsModal(true);
+    try {
+      const res = await mailwizzApi.getCampaignDetails(campaign.campaign_uid);
+      setDetailsCampaign(res.data.data);
+    } catch (err) {
+      setDetailsError(
+        err.response?.data?.message || err.message || "Failed to fetch details"
+      );
+      setDetailsCampaign(null);
+    } finally {
+      setDetailsLoading(false);
     }
   };
 
@@ -142,27 +167,83 @@ const CampaignManagement = () => {
     );
   };
 
+  // Helper to get nested field for robustness
+  const getField = (row, keys, fallback = "N/A") => {
+    for (const key of keys) {
+      if (row && row[key] !== undefined && row[key] !== null && row[key] !== "")
+        return row[key];
+    }
+    if (row.general) {
+      for (const key of keys) {
+        if (
+          row.general[key] !== undefined &&
+          row.general[key] !== null &&
+          row.general[key] !== ""
+        )
+          return row.general[key];
+      }
+    }
+    if (row.campaign) {
+      for (const key of keys) {
+        if (
+          row.campaign[key] !== undefined &&
+          row.campaign[key] !== null &&
+          row.campaign[key] !== ""
+        )
+          return row.campaign[key];
+      }
+    }
+    return fallback;
+  };
+
   const campaignColumns = [
     {
       accessorKey: "name",
       header: "Campaign Name",
       cell: (row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-gray-100">{row.name}</span>
-          <span className="text-sm text-gray-400">{row.subject ?? ""}</span>
+          <span className="font-medium text-gray-100">
+            {getField(row, ["name"])}{" "}
+          </span>
+          <span className="text-sm text-gray-400">
+            {getField(row, ["subject"])}{" "}
+          </span>
         </div>
       ),
     },
     {
+      accessorKey: "from_name",
+      header: "From Name",
+      cell: (row) => (
+        <span className="text-sm text-gray-300">
+          {getField(row, ["from_name"])}{" "}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "send_at",
+      header: "Send At",
+      cell: (row) => {
+        const val = getField(row, ["send_at"]);
+        return (
+          <span className="text-sm text-gray-300">
+            {val && val !== "N/A" ? new Date(val).toLocaleString() : "N/A"}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: "status",
       header: "Status",
-      cell: (row) => getStatusBadge(row.status),
+      cell: (row) => getStatusBadge(getField(row, ["status"])),
     },
     {
       accessorKey: "list_name",
       header: "List",
       cell: (row) => (
-        <span className="text-sm text-gray-300">{row.list_name ?? "N/A"}</span>
+        <span className="text-sm text-gray-300">
+          {getField(row, ["list_name"])}{" "}
+        </span>
       ),
     },
     {
@@ -171,10 +252,19 @@ const CampaignManagement = () => {
       cell: (row) => {
         const stats = row.stats || {};
         return (
-          <div className="text-sm text-gray-300">
-            <div>Sent: {stats.processed_count ?? 0}</div>
-            <div>Opens: {stats.unique_opens_count ?? 0}</div>
-            <div>Clicks: {stats.unique_clicks_count ?? 0}</div>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="flex items-center gap-1 text-blue-400">
+              <Send size={16} className="inline-block" />
+              <span className="font-semibold">{stats.processed_count ?? 0}</span> Sent
+            </span>
+            <span className="flex items-center gap-1 text-green-400">
+              <Eye size={16} className="inline-block" />
+              <span className="font-semibold">{stats.unique_opens_count ?? 0}</span> Opens
+            </span>
+            <span className="flex items-center gap-1 text-yellow-400">
+              <MousePointerClick size={16} className="inline-block" />
+              <span className="font-semibold">{stats.unique_clicks_count ?? 0}</span> Clicks
+            </span>
           </div>
         );
       },
@@ -204,7 +294,12 @@ const CampaignManagement = () => {
           >
             <UserCheck className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-300 ">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 "
+            onClick={() => handleShowDetails(row)}
+          >
             <Eye className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" className="text-gray-300 ">
@@ -527,6 +622,134 @@ const CampaignManagement = () => {
                   Cancel
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Campaign Details Modal */}
+      {showDetailsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl bg-gray-900 border-gray-700 text-gray-100 max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Campaign Details</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    setDetailsCampaign(null);
+                  }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  Close
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {detailsLoading ? (
+                <div className="text-center py-8">Loading...</div>
+              ) : detailsError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{detailsError}</AlertDescription>
+                </Alert>
+              ) : detailsCampaign ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="font-semibold">Name:</div>
+                      <div>{detailsCampaign.name}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Subject:</div>
+                      <div>{detailsCampaign.subject}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Status:</div>
+                      <div>{detailsCampaign.status}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">From Name:</div>
+                      <div>{detailsCampaign.from_name}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">From Email:</div>
+                      <div>{detailsCampaign.from_email}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Reply To:</div>
+                      <div>{detailsCampaign.reply_to}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Send At:</div>
+                      <div>
+                        {detailsCampaign.send_at
+                          ? new Date(detailsCampaign.send_at).toLocaleString()
+                          : "N/A"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Created At:</div>
+                      <div>
+                        {detailsCampaign.created_at
+                          ? new Date(
+                              detailsCampaign.created_at
+                            ).toLocaleString()
+                          : "N/A"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Updated At:</div>
+                      <div>
+                        {detailsCampaign.updated_at
+                          ? new Date(
+                              detailsCampaign.updated_at
+                            ).toLocaleString()
+                          : "N/A"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-semibold">Type:</div>
+                      <div>{detailsCampaign.type}</div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <div className="font-semibold mb-1">List Info:</div>
+                    {detailsCampaign.list ? (
+                      <div className="pl-2 text-sm">
+                        <div>List Name: {detailsCampaign.list.name}</div>
+                        <div>List UID: {detailsCampaign.list.list_uid}</div>
+                        <div>
+                          Subscribers: {detailsCampaign.list.subscribers_count}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-gray-400">No list info</div>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <div className="font-semibold mb-1">Performance Stats:</div>
+                    {detailsCampaign.stats ? (
+                      <div className="pl-2 text-sm">
+                        {Object.entries(detailsCampaign.stats).map(([k, v]) => (
+                          <div key={k}>
+                            {k}: {v}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-gray-400">No stats available</div>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <div className="font-semibold mb-1">Raw Data:</div>
+                    <pre className="bg-gray-800 p-2 rounded text-xs overflow-x-auto">
+                      {JSON.stringify(detailsCampaign, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

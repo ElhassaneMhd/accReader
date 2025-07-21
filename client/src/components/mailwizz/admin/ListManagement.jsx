@@ -23,6 +23,8 @@ const ListManagement = () => {
   const [activeTab, setActiveTab] = useState("lists");
   const [selectedListId, setSelectedListId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   useEffect(() => {
     dispatch(fetchAllLists());
@@ -43,6 +45,14 @@ const ListManagement = () => {
       displayName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  // Pagination logic
+  const totalLists = filteredLists.length;
+  const totalPages = Math.ceil(totalLists / perPage);
+  const paginatedLists = filteredLists.slice(
+    (page - 1) * perPage,
+    page * perPage
+  );
 
   // DataTable columns
   const listColumns = [
@@ -92,16 +102,73 @@ const ListManagement = () => {
       <CardHeader>
         <CardTitle className="flex items-center text-white">
           <ListIcon className="h-5 w-5 mr-2" />
-          MailWizz Lists ({filteredLists.length})
+          MailWizz Lists ({totalLists})
         </CardTitle>
       </CardHeader>
       <CardContent>
         <DataTable
           columns={listColumns}
-          data={filteredLists}
+          data={paginatedLists}
           loading={loading}
           title="MailWizz Lists"
+          footer={
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border-t border-gray-700 bg-gray-900 rounded-b-lg mt-4">
+              <div className="text-gray-400 text-sm">
+                Showing{" "}
+                <span className="font-semibold text-gray-100">
+                  {(page - 1) * perPage + 1}
+                </span>{" "}
+                to{" "}
+                <span className="font-semibold text-gray-100">
+                  {Math.min(page * perPage, totalLists)}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-gray-100">
+                  {totalLists}
+                </span>{" "}
+                lists
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+                >
+                  Previous
+                </button>
+                <span className="text-gray-400 text-sm px-2">
+                  Page{" "}
+                  <span className="font-semibold text-gray-100">{page}</span> of{" "}
+                  <span className="font-semibold text-gray-100">
+                    {totalPages}
+                  </span>
+                </span>
+                <button
+                  onClick={() => setPage(page + 1)}
+                  disabled={page === totalPages}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+                >
+                  Next
+                </button>
+                <select
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="ml-2 px-2 py-1.5 rounded-md border border-gray-600 bg-gray-800 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none hover:bg-gray-700 transition"
+                >
+                  {[10, 20, 50, 100].map((n) => (
+                    <option key={n} value={n}>
+                      {n} / page
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          }
         />
+        {/* Pagination Controls */}
       </CardContent>
     </Card>
   );

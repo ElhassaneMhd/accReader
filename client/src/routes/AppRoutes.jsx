@@ -67,19 +67,6 @@ const PublicRoute = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* PowerMTA Analytics Routes */}
-      <Route
-        path="/pmta"
-        element={
-          <ConnectionProvider>
-            <EmailDataProvider>
-              <DashboardPage />
-            </EmailDataProvider>
-          </ConnectionProvider>
-        }
-      />
-      <Route path="/pmta-upload" element={<PublicUploadPage />} />
-
       {/* MailWizz Admin/Client Authentication Routes */}
       <Route
         path="/login"
@@ -125,6 +112,7 @@ const AppRoutes = () => {
                     </ConnectionProvider>
                   }
                 />
+                {/* PMTA analytics only inside admin */}
                 <Route
                   path="pmta"
                   element={
@@ -142,11 +130,10 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Default redirects to PowerMTA login */}
-      <Route path="/" element={<Navigate to="/pmta" replace />} />
-
-      {/* Catch all - redirect to PowerMTA login */}
-      <Route path="*" element={<Navigate to="/pmta" replace />} />
+      {/* Default redirect to login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Catch all - redirect to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };

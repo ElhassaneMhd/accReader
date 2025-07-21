@@ -67,6 +67,7 @@ const FileSelector = ({
 
   // Initialize component
   useEffect(() => {
+    console.log("🚀 FileSelector component initialized");
     // Always fetch available files on mount, regardless of auto-import setting
     dispatch(fetchAvailableFiles());
     fetchImportedFiles();
@@ -83,35 +84,85 @@ const FileSelector = ({
     }
   }, [dispatch, isAutoImportEnabled]);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("📊 Current file state:", {
+      availableFiles: availableFiles.length,
+      serverImportedFiles: serverImportedFiles.length,
+      selectedFile,
+      importing,
+      loading,
+    });
+  }, [availableFiles, serverImportedFiles, selectedFile, importing, loading]);
+
   // Handlers
   const fetchImportedFiles = async () => {
     try {
+      console.log("🔄 Fetching imported files from server...");
       const response = await fetch("http://localhost:4000/api/pmta/files");
+
       if (response.ok) {
         const data = await response.json();
-        setServerImportedFiles(data.files || []);
+        console.log("📦 Server response:", data);
+
+        // Handle different response formats
+        let files = [];
+        if (data.files && Array.isArray(data.files)) {
+          files = data.files;
+        } else if (Array.isArray(data)) {
+          files = data;
+        } else if (data && typeof data === "object") {
+          // Try to extract files from various possible structures
+          files = data.importedFiles || data.files || [];
+        }
+
+        console.log("📁 Processed files:", files);
+        setServerImportedFiles(files);
+      } else {
+        console.warn(
+          "❌ Failed to fetch imported files:",
+          response.status,
+          response.statusText
+        );
+        setServerImportedFiles([]);
       }
     } catch (error) {
-      console.error("Failed to fetch imported files:", error);
+      console.error("❌ Error fetching imported files:", error);
+      setServerImportedFiles([]);
     }
   };
 
   const handleFetchFiles = async () => {
-    await dispatch(fetchAvailableFiles()).unwrap();
-    await fetchImportedFiles();
-    if (onRefreshFiles) {
-      onRefreshFiles();
+    try {
+      console.log("🔄 Fetching available files...");
+      await dispatch(fetchAvailableFiles()).unwrap();
+
+      console.log("🔄 Fetching imported files...");
+      await fetchImportedFiles();
+
+      if (onRefreshFiles) {
+        onRefreshFiles();
+      }
+
+      console.log("✅ Files refreshed successfully");
+    } catch (error) {
+      console.error("❌ Error fetching files:", error);
     }
   };
 
   const handleImportFile = async (filename) => {
     try {
-      await dispatch(importFile(filename)).unwrap();
+      console.log(`🔄 Starting import for ${filename}`);
+
+      // Import the file
+      const importResult = await dispatch(importFile(filename)).unwrap();
+      console.log(`✅ Successfully imported ${filename}:`, importResult);
+
+      // Refresh the file lists
       await handleFetchFiles();
-      console.log(`✅ Successfully imported ${filename}`);
 
       // Small delay to ensure server state consistency
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Auto-select the imported file after successful import
       console.log(`🎯 Auto-selecting ${filename} after successful import`);
@@ -121,6 +172,11 @@ const FileSelector = ({
       }
     } catch (err) {
       console.error(`❌ Failed to import ${filename}:`, err);
+      // Show error to user with more details
+      const errorMessage = err.message || err.toString();
+      alert(
+        `Failed to import ${filename}:\n\n${errorMessage}\n\nPlease check the server logs for more details.`
+      );
     }
   };
 
@@ -208,10 +264,18 @@ const FileSelector = ({
 
   const getTotalRecordsForFile = (filename) => {
     if (filename === "all") {
-      return totalRecords;
+      return totalRecords || 0;
     }
-    const file = serverImportedFiles.find((f) => f.filename === filename);
-    return file ? file.recordCount || 0 : 0;
+    const file = serverImportedFiles.find((f) => f && f.filename === filename);
+    if (!file) {
+      console.warn(`File not found: ${filename}`);
+      return 0;
+    }
+    // Handle different possible field names for record count
+    const recordCount =
+      file.recordCount || file.records || file.totalRecords || file.count || 0;
+    console.log(`📊 Records for ${filename}:`, recordCount);
+    return recordCount;
   };
 
   return (
@@ -362,14 +426,21 @@ const FileSelector = ({
                             <div className="text-xs text-gray-400">
                               {file.imported
                                 ? `${(
-                                    file.recordCount || 0
+                                    file.recordCount ||
+                                    file.records ||
+                                    0
                                   ).toLocaleString()} records`
                                 : "Not imported"}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {file.imported ? (
+                          {file.imported ||
+                          serverImportedFiles.some(
+                            (importedFile) =>
+                              importedFile &&
+                              importedFile.filename === file.filename
+                          ) ? (
                             <Badge
                               variant="outline"
                               className="bg-green-900/20 text-green-400 border-green-700 text-xs"
@@ -380,10 +451,29 @@ const FileSelector = ({
                           ) : (
                             <Button
                               onClick={() => handleImportFile(file.filename)}
-                              disabled={importing || loading}
+                              disabled={
+                                importing ||
+                                loading ||
+                                file.imported ||
+                                serverImportedFiles.some(
+                                  (importedFile) =>
+                                    importedFile &&
+                                    importedFile.filename === file.filename
+                                )
+                              }
                               size="sm"
                               variant="outline"
-                              className="bg-blue-900/20 border-blue-700 text-blue-400 hover:bg-blue-900/30 text-xs"
+                              className="bg-blue-900/20 border-blue-700 text-blue-400 hover:bg-blue-900/30 text-xs disabled:opacity-50"
+                              title={
+                                file.imported ||
+                                serverImportedFiles.some(
+                                  (importedFile) =>
+                                    importedFile &&
+                                    importedFile.filename === file.filename
+                                )
+                                  ? "File already imported"
+                                  : "Import this file"
+                              }
                             >
                               {importing ? (
                                 <Clock
@@ -502,43 +592,52 @@ const FileSelector = ({
                     </button>
 
                     {/* Individual Imported Files */}
-                    {serverImportedFiles.map((file, index) => (
-                      <div
-                        key={`imported-${file.filename}-${index}`}
-                        className={`w-full p-3 flex items-center justify-between ${
-                          selectedFile === file.filename ? "bg-blue-900/20" : ""
-                        }`}
-                      >
-                        <button
-                          onClick={() =>
-                            handleSwitchToSpecificFile(file.filename)
-                          }
-                          className="flex items-center gap-2 flex-1 text-left hover:bg-gray-700/50 rounded px-2 py-1 transition-colors"
+                    {serverImportedFiles
+                      .filter((file) => file && file.filename) // Filter out invalid files
+                      .map((file, index) => (
+                        <div
+                          key={`imported-${file.filename}-${index}`}
+                          className={`w-full p-3 flex items-center justify-between ${
+                            selectedFile === file.filename
+                              ? "bg-blue-900/20"
+                              : ""
+                          }`}
                         >
-                          <FileText size={16} className="text-gray-400" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-200">
-                              {formatFileName(file.filename)}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              {(file.recordCount || 0).toLocaleString()} records
-                            </div>
-                          </div>
-                        </button>
-                        <div className="flex items-center gap-2">
-                          {selectedFile === file.filename && (
-                            <Check size={16} className="text-blue-400" />
-                          )}
                           <button
-                            onClick={() => handleDeleteFile(file.filename)}
-                            className="p-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition-colors"
-                            title={`Delete ${file.filename}`}
+                            onClick={() =>
+                              handleSwitchToSpecificFile(file.filename)
+                            }
+                            className="flex items-center gap-2 flex-1 text-left hover:bg-gray-700/50 rounded px-2 py-1 transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <FileText size={16} className="text-gray-400" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-200">
+                                {formatFileName(file.filename)}
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {(
+                                  file.recordCount ||
+                                  file.records ||
+                                  0
+                                ).toLocaleString()}{" "}
+                                records
+                              </div>
+                            </div>
                           </button>
+                          <div className="flex items-center gap-2">
+                            {selectedFile === file.filename && (
+                              <Check size={16} className="text-blue-400" />
+                            )}
+                            <button
+                              onClick={() => handleDeleteFile(file.filename)}
+                              className="p-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition-colors"
+                              title={`Delete ${file.filename}`}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
                     {serverImportedFiles.length === 0 && (
                       <div className="p-3 text-center text-gray-400 text-sm">

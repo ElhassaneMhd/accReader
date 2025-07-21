@@ -5,7 +5,9 @@ export const fetchAvailableFiles = createAsyncThunk(
   "files/fetchAvailableFiles",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4000/api/pmta/files/available");
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/files/available"
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch available files");
       }
@@ -21,11 +23,14 @@ export const importFile = createAsyncThunk(
   "files/importFile",
   async (filename, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4000/api/pmta/files/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename }),
-      });
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/files/import",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename }),
+        }
+      );
       if (!response.ok) {
         throw new Error(`Failed to import ${filename}`);
       }
@@ -40,11 +45,14 @@ export const importAllFiles = createAsyncThunk(
   "files/importAllFiles",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4000/api/pmta/files/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ importAll: true }),
-      });
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/files/import",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ importAll: true }),
+        }
+      );
       if (!response.ok) {
         throw new Error("Failed to import all files");
       }
@@ -106,11 +114,14 @@ export const selectFile = createAsyncThunk(
         );
       }
 
-      const response = await fetch("http://localhost:4000/api/pmta/files/select", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename }),
-      });
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/files/select",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename }),
+        }
+      );
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || `Failed to select ${filename}`);

@@ -43,119 +43,119 @@ const LoginForm = ({ onConnect, isConnecting, error }) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Host */}
+          {/* Host */}
             <div className="space-y-2 focus-within:bg-gray-700 rounded transition-colors">
-              <Label htmlFor="host" className="text-gray-300">
-                Server Host
-              </Label>
-              <Input
-                id="host"
-                name="host"
-                type="text"
-                value={formData.host}
-                onChange={handleInputChange}
-                placeholder="91.229.239.75"
-                required
-                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-              />
-            </div>
+            <Label htmlFor="host" className="text-gray-300">
+              Server Host
+            </Label>
+            <Input
+              id="host"
+              name="host"
+              type="text"
+              value={formData.host}
+              onChange={handleInputChange}
+              placeholder="91.229.239.75"
+              required
+              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
 
-            {/* Port */}
+          {/* Port */}
             <div className="space-y-2 focus-within:bg-gray-700 rounded transition-colors">
-              <Label htmlFor="port" className="text-gray-300">
-                SSH Port
-              </Label>
-              <Input
-                id="port"
-                name="port"
-                type="number"
-                value={formData.port}
-                onChange={handleInputChange}
-                placeholder="22"
-                required
-                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-              />
-            </div>
+            <Label htmlFor="port" className="text-gray-300">
+              SSH Port
+            </Label>
+            <Input
+              id="port"
+              name="port"
+              type="number"
+              value={formData.port}
+              onChange={handleInputChange}
+              placeholder="22"
+              required
+              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
 
-            {/* Username */}
+          {/* Username */}
             <div className="space-y-2 focus-within:bg-gray-700 rounded transition-colors">
-              <Label htmlFor="username" className="text-gray-300">
-                Username
-              </Label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="root"
-                required
-                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-              />
-            </div>
+            <Label htmlFor="username" className="text-gray-300">
+              Username
+            </Label>
+            <Input
+              id="username"
+              name="username"
+              type="text"
+              value={formData.username}
+              onChange={handleInputChange}
+              placeholder="root"
+              required
+              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
 
-            {/* Password */}
+          {/* Password */}
             <div className="space-y-2 focus-within:bg-gray-700 rounded transition-colors">
-              <Label htmlFor="password" className="text-gray-300">
-                Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter password"
-                  required
-                  className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Log Path */}
-            <div className="space-y-2 focus-within:bg-gray-700 rounded transition-colors">
-              <Label htmlFor="logPath" className="text-gray-300">
-                Log Directory Path
-              </Label>
+            <Label htmlFor="password" className="text-gray-300">
+              Password
+            </Label>
+            <div className="relative">
               <Input
-                id="logPath"
-                name="logPath"
-                type="text"
-                value={formData.logPath}
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
                 onChange={handleInputChange}
-                placeholder="/var/log/pmta"
+                placeholder="Enter password"
                 required
-                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
+          </div>
 
-            {/* Log Pattern */}
+          {/* Log Path */}
             <div className="space-y-2 focus-within:bg-gray-700 rounded transition-colors">
-              <Label htmlFor="logPattern" className="text-gray-300">
-                Log File Pattern
-              </Label>
-              <Input
-                id="logPattern"
-                name="logPattern"
-                type="text"
-                value={formData.logPattern}
-                onChange={handleInputChange}
-                placeholder="acct-*.csv"
-                required
-                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-              />
+            <Label htmlFor="logPath" className="text-gray-300">
+              Log Directory Path
+            </Label>
+            <Input
+              id="logPath"
+              name="logPath"
+              type="text"
+              value={formData.logPath}
+              onChange={handleInputChange}
+              placeholder="/var/log/pmta"
+              required
+              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
+
+          {/* Log Pattern */}
+            <div className="space-y-2 focus-within:bg-gray-700 rounded transition-colors">
+            <Label htmlFor="logPattern" className="text-gray-300">
+              Log File Pattern
+            </Label>
+            <Input
+              id="logPattern"
+              name="logPattern"
+              type="text"
+              value={formData.logPattern}
+              onChange={handleInputChange}
+              placeholder="acct-*.csv"
+              required
+              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            />
             </div>
           </div>
 

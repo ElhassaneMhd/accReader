@@ -252,7 +252,9 @@ const getPermissionsByRole = (role) => {
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null,
+    user: localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user"))
+      : null,
     token: localStorage.getItem("token") || null,
     isAuthenticated: !!localStorage.getItem("token"),
     loading: false,

@@ -40,7 +40,9 @@ const ImportStatus = ({
 
   const fetchStatus = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/pmta/import-status");
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/import-status"
+      );
       if (response.ok) {
         const data = await response.json();
         setStatus(data);
@@ -58,9 +60,12 @@ const ImportStatus = ({
   const forceImport = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:4000/api/pmta/files/import", {
-        method: "POST",
-      });
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/files/import",
+        {
+          method: "POST",
+        }
+      );
       if (response.ok) {
         await fetchStatus();
       }
