@@ -1,15 +1,15 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
-import OverviewStats from "../../components/OverviewStats";
-import Charts from "../../components/Charts";
-import VmtaPerformance from "../../components/VmtaPerformance";
-import SearchAndFilters from "../../components/SearchAndFilters";
-import DataTable from "../../components/DataTable";
-import ImportStatus from "../../components/ImportStatus";
-import FileSelector from "../../components/FileSelector";
-import { useEmailDataContext } from "../../hooks/useEmailDataContext";
-import { useConnectionContext } from "../../hooks/useConnectionContext";
+import Header from "@/components/Header";
+import OverviewStats from "@/components/OverviewStats";
+import Charts from "@/components/Charts";
+import VmtaPerformance from "@/components/VmtaPerformance";
+import SearchAndFilters from "@/components/SearchAndFilters";
+import DataTable from "@/components/DataTable";
+import ImportStatus from "@/components/ImportStatus";
+import FileSelector from "@/components/FileSelector";
+import { useEmailDataContext } from "@/hooks/useEmailDataContext";
+import { useConnectionContext } from "@/hooks/useConnectionContext";
 
 const DashboardPage = () => {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React from "react";
-import { ListManagement } from "../../components/mailwizz";
+import ListManagement from "@/components/admin/ListManagement";
 import { useDispatch } from "react-redux";
-import { fetchAllLists } from "../../store/slices/mailwizzSlice";
+import { fetchAllLists } from "@/store/slices/mailwizzSlice";
 import { Button } from "@/components/ui/button";
 
 const ListManagementPage = () => {

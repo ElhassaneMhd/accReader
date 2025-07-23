@@ -1,10 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { parseCSVFile } from "../utils/csvParser";
+import { parseCSVFile } from "@/utils/csvParser";
 import {
   analyzeEmailData,
   searchData,
   filterData,
-} from "../utils/dataAnalysis";
+} from "@/utils/dataAnalysis";
 
 export const useEmailData = () => {
   const [rawData, setRawData] = useState([]);

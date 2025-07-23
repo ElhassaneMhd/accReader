@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { EmailDataContext } from "../contexts/EmailDataContext";
+import { EmailDataContext } from "@/contexts/EmailDataContext";
 
 export const useEmailDataContext = () => {
   const context = useContext(EmailDataContext);

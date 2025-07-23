@@ -9,8 +9,8 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Import page components
-import CampaignOverview from "@/components/mailwizz/client/CampaignOverview";
-import CampaignDetails from "@/components/mailwizz/client/CampaignDetails";
+import CampaignOverview from "@/components/client/CampaignOverview";
+import CampaignDetails from "@/components/client/CampaignDetails";
 
 const MailWizzDashboard = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);

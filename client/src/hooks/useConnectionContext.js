@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { ConnectionContext } from "../contexts/ConnectionContext";
+import { ConnectionContext } from "@/contexts/ConnectionContext";
 
 export const useConnectionContext = () => {
   const context = useContext(ConnectionContext);

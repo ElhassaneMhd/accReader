@@ -9,7 +9,7 @@ import {
   selectSelectedList,
   selectMailwizzLoading,
   selectMailwizzError,
-} from "../../../store/slices/mailwizzSlice";
+} from "@/store/slices/mailwizzSlice";
 import DataTable from "@/components/DataTable";
 
 const SubscriberManagement = ({ listId }) => {

@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import SubscriberManagement from "@/components/mailwizz/admin/SubscriberManagement";
+import SubscriberManagement from "@/components/admin/SubscriberManagement";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const ListSubscribersPage = () => {

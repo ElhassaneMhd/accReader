@@ -1,6 +1,6 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useMemo } from "react";
-import { analyzeEmailData } from "../utils/dataAnalysis";
+import { analyzeEmailData } from "@/utils/dataAnalysis";
 
 // Redux hooks
 export const useAppSelector = useSelector;

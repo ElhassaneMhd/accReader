@@ -18,7 +18,7 @@ import {
   exportToExcel,
   exportSummary,
   generateExportFilename,
-} from "../utils/exportUtils";
+} from "@/utils/exportUtils";
 
 const ExportControls = ({
   data,

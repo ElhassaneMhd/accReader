@@ -1,5 +1,5 @@
 import React, { createContext } from "react";
-import { useEmailData as useEmailDataHook } from "../hooks/useEmailData";
+import { useEmailData as useEmailDataHook } from "@/hooks/useEmailData";
 
 const EmailDataContext = createContext();
 

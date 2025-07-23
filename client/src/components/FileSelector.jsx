@@ -18,7 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { useAppDispatch } from "../store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   useAvailableFiles,
   useSelectedFile,
@@ -28,7 +28,7 @@ import {
   useImportOpen,
   useViewOpen,
   useFileStats,
-} from "../store/hooks";
+} from "@/store/hooks";
 import {
   fetchAvailableFiles,
   importFile,
@@ -37,12 +37,12 @@ import {
   selectFile,
   deleteFile,
   clearError,
-} from "../store/slices/filesSlice";
+} from "@/store/slices/filesSlice";
 import {
   toggleImportOpen,
   toggleViewOpen,
   setViewOpen,
-} from "../store/slices/uiSlice";
+} from "@/store/slices/uiSlice";
 
 const FileSelector = ({
   onFileSelect,

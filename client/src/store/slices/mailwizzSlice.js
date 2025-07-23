@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { mailwizzApi } from "../../services/mailwizz/mailwizzApi";
+import { mailwizzApi } from "@/services/mailwizz/mailwizzApi";
 
 // Async thunks for MailWizz operations
 export const fetchUserCampaigns = createAsyncThunk(
