@@ -10,6 +10,7 @@ const multer = require("multer");
 const { createMailWizzService } = require("../services/mailwizzService");
 const { protect, restrictTo } = require("../middleware/auth");
 const logger = require("../utils/logger");
+const User = require("../models/User");
 
 const router = express.Router();
 
@@ -471,33 +472,109 @@ router.post("/mailwizz/refresh-cache", (req, res) => {
 });
 
 // User management routes (admin only)
-router.get("/users", (req, res) => {
-  res.json({
-    status: "success",
-    users: [],
-    message: "User management endpoint - implementation needed",
-  });
+router.get("/users", async (req, res) => {
+  try {
+    const users = await User.findAll({ attributes: { exclude: ["password"] } });
+    res.json({
+      status: "success",
+      users,
+      message: "Fetched all users successfully",
+    });
+  } catch (error) {
+    logger.error("Error fetching users:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch users",
+      error: error.message,
+    });
+  }
 });
 
-router.post("/users", (req, res) => {
-  res.json({
-    status: "success",
-    message: "User created - implementation needed",
-  });
+router.post("/users", async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
+    if (!username || !email || !password || !role) {
+      return res.status(400).json({
+        status: "error",
+        message: "username, email, password, and role are required",
+      });
+    }
+    // Check for existing user
+    const existing = await User.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({
+        status: "error",
+        message: "A user with this email already exists",
+      });
+    }
+    const newUser = await User.create({
+      name: username,
+      email,
+      password,
+      role,
+    });
+    newUser.password = undefined;
+    res.status(201).json({
+      status: "success",
+      user: newUser,
+      message: "User created successfully",
+    });
+  } catch (error) {
+    logger.error("Error creating user:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to create user",
+      error: error.message,
+    });
+  }
 });
 
-router.put("/users/:id", (req, res) => {
-  res.json({
-    status: "success",
-    message: "User updated - implementation needed",
-  });
+router.put("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, password, role } = req.body;
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found" });
+    }
+    if (username) user.name = username;
+    if (email) user.email = email;
+    if (role) user.role = role;
+    if (password) user.password = password;
+    await user.save();
+    user.password = undefined;
+    res.json({ status: "success", user, message: "User updated successfully" });
+  } catch (error) {
+    logger.error("Error updating user:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update user",
+      error: error.message,
+    });
+  }
 });
 
-router.delete("/users/:id", (req, res) => {
-  res.json({
-    status: "success",
-    message: "User deleted - implementation needed",
-  });
+router.delete("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found" });
+    }
+    await user.destroy();
+    res.json({ status: "success", message: "User deleted successfully" });
+  } catch (error) {
+    logger.error("Error deleting user:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete user",
+      error: error.message,
+    });
+  }
 });
 
 // Campaign assignment routes

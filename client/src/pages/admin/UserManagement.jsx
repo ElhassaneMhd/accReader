@@ -66,18 +66,20 @@ const UserManagement = () => {
     }
   }, [dispatch]);
 
-  const filteredUsers = (users || []).filter((user) => {
-    const matchesSearch =
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus =
-      statusFilter === "all" || user.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  const filteredUsers = Array.isArray(users)
+    ? users.filter((user) => {
+        const matchesSearch =
+          user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = roleFilter === "all" || user?.role === roleFilter;
+        // Remove status filtering since backend does not provide status
+        return matchesSearch && matchesRole;
+      })
+    : [];
 
   const handleCreateUser = async () => {
     try {
+      console.log("Creating user with data:", newUser); // Debug log
       await dispatch(createUser(newUser)).unwrap();
       setShowCreateModal(false);
       setNewUser({
@@ -143,13 +145,14 @@ const UserManagement = () => {
       },
     };
 
-    const config = roleConfig[role] || roleConfig.client;
+    const safeRole = role || "client";
+    const config = roleConfig[safeRole] || roleConfig.client;
     const Icon = config.icon;
 
     return (
       <Badge className={`${config.color} flex items-center space-x-1`}>
         <Icon className="h-3 w-3" />
-        <span>{role.replace("_", " ").toUpperCase()}</span>
+        <span>{safeRole.replace("_", " ").toUpperCase()}</span>
       </Badge>
     );
   };
@@ -162,42 +165,53 @@ const UserManagement = () => {
       pending: { color: "bg-yellow-100 text-yellow-800" },
     };
 
-    const config = statusConfig[status] || statusConfig.pending;
+    // Default to 'active' if status is missing
+    const safeStatus = status || "active";
+    const config = statusConfig[safeStatus] || statusConfig.active;
 
     return (
       <Badge className={config.color}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1)}
       </Badge>
     );
   };
 
   const userColumns = [
     {
-      accessorKey: "username",
+      accessorKey: "name",
       header: "User",
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="font-medium">{row.getValue("username")}</span>
-          <span className="text-sm text-gray-500">{row.original.email}</span>
+          <span className="font-medium">{row?.original?.name || ""}</span>
+          <span className="text-sm text-gray-500">
+            {row?.original?.email || ""}
+          </span>
         </div>
       ),
     },
     {
       accessorKey: "role",
       header: "Role",
-      cell: ({ row }) => getRoleBadge(row.getValue("role")),
+      cell: ({ row }) =>
+        getRoleBadge(
+          row?.getValue ? row.getValue("role") : row?.original?.role
+        ),
     },
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => getStatusBadge(row.getValue("status") || "pending"),
+      cell: ({ row }) =>
+        getStatusBadge(
+          (row?.getValue ? row.getValue("status") : row?.original?.status) ||
+            "active"
+        ),
     },
     {
       accessorKey: "assigned_campaigns",
       header: "Campaigns",
       cell: ({ row }) => (
         <Badge variant="outline">
-          {row.original.assigned_campaigns?.length || 0} campaigns
+          {row?.original?.assigned_campaigns?.length || 0} campaigns
         </Badge>
       ),
     },
@@ -205,7 +219,9 @@ const UserManagement = () => {
       accessorKey: "last_login",
       header: "Last Login",
       cell: ({ row }) => {
-        const lastLogin = row.getValue("last_login");
+        const lastLogin = row?.getValue
+          ? row.getValue("last_login")
+          : row?.original?.last_login;
         return lastLogin ? new Date(lastLogin).toLocaleDateString() : "Never";
       },
     },
@@ -438,7 +454,7 @@ const UserManagement = () => {
                       htmlFor="username"
                       className="text-gray-300 font-semibold"
                     >
-                      Username
+                      Name
                     </Label>
                     <Input
                       id="username"
@@ -449,7 +465,7 @@ const UserManagement = () => {
                           username: e.target.value,
                         }))
                       }
-                      placeholder="Enter username"
+                      placeholder="Enter name"
                       className="bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 mt-1"
                     />
                   </div>
@@ -630,9 +646,9 @@ const UserManagement = () => {
               {/* Copy Credentials Button */}
               <CopyCredentialsButton newUser={newUser} />
               {/* Error/Validation */}
-              {(!newUser?.username ||
-                !newUser?.email ||
-                !newUser?.password) && (
+              {(!newUser?.username?.trim() ||
+                !newUser?.email?.trim() ||
+                !newUser?.password?.trim()) && (
                 <div className="text-red-400 text-sm font-medium text-center">
                   All fields are required.
                 </div>
@@ -671,7 +687,9 @@ const UserManagement = () => {
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-lg py-2"
                   disabled={
-                    !newUser?.username || !newUser?.email || !newUser?.password
+                    !newUser?.username?.trim() ||
+                    !newUser?.email?.trim() ||
+                    !newUser?.password?.trim()
                   }
                 >
                   <UserPlus className="h-5 w-5 mr-2" /> Create User
@@ -695,7 +713,7 @@ const UserManagement = () => {
           <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700">
             <CardHeader>
               <CardTitle className="text-white">
-                Edit User: {selectedUser.username}
+                Edit User: {selectedUser.name}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -704,7 +722,7 @@ const UserManagement = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-white">
-                      {selectedUser.username}
+                      {selectedUser.name}
                     </p>
                     <p className="text-sm text-gray-300">
                       {selectedUser.email}
@@ -831,7 +849,7 @@ export default UserManagement;
 // Add CopyCredentialsButton component
 function CopyCredentialsButton({ newUser }) {
   const [copied, setCopied] = useState(false);
-  const credentialsText = `Username: ${newUser?.username || ""}\nEmail: ${
+  const credentialsText = `Name: ${newUser?.username || ""}\nEmail: ${
     newUser?.email || ""
   }\nPassword: ${newUser?.password || ""}`;
 
