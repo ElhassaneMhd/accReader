@@ -27,6 +27,8 @@ import {
 } from "@/store/slices/authSlice";
 
 const Login = () => {
+  console.log('Login component rendering...');
+  
   const dispatch = useDispatch();
   const location = useLocation();
 
@@ -52,6 +54,8 @@ const Login = () => {
     return <Navigate to={from} replace />;
   }
 
+  // Add error boundary for debugging
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -202,6 +206,22 @@ const Login = () => {
                   </>
                 )}
               </Button>
+
+              {/* Quick Fill Button for Testing */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-2 bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                onClick={() => {
+                  if (loginType === "admin") {
+                    setFormData({ username: "admin@test.com", password: "admin123" });
+                  } else {
+                    setFormData({ username: "client@test.com", password: "client123" });
+                  }
+                }}
+              >
+                Fill Test Credentials
+              </Button>
             </form>
 
             {/* Access Info */}
@@ -209,23 +229,40 @@ const Login = () => {
               <h4 className="text-sm font-medium text-white mb-2">
                 {loginType === "admin" ? "Admin Access" : "Client Access"}
               </h4>
-              <ul className="text-xs text-gray-300 space-y-1">
+              <div className="text-xs text-gray-300 space-y-1 mb-3">
                 {loginType === "admin" ? (
                   <>
-                    <li>• Full access to PMTA analytics</li>
-                    <li>• MailWizz campaign management</li>
-                    <li>• User and permission management</li>
-                    <li>• System health monitoring</li>
+                    <div>• Full access to PMTA analytics</div>
+                    <div>• MailWizz campaign management</div>
+                    <div>• User and permission management</div>
+                    <div>• System health monitoring</div>
                   </>
                 ) : (
                   <>
-                    <li>• Access to assigned campaigns only</li>
-                    <li>• Performance analytics and reports</li>
-                    <li>• Data export capabilities</li>
-                    <li>• Mobile-responsive dashboard</li>
+                    <div>• Access to assigned campaigns only</div>
+                    <div>• Performance analytics and reports</div>
+                    <div>• Data export capabilities</div>
+                    <div>• Mobile-responsive dashboard</div>
                   </>
                 )}
-              </ul>
+              </div>
+              
+              {/* Test Credentials */}
+              <div className="border-t border-gray-600 pt-3 mt-3">
+                <h5 className="text-xs font-medium text-yellow-300 mb-2">Test Credentials:</h5>
+                <div className="text-xs text-gray-300 space-y-1">
+                  {loginType === "admin" ? (
+                    <>
+                      <div><strong>Option 1:</strong> admin@test.com / admin123</div>
+                      <div><strong>Option 2:</strong> admin@accreader.com / (your password)</div>
+                    </>
+                  ) : (
+                    <>
+                      <div><strong>Client:</strong> client@test.com / client123</div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

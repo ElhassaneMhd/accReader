@@ -72,7 +72,7 @@ const DataTable = ({ columns, data, title = "Records", loading, footer }) => {
                       className="text-gray-300 text-sm"
                     >
                       {col.cell
-                        ? col.cell(row)
+                        ? col.cell({ row: { original: row } })
                         : col.accessorKey
                         ? row[col.accessorKey]
                         : null}

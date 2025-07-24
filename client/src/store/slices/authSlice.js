@@ -5,8 +5,8 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ username, password, userType = "admin" }, { rejectWithValue }) => {
     try {
-      const endpoint =
-        userType === "client" ? "/auth/client-login" : "/auth/login";
+      // Use the same login endpoint for both admin and client
+      const endpoint = "/auth/login";
       const response = await fetch(`http://localhost:4000/api${endpoint}`, {
         method: "POST",
         headers: {

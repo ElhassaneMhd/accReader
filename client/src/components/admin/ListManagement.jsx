@@ -54,38 +54,38 @@ const ListManagement = () => {
     {
       accessorKey: "name",
       header: "List Name",
-      cell: (row) => row.general?.name ?? "-",
+      cell: ({ row }) => row.original.general?.name ?? "-",
     },
     {
       accessorKey: "display_name",
       header: "Display Name",
-      cell: (row) => row.general?.display_name ?? "-",
+      cell: ({ row }) => row.original.general?.display_name ?? "-",
     },
     {
       accessorKey: "from_email",
       header: "From Email",
-      cell: (row) => row.defaults?.from_email ?? "-",
+      cell: ({ row }) => row.original.defaults?.from_email ?? "-",
     },
     {
       accessorKey: "company_name",
       header: "Company Name",
-      cell: (row) => row.company?.name ?? "-",
+      cell: ({ row }) => row.original.company?.name ?? "-",
     },
     {
       accessorKey: "description",
       header: "Description",
-      cell: (row) => row.general?.description ?? "-",
+      cell: ({ row }) => row.original.general?.description ?? "-",
     },
     {
       id: "actions",
       header: "Actions",
-      cell: (row) => (
+      cell: ({ row }) => (
         <Button
           size="sm"
           variant="ghost"
           className="text-blue-400 hover:text-blue-600"
           onClick={() =>
-            navigate(`/admin/lists/${row.general?.list_uid ?? ""}`)
+            navigate(`/admin/lists/${row.original.general?.list_uid ?? ""}`)
           }
         >
           Manage Subscribers

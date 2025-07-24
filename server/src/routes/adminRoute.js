@@ -133,9 +133,6 @@ router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
   try {
     const { page = 1, per_page = 50, search = "", status = "" } = req.query;
 
-    logger.info(
-      `Fetching campaigns with stats: page=${page}, per_page=${per_page}, search=\"${search}\", status=\"${status}\"`
-    );
 
     const mailwizzService = createMailWizzService(
       process.env.MAILWIZZ_API_URL,
@@ -752,7 +749,7 @@ router.post("/mailwizz/lists/:listUid/subscribers", async (req, res) => {
 router.post(
   "/mailwizz/lists/:listUid/subscribers/import",
   upload.single("import_file"),
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       const { listUid } = req.params;
 
@@ -994,7 +991,7 @@ router.post(
 // Update subscriber in list
 router.put(
   "/mailwizz/lists/:listUid/subscribers/:subscriberUid",
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       const { listUid, subscriberUid } = req.params;
       const subscriberData = req.body;
@@ -1036,8 +1033,7 @@ router.put(
 
 // Delete subscriber from list
 router.delete(
-  "/mailwizz/lists/:listUid/subscribers/:subscriberUid",
-  async (req, res, next) => {
+  "/mailwizz/lists/:listUid/subscribers/:subscriberUid",async (req, res) => {
     try {
       const { listUid, subscriberUid } = req.params;
 

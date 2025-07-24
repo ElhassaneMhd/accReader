@@ -141,55 +141,55 @@ const SubscriberManagement = ({ listId }) => {
     {
       accessorKey: "email",
       header: "Email",
-      cell: (row) => row.EMAIL || row.email,
+      cell: ({ row }) => row.original.EMAIL || row.original.email,
     },
     {
       accessorKey: "first_name",
       header: "First Name",
-      cell: (row) => row.FNAME || row.first_name || "-",
+      cell: ({ row }) => row.original.FNAME || row.original.first_name || "-",
     },
     {
       accessorKey: "last_name",
       header: "Last Name",
-      cell: (row) => row.LNAME || row.last_name || "-",
+      cell: ({ row }) => row.original.LNAME || row.original.last_name || "-",
     },
     {
       accessorKey: "status",
       header: "Status",
-      cell: (row) => (
+      cell: ({ row }) => (
         <span
           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-            row.status === "confirmed"
+            row.original.status === "confirmed"
               ? "bg-green-100 text-green-800"
-              : row.status === "unsubscribed"
+              : row.original.status === "unsubscribed"
               ? "bg-red-100 text-red-800"
-              : row.status === "blacklisted"
+              : row.original.status === "blacklisted"
               ? "bg-gray-600 text-gray-200"
               : "bg-yellow-100 text-yellow-800"
           }`}
         >
-          {row.status}
+          {row.original.status}
         </span>
       ),
     },
     {
       accessorKey: "date_added",
       header: "Added",
-      cell: (row) => formatDate(row.date_added),
+      cell: ({ row }) => formatDate(row.original.date_added),
     },
     {
       id: "actions",
       header: "Actions",
-      cell: (row) => (
+      cell: ({ row }) => (
         <>
           <button
-            onClick={() => handleEdit(row)}
+            onClick={() => handleEdit(row.original)}
             className="text-blue-400 hover:text-blue-300 mr-4"
           >
             Edit
           </button>
           <button
-            onClick={() => handleDelete(row.subscriber_uid)}
+            onClick={() => handleDelete(row.original.subscriber_uid)}
             className="text-red-400 hover:text-red-300"
           >
             Delete

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
 import DataTable from "@/components/DataTable";
 import {
   Select,
@@ -72,15 +73,66 @@ const UserManagement = () => {
           user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRole = roleFilter === "all" || user?.role === roleFilter;
-        // Remove status filtering since backend does not provide status
-        return matchesSearch && matchesRole;
+        
+        // Filter by isActive status
+        let matchesStatus = true;
+        if (statusFilter === "active") {
+          matchesStatus = user?.isActive !== false;
+        } else if (statusFilter === "inactive") {
+          matchesStatus = user?.isActive === false;
+        }
+        // "all" status shows all users regardless of isActive value
+        
+        return matchesSearch && matchesRole && matchesStatus;
       })
     : [];
 
   const handleCreateUser = async () => {
+    // Validation
+    if (!newUser.username || !newUser.email || !newUser.password || !newUser.role) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUser.email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Password validation
+    if (newUser.password.length < 8) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       console.log("Creating user with data:", newUser); // Debug log
-      await dispatch(createUser(newUser)).unwrap();
+      
+      // Only send basic user data to backend (no permissions object)
+      const userData = {
+        username: newUser.username,
+        email: newUser.email,
+        password: newUser.password,
+        role: newUser.role,
+      };
+
+      await dispatch(createUser(userData)).unwrap();
+      
+      // Reset form on success
       setShowCreateModal(false);
       setNewUser({
         username: "",
@@ -94,8 +146,25 @@ const UserManagement = () => {
           system: { view: false, configure: false, logs: false },
         },
       });
+      
+      // Show success message
+      toast({
+        title: "Success",
+        description: "User created successfully!",
+        variant: "default",
+      });
+      
+      // Refresh users list
+      dispatch(fetchUsers());
     } catch (error) {
       console.error("Failed to create user:", error);
+      
+      // Show specific error message
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred while creating the user",
+        variant: "destructive",
+      });
     }
   };
 
@@ -111,8 +180,18 @@ const UserManagement = () => {
       ).unwrap();
       setShowEditModal(false);
       setSelectedUser(null);
+      toast({
+        title: "Success",
+        description: "User permissions updated successfully!",
+        variant: "default",
+      });
     } catch (error) {
       console.error("Failed to update user:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user permissions",
+        variant: "destructive",
+      });
     }
   };
 
@@ -120,8 +199,18 @@ const UserManagement = () => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         await dispatch(deleteUser(userId)).unwrap();
+        toast({
+          title: "Success",
+          description: "User deleted successfully!",
+          variant: "default",
+        });
       } catch (error) {
         console.error("Failed to delete user:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to delete user",
+          variant: "destructive",
+        });
       }
     }
   };
@@ -157,34 +246,15 @@ const UserManagement = () => {
     );
   };
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      active: { color: "bg-green-100 text-green-800" },
-      inactive: { color: "bg-gray-100 text-gray-800" },
-      suspended: { color: "bg-red-100 text-red-800" },
-      pending: { color: "bg-yellow-100 text-yellow-800" },
-    };
-
-    // Default to 'active' if status is missing
-    const safeStatus = status || "active";
-    const config = statusConfig[safeStatus] || statusConfig.active;
-
-    return (
-      <Badge className={config.color}>
-        {safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1)}
-      </Badge>
-    );
-  };
-
   const userColumns = [
     {
       accessorKey: "name",
       header: "User",
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="font-medium">{row?.original?.name || ""}</span>
-          <span className="text-sm text-gray-500">
-            {row?.original?.email || ""}
+          <span className="font-medium text-white">{row?.original?.name || "No Name"}</span>
+          <span className="text-sm text-gray-400">
+            {row?.original?.email || "No Email"}
           </span>
         </div>
       ),
@@ -192,37 +262,34 @@ const UserManagement = () => {
     {
       accessorKey: "role",
       header: "Role",
-      cell: ({ row }) =>
-        getRoleBadge(
-          row?.getValue ? row.getValue("role") : row?.original?.role
-        ),
+      cell: ({ row }) => getRoleBadge(row?.original?.role),
     },
     {
-      accessorKey: "status",
+      accessorKey: "isActive",
       header: "Status",
-      cell: ({ row }) =>
-        getStatusBadge(
-          (row?.getValue ? row.getValue("status") : row?.original?.status) ||
-            "active"
-        ),
-    },
-    {
-      accessorKey: "assigned_campaigns",
-      header: "Campaigns",
-      cell: ({ row }) => (
-        <Badge variant="outline">
-          {row?.original?.assigned_campaigns?.length || 0} campaigns
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "last_login",
-      header: "Last Login",
       cell: ({ row }) => {
-        const lastLogin = row?.getValue
-          ? row.getValue("last_login")
-          : row?.original?.last_login;
-        return lastLogin ? new Date(lastLogin).toLocaleDateString() : "Never";
+        const isActive = row?.original?.isActive;
+        return (
+          <Badge className={isActive !== false ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+            {isActive !== false ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created",
+      cell: ({ row }) => {
+        const createdAt = row?.original?.createdAt;
+        return createdAt ? new Date(createdAt).toLocaleDateString() : "N/A";
+      },
+    },
+    {
+      accessorKey: "updatedAt", 
+      header: "Last Updated",
+      cell: ({ row }) => {
+        const updatedAt = row?.original?.updatedAt;
+        return updatedAt ? new Date(updatedAt).toLocaleDateString() : "N/A";
       },
     },
     {
@@ -234,20 +301,33 @@ const UserManagement = () => {
             variant="ghost"
             size="sm"
             onClick={() => {
-              setSelectedUser(row.original);
+              setSelectedUser({
+                ...row.original,
+                permissions: {
+                  campaigns: { view: true, create: false, edit: false, delete: false },
+                  analytics: { view: true, export: false, advanced: false },
+                  users: { view: false, create: false, edit: false, delete: false },
+                  system: { view: false, configure: false, logs: false },
+                }
+              });
               setShowEditModal(true);
             }}
+            className="text-blue-400 hover:text-blue-300"
           >
             <Edit className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-gray-300"
+          >
             <Eye className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => handleDeleteUser(row.original.id)}
-            className="text-red-600 hover:text-red-800"
+            className="text-red-400 hover:text-red-300"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -387,18 +467,6 @@ const UserManagement = () => {
                   className="text-white hover:bg-gray-600"
                 >
                   Inactive
-                </SelectItem>
-                <SelectItem
-                  value="suspended"
-                  className="text-white hover:bg-gray-600"
-                >
-                  Suspended
-                </SelectItem>
-                <SelectItem
-                  value="pending"
-                  className="text-white hover:bg-gray-600"
-                >
-                  Pending
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -656,35 +724,7 @@ const UserManagement = () => {
               {/* Actions */}
               <div className="flex space-x-2 justify-end pt-4 border-t border-gray-700">
                 <Button
-                  onClick={async () => {
-                    await handleCreateUser();
-                    setNewUser({
-                      username: "",
-                      email: "",
-                      password: "",
-                      role: "client",
-                      permissions: {
-                        campaigns: {
-                          view: true,
-                          create: false,
-                          edit: false,
-                          delete: false,
-                        },
-                        analytics: {
-                          view: true,
-                          export: false,
-                          advanced: false,
-                        },
-                        users: {
-                          view: false,
-                          create: false,
-                          edit: false,
-                          delete: false,
-                        },
-                        system: { view: false, configure: false, logs: false },
-                      },
-                    });
-                  }}
+                  onClick={handleCreateUser}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-lg py-2"
                   disabled={
                     !newUser?.username?.trim() ||
@@ -730,7 +770,9 @@ const UserManagement = () => {
                   </div>
                   <div className="flex space-x-2">
                     {getRoleBadge(selectedUser.role)}
-                    {getStatusBadge(selectedUser.status || "pending")}
+                    <Badge className={selectedUser.isActive !== false ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                      {selectedUser.isActive !== false ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
                 </div>
               </div>

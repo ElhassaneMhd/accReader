@@ -21,7 +21,7 @@ const pmtaRoutes = require("./routes/pmtaRoutes");
 const pmtaPublicRoutes = require("./routes/pmtaPublicRoutes");
 const userRoutes = require("./routes/userRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
-const adminRoutes = require("./routes/adminRoutes");
+const adminRoute = require("./routes/adminRoute");
 
 const app = express();
 
@@ -161,7 +161,7 @@ app.use("/api/pmta-admin", pmtaRoutes); // Admin-only PMTA routes
 app.use("/api/pmta", pmtaPublicRoutes); // Public PMTA routes (no auth required)
 app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminRoute);
 
 // Root endpoint
 app.get("/", (req, res) => {

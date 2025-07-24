@@ -58,13 +58,13 @@ const DashboardPage = () => {
     return result;
   };
 
-  // Auto-refresh when data changes to ensure UI updates
-  useEffect(() => {
-    // Force a re-render when rawData changes
-    if (rawData.length > 0) {
-      console.log(`Dashboard updated: ${rawData.length} records loaded`);
-    }
-  }, [rawData, lastAutoUpdate]);
+  // // Auto-refresh when data changes to ensure UI updates
+  // useEffect(() => {
+  //   // Force a re-render when rawData changes
+  //   if (rawData.length > 0) {
+  //     console.log(`Dashboard updated: ${rawData.length} records loaded`);
+  //   }
+  // }, [rawData, lastAutoUpdate]);
 
   // Define columns for the DataTable (PMTA/email log fields)
   const columns = [

@@ -168,7 +168,10 @@ const CampaignManagement = () => {
   };
 
   // Helper to get nested field for robustness
-  const getField = (row, keys, fallback = "N/A") => {
+  const getField = (rowData, keys, fallback = "N/A") => {
+    // Extract the actual data from the row structure
+    const row = rowData?.original || rowData;
+    
     for (const key of keys) {
       if (row && row[key] !== undefined && row[key] !== null && row[key] !== "")
         return row[key];
@@ -200,7 +203,7 @@ const CampaignManagement = () => {
     {
       accessorKey: "name",
       header: "Campaign Name",
-      cell: (row) => (
+      cell: ({ row }) => (
         <div className="flex flex-col">
           <span className="font-medium text-gray-100">
             {getField(row, ["name"])}{" "}
@@ -214,7 +217,7 @@ const CampaignManagement = () => {
     {
       accessorKey: "from_name",
       header: "From Name",
-      cell: (row) => (
+      cell: ({ row }) => (
         <span className="text-sm text-gray-300">
           {getField(row, ["from_name"])}{" "}
         </span>
@@ -223,7 +226,7 @@ const CampaignManagement = () => {
     {
       accessorKey: "send_at",
       header: "Send At",
-      cell: (row) => {
+      cell: ({ row }) => {
         const val = getField(row, ["send_at"]);
         return (
           <span className="text-sm text-gray-300">
@@ -235,12 +238,12 @@ const CampaignManagement = () => {
     {
       accessorKey: "status",
       header: "Status",
-      cell: (row) => getStatusBadge(getField(row, ["status"])),
+      cell: ({ row }) => getStatusBadge(getField(row, ["status"])),
     },
     {
       accessorKey: "list_name",
       header: "List",
-      cell: (row) => (
+      cell: ({ row }) => (
         <span className="text-sm text-gray-300">
           {getField(row, ["list_name"])}{" "}
         </span>
@@ -249,8 +252,8 @@ const CampaignManagement = () => {
     {
       accessorKey: "stats",
       header: "Performance",
-      cell: (row) => {
-        const stats = row.stats || {};
+      cell: ({ row }) => {
+        const stats = getField(row, ["stats"]) || {};
         return (
           <div className="flex items-center gap-4 text-sm">
             <span className="flex items-center gap-1 text-blue-400">
@@ -272,22 +275,22 @@ const CampaignManagement = () => {
     {
       accessorKey: "assigned_users_count",
       header: "Assigned Users",
-      cell: (row) => (
+      cell: ({ row }) => (
         <Badge className="text-white" variant="outline">
-          {row.assigned_users_count ?? 0} users
+          {getField(row, ["assigned_users_count"]) ?? 0} users
         </Badge>
       ),
     },
     {
       id: "actions",
       header: "Actions",
-      cell: (row) => (
+      cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              setSelectedCampaign(row);
+              setSelectedCampaign(row.original);
               setShowAssignModal(true);
             }}
             className="text-gray-300 "
@@ -298,7 +301,7 @@ const CampaignManagement = () => {
             variant="ghost"
             size="sm"
             className="text-gray-300 "
-            onClick={() => handleShowDetails(row)}
+            onClick={() => handleShowDetails(row.original)}
           >
             <Eye className="h-4 w-4" />
           </Button>

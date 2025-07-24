@@ -5,6 +5,7 @@ import { selectIsAuthenticated, selectAuth } from "@/store/slices/authSlice";
 
 // Import pages
 import Login from "@/pages/auth/Login";
+import SimpleLogin from "@/components/SimpleLogin";
 import ClientDashboard from "@/pages/mailwizz/ClientDashboard";
 import CampaignManagement from "@/pages/admin/CampaignManagement";
 import UserManagement from "@/pages/admin/UserManagement";
