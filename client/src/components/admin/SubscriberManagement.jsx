@@ -57,12 +57,9 @@ const SubscriberManagement = ({ listId }) => {
   }, [dispatch, listId, page, perPage]);
 
   useEffect(() => {
-    console.log("Subscribers data:", subscribers);
-    console.log("Subscribers length:", subscribers?.length);
   }, [subscribers]);
 
   useEffect(() => {
-    // Reset search and page when listId changes
     setSearchTerm("");
     setPage(1);
   }, [listId]);
@@ -136,7 +133,6 @@ const SubscriberManagement = ({ listId }) => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  // DataTable columns for subscribers
   const subscriberColumns = [
     {
       accessorKey: "email",

@@ -3,9 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated, selectAuth } from "@/store/slices/authSlice";
 
-// Import pages
 import Login from "@/pages/auth/Login";
-import SimpleLogin from "@/components/SimpleLogin";
 import ClientDashboard from "@/pages/mailwizz/ClientDashboard";
 import CampaignManagement from "@/pages/admin/CampaignManagement";
 import UserManagement from "@/pages/admin/UserManagement";
@@ -14,19 +12,15 @@ import Settings from "@/pages/admin/Settings";
 import OverviewPage from "@/pages/admin/OverviewPage";
 import ListSubscribersPage from "@/pages/admin/ListSubscribersPage";
 
-// PowerMTA pages
 import DashboardPage from "@/pages/admin/DashboardPage";
 import PublicUploadPage from "@/pages/PublicUploadPage";
 
-// Context providers
 import { ConnectionProvider } from "@/contexts/ConnectionContext";
 import { EmailDataProvider } from "@/contexts/EmailDataContext";
 
-// Layout components
 import AdminLayout from "@/layouts/AdminLayout";
 import ClientLayout from "@/layouts/ClientLayout";
 
-// Protected Route component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const { user } = useSelector(selectAuth);
@@ -36,7 +30,6 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   if (requiredRole && user?.role !== requiredRole) {
-    // Redirect to appropriate dashboard based on user role
     if (user?.role === "admin") {
       return <Navigate to="/admin/campaigns" replace />;
     } else if (user?.role === "client") {
@@ -49,13 +42,11 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   return children;
 };
 
-// Public Route component (redirects if already authenticated)
 const PublicRoute = ({ children }) => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const { user } = useSelector(selectAuth);
 
   if (isAuthenticated) {
-    // Redirect based on user role
     if (user?.role === "admin") {
       return <Navigate to="/admin/campaigns" replace />;
     } else if (user?.role === "client") {
@@ -69,7 +60,6 @@ const PublicRoute = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* MailWizz Admin/Client Authentication Routes */}
       <Route
         path="/login"
         element={
@@ -79,7 +69,6 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Client Routes */}
       <Route
         path="/dashboard/*"
         element={
@@ -87,14 +76,12 @@ const AppRoutes = () => {
             <ClientLayout>
               <Routes>
                 <Route index element={<ClientDashboard />} />
-                {/* Add more client routes here as needed */}
               </Routes>
             </ClientLayout>
           </ProtectedRoute>
         }
       />
 
-      {/* Admin Routes */}
       <Route
         path="/admin/*"
         element={
@@ -111,14 +98,13 @@ const AppRoutes = () => {
                   element={<ListSubscribersPage />}
                 />
                 <Route
-                  path="settings"
+                  path="settings/*"
                   element={
                     <ConnectionProvider>
                       <Settings />
                     </ConnectionProvider>
                   }
                 />
-                {/* PMTA analytics only inside admin */}
                 <Route
                   path="pmta"
                   element={
@@ -129,16 +115,13 @@ const AppRoutes = () => {
                     </ConnectionProvider>
                   }
                 />
-                {/* Add more admin routes here as needed */}
               </Routes>
             </AdminLayout>
           </ProtectedRoute>
         }
       />
 
-      {/* Default redirect to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
-      {/* Catch all - redirect to login */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

@@ -27,8 +27,6 @@ import {
 } from "@/store/slices/authSlice";
 
 const Login = () => {
-  console.log('Login component rendering...');
-  
   const dispatch = useDispatch();
   const location = useLocation();
 
@@ -43,18 +41,14 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Clear error when component mounts or login type changes
   React.useEffect(() => {
     dispatch(clearError());
   }, [dispatch, loginType]);
 
-  // Redirect if already authenticated
   const from = location.state?.from?.pathname || "/";
   if (isAuthenticated) {
     return <Navigate to={from} replace />;
   }
-
-  // Add error boundary for debugging
   
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -57,34 +57,23 @@ const PublicUploadPage = () => {
     setError(null);
 
     try {
-      console.log("🔄 Processing uploaded file:", file.name);
-
-      // Parse CSV file
       const parsedData = await parseCSVFile(file);
 
       if (!parsedData || parsedData.length === 0) {
         throw new Error("The CSV file appears to be empty or invalid");
       }
 
-      console.log(`✅ Parsed ${parsedData.length} records from CSV`);
-
-      // Set the data
       setData(parsedData);
 
-      // Analyze the data
       const analysisResult = analyzeEmailData(parsedData);
       
-      // Transform analysis to flatten overview properties for StatsCards compatibility
       const flattenedAnalysis = {
         ...analysisResult,
-        ...analysisResult.overview, // Flatten overview properties to top level
+        ...analysisResult.overview,
       };
       
       setAnalysis(flattenedAnalysis);
-
-      console.log("📊 Analysis completed:", flattenedAnalysis);
     } catch (err) {
-      console.error("❌ Error processing file:", err);
       setError(err.message || "Failed to process the CSV file");
       setData([]);
       setAnalysis(null);

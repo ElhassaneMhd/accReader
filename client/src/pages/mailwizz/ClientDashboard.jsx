@@ -18,11 +18,8 @@ const MailWizzDashboard = () => {
   const permissions = useSelector(selectPermissions);
 
   useEffect(() => {
-    // Token verification happens automatically in authSlice
-    // No additional verification needed here
   }, []);
 
-  // Check if user has permission to access MailWizz
   if (!permissions.canAccessMailWizz) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-950">

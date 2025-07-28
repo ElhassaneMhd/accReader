@@ -16,29 +16,21 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import DataTable from "@/components/DataTable";
 import {
-  Users,
   Mail,
   Plus,
   Search,
   Filter,
   UserCheck,
-  UserX,
   Eye,
-  Edit,
-  Trash2,
   Settings,
   ChevronLeft,
   ChevronRight,
-  BarChart2,
   MousePointerClick,
   Send,
 } from "lucide-react";
 import {
   fetchAllCampaignsWithStats,
   assignCampaignToUser,
-  // unassignCampaignFromUser, // Reserved for future use
-  // fetchCampaignDetails, // Reserved for future use
-  // updateUserPermissions, // Reserved for future use
   selectAllCampaigns,
   selectMailwizzLoading,
   selectMailwizzError,
@@ -133,20 +125,6 @@ const CampaignManagement = () => {
     }
   };
 
-  // Function for removing campaign assignments - reserved for future use
-  // const handleRemoveAssignment = async (campaignId, userId) => {
-  //   try {
-  //     await dispatch(
-  //       removeCampaignFromUser({
-  //         campaignId,
-  //         userId,
-  //       })
-  //     ).unwrap();
-  //   } catch (error) {
-  //     console.error("Failed to remove assignment:", error);
-  //   }
-  // };
-
   const getStatusBadge = (status) => {
     const statusConfig = {
       sending: { variant: "default", color: "bg-blue-100 text-blue-800" },
@@ -167,36 +145,66 @@ const CampaignManagement = () => {
     );
   };
 
-  // Helper to get nested field for robustness
-  const getField = (rowData, keys, fallback = "N/A") => {
-    // Extract the actual data from the row structure
-    const row = rowData?.original || rowData;
+  const getField = (rowData, field) => {
+    const data = rowData?.original || rowData;
     
-    for (const key of keys) {
-      if (row && row[key] !== undefined && row[key] !== null && row[key] !== "")
-        return row[key];
-    }
-    if (row.general) {
-      for (const key of keys) {
-        if (
-          row.general[key] !== undefined &&
-          row.general[key] !== null &&
-          row.general[key] !== ""
-        )
-          return row.general[key];
+    if (!data || !field) return "";
+    
+    // If field is an array of possible keys, try each one
+    if (Array.isArray(field)) {
+      for (const key of field) {
+        if (data && data[key] !== undefined && data[key] !== null && data[key] !== "") {
+          return data[key];
+        }
       }
-    }
-    if (row.campaign) {
-      for (const key of keys) {
-        if (
-          row.campaign[key] !== undefined &&
-          row.campaign[key] !== null &&
-          row.campaign[key] !== ""
-        )
-          return row.campaign[key];
+      
+      // Try nested access in common campaign properties
+      if (data.general) {
+        for (const key of field) {
+          if (data.general[key] !== undefined && data.general[key] !== null && data.general[key] !== "") {
+            return data.general[key];
+          }
+        }
       }
+      
+      if (data.campaign) {
+        for (const key of field) {
+          if (data.campaign[key] !== undefined && data.campaign[key] !== null && data.campaign[key] !== "") {
+            return data.campaign[key];
+          }
+        }
+      }
+      
+      if (data.defaults) {
+        for (const key of field) {
+          if (data.defaults[key] !== undefined && data.defaults[key] !== null && data.defaults[key] !== "") {
+            return data.defaults[key];
+          }
+        }
+      }
+      
+      return "";
     }
-    return fallback;
+    
+    // Single field access
+    if (data[field] !== undefined && data[field] !== null && data[field] !== "") {
+      return data[field];
+    }
+    
+    // Try nested properties
+    if (data.general && data.general[field] !== undefined && data.general[field] !== null && data.general[field] !== "") {
+      return data.general[field];
+    }
+    
+    if (data.campaign && data.campaign[field] !== undefined && data.campaign[field] !== null && data.campaign[field] !== "") {
+      return data.campaign[field];
+    }
+    
+    if (data.defaults && data.defaults[field] !== undefined && data.defaults[field] !== null && data.defaults[field] !== "") {
+      return data.defaults[field];
+    }
+    
+    return "";
   };
 
   const campaignColumns = [

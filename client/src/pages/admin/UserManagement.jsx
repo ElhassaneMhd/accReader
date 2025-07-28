@@ -67,27 +67,20 @@ const UserManagement = () => {
     }
   }, [dispatch]);
 
-  const filteredUsers = Array.isArray(users)
-    ? users.filter((user) => {
-        const matchesSearch =
-          user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === "all" || user?.role === roleFilter;
-        
-        // Filter by isActive status
-        let matchesStatus = true;
-        if (statusFilter === "active") {
-          matchesStatus = user?.isActive !== false;
-        } else if (statusFilter === "inactive") {
-          matchesStatus = user?.isActive === false;
-        }
-        // "all" status shows all users regardless of isActive value
-        
-        return matchesSearch && matchesRole && matchesStatus;
-      })
-    : [];
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = searchTerm === "" || 
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const handleCreateUser = async () => {
+    if (statusFilter === "active") {
+      return matchesSearch && user.isActive === true;
+    } else if (statusFilter === "inactive") {
+      return matchesSearch && user.isActive === false;
+    }
+    return matchesSearch;
+  });  const handleCreateUser = async () => {
     // Validation
     if (!newUser.username || !newUser.email || !newUser.password || !newUser.role) {
       toast({
@@ -120,9 +113,6 @@ const UserManagement = () => {
     }
 
     try {
-      console.log("Creating user with data:", newUser); // Debug log
-      
-      // Only send basic user data to backend (no permissions object)
       const userData = {
         username: newUser.username,
         email: newUser.email,

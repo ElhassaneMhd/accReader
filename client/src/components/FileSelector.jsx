@@ -67,7 +67,6 @@ const FileSelector = ({
 
   // Initialize component
   useEffect(() => {
-    console.log("🚀 FileSelector component initialized");
     // Always fetch available files on mount, regardless of auto-import setting
     dispatch(fetchAvailableFiles());
     fetchImportedFiles();
@@ -86,24 +85,31 @@ const FileSelector = ({
 
   // Debug logging
   useEffect(() => {
-    console.log("📊 Current file state:", {
-      availableFiles: availableFiles.length,
-      serverImportedFiles: serverImportedFiles.length,
-      selectedFile,
-      importing,
-      loading,
-    });
-  }, [availableFiles, serverImportedFiles, selectedFile, importing, loading]);
+    fetchImportedFiles();
+  }, []);
 
-  // Handlers
+  const [debugInfo, setDebugInfo] = useState({
+    availableFiles: [],
+    importedFiles: [],
+    selectedFile: null,
+    isConnected: false,
+  });
+
+  useEffect(() => {
+    setDebugInfo({
+      availableFiles: availableFiles?.length || 0,
+      importedFiles: serverImportedFiles?.length || 0,
+      selectedFile,
+      isConnected: true,
+    });
+  }, [availableFiles, serverImportedFiles, selectedFile]);
+
   const fetchImportedFiles = async () => {
     try {
-      console.log("🔄 Fetching imported files from server...");
       const response = await fetch("http://localhost:4000/api/pmta/files");
 
       if (response.ok) {
         const data = await response.json();
-        console.log("📦 Server response:", data);
 
         // Handle different response formats
         let files = [];
@@ -116,37 +122,26 @@ const FileSelector = ({
           files = data.importedFiles || data.files || [];
         }
 
-        console.log("📁 Processed files:", files);
         setServerImportedFiles(files);
       } else {
-        console.warn(
-          "❌ Failed to fetch imported files:",
-          response.status,
-          response.statusText
-        );
         setServerImportedFiles([]);
       }
     } catch (error) {
-      console.error("❌ Error fetching imported files:", error);
       setServerImportedFiles([]);
     }
   };
 
-  const handleFetchFiles = async () => {
+    const handleFetchFiles = async () => {
     try {
-      console.log("🔄 Fetching available files...");
-      await dispatch(fetchAvailableFiles()).unwrap();
-
-      console.log("🔄 Fetching imported files...");
-      await fetchImportedFiles();
-
-      if (onRefreshFiles) {
-        onRefreshFiles();
-      }
-
-      console.log("✅ Files refreshed successfully");
+      setIsLoading(true);
+      await Promise.all([
+        fetch("http://localhost:4000/api/pmta/fetch-files"),
+        fetchImportedFiles(),
+      ]);
     } catch (error) {
-      console.error("❌ Error fetching files:", error);
+      onError?.("Failed to fetch files from server");
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -92,39 +92,6 @@ const Charts = ({ analysis }) => {
     ],
   };
 
-  // VMTA performance chart
-  // VMTA performance data - prepared for future chart implementation
-  // const vmtaNames = Object.values(analysis.vmtaPerformance).map(
-  //   (vmta) => vmta.name
-  // );
-  // const vmtaDeliveryRates = Object.values(analysis.vmtaPerformance).map(
-  //   (vmta) => parseFloat(vmta.deliveryRate)
-  // );
-  // const vmtaBounceRates = Object.values(analysis.vmtaPerformance).map((vmta) =>
-  //   parseFloat(vmta.bounceRate)
-  // );
-
-  // VMTA performance data for future chart implementation
-  // const vmtaData = {
-  //   labels: vmtaNames,
-  //   datasets: [
-  //     {
-  //       label: "Delivery Rate (%)",
-  //       data: vmtaDeliveryRates,
-  //       backgroundColor: "rgba(26, 127, 55, 0.6)",
-  //       borderColor: "#1a7f37",
-  //       borderWidth: 1,
-  //     },
-  //     {
-  //       label: "Bounce Rate (%)",
-  //       data: vmtaBounceRates,
-  //       backgroundColor: "rgba(207, 34, 46, 0.6)",
-  //       borderColor: "#cf222e",
-  //       borderWidth: 1,
-  //     },
-  //   ],
-  // };
-
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
