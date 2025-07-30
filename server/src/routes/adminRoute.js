@@ -10,7 +10,7 @@ const multer = require("multer");
 const { createMailWizzService } = require("../services/mailwizzService");
 const { protect, restrictTo } = require("../middleware/auth");
 const logger = require("../utils/logger");
-const User = require("../models/User");
+const { User } = require("../models/User");
 
 const router = express.Router();
 
@@ -132,7 +132,6 @@ router.get("/mailwizz/campaigns", async (req, res) => {
 router.get("/mailwizz/campaigns-with-stats", async (req, res) => {
   try {
     const { page = 1, per_page = 50, search = "", status = "" } = req.query;
-
 
     const mailwizzService = createMailWizzService(
       process.env.MAILWIZZ_API_URL,
@@ -1033,7 +1032,8 @@ router.put(
 
 // Delete subscriber from list
 router.delete(
-  "/mailwizz/lists/:listUid/subscribers/:subscriberUid",async (req, res) => {
+  "/mailwizz/lists/:listUid/subscribers/:subscriberUid",
+  async (req, res) => {
     try {
       const { listUid, subscriberUid } = req.params;
 

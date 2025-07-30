@@ -4,6 +4,7 @@ require("dotenv").config();
 const app = require("./src/app");
 const config = require("./src/config/database");
 const logger = require("./src/utils/logger");
+const setupDatabase = require("./src/config/setup-database.cjs");
 
 const PORT = process.env.PORT || 4000;
 
@@ -14,9 +15,9 @@ const startServer = async () => {
     await config.authenticate();
     logger.info("Database connection established successfully");
 
-    // Sync database models (create tables if they don't exist)
-    await config.sync({ alter: true });
-    logger.info("Database synchronized");
+    // Setup database with system configuration
+    await setupDatabase();
+    logger.info("Database setup completed");
 
     // Start the server
     const server = app.listen(PORT, () => {

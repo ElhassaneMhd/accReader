@@ -1,5 +1,5 @@
 const express = require('express');
-const User = require('../models/User');
+const { User } = require('../models/User');
 const { AppError } = require('../middleware/errorHandler');
 const { protect, restrictTo } = require('../middleware/auth');
 const logger = require('../utils/logger');

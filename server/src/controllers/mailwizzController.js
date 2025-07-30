@@ -1,18 +1,61 @@
-const { createMailWizzService } = require('../services/mailwizzService');
-const { AppError } = require('../middleware/errorHandler');
-const logger = require('../utils/logger');
+const { createMailWizzService } = require("../services/mailwizzService");
+const { AppError } = require("../middleware/errorHandler");
+const logger = require("../utils/logger");
+const { SystemConfig } = require("../models/User");
+const crypto = require("crypto");
 
-// Helper function to get MailWizz service instance for user
-const getMailWizzServiceForUser = (user) => {
-  if (!user.mailwizzApiKey) {
-    throw new AppError('MailWizz API key not configured for this user', 400);
+// Encryption key for sensitive data (should be stored in environment)
+const ENCRYPTION_KEY =
+  process.env.ENCRYPTION_KEY || "your-32-character-secret-key-here";
+
+// Helper function to decrypt sensitive data
+const decrypt = (text) => {
+  const textParts = text.split(":");
+  const iv = Buffer.from(textParts.shift(), "hex");
+  const encryptedText = textParts.join(":");
+  const decipher = crypto.createDecipher("aes-256-cbc", ENCRYPTION_KEY);
+  let decrypted = decipher.update(encryptedText, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+};
+
+// Helper function to get system configuration
+const getSystemConfig = async (key) => {
+  const config = await SystemConfig.findOne({ where: { key } });
+  if (!config) return null;
+
+  if (config.isEncrypted && config.value) {
+    try {
+      return decrypt(config.value);
+    } catch (error) {
+      logger.error("Error decrypting config value:", error);
+      return null;
+    }
   }
 
-  const apiUrl = process.env.MAILWIZZ_API_URL;
-  const publicKey = process.env.MAILWIZZ_PUBLIC_KEY;
-  
+  return config.value;
+};
+
+// Helper function to get MailWizz service instance for user
+const getMailWizzServiceForUser = async (user) => {
+  if (!user.mailwizzApiKey) {
+    throw new AppError("MailWizz API key not configured for this user", 400);
+  }
+
+  // Try to get configuration from database first
+  let apiUrl = await getSystemConfig("MAILWIZZ_API_URL");
+  let publicKey = await getSystemConfig("MAILWIZZ_PUBLIC_KEY");
+
+  // Fallback to environment variables if not found in database
+  if (!apiUrl) {
+    apiUrl = process.env.MAILWIZZ_API_URL;
+  }
+  if (!publicKey) {
+    publicKey = process.env.MAILWIZZ_PUBLIC_KEY;
+  }
+
   if (!apiUrl || !publicKey) {
-    throw new AppError('MailWizz API configuration missing', 500);
+    throw new AppError("MailWizz API configuration missing", 500);
   }
 
   return createMailWizzService(apiUrl, publicKey, user.mailwizzApiKey);
@@ -90,18 +133,18 @@ const getMailWizzServiceForUser = (user) => {
  */
 const getAllCampaigns = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
     const campaigns = await mailwizzService.getAllCampaigns(page, perPage);
 
     res.status(200).json({
-      status: 'success',
-      data: campaigns
+      status: "success",
+      data: campaigns,
     });
   } catch (error) {
-    logger.error('getAllCampaigns error:', error);
+    logger.error("getAllCampaigns error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -136,15 +179,15 @@ const getAllCampaigns = async (req, res, next) => {
  */
 const getCampaign = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const campaign = await mailwizzService.getCampaign(req.params.id);
 
     res.status(200).json({
-      status: 'success',
-      data: campaign
+      status: "success",
+      data: campaign,
     });
   } catch (error) {
-    logger.error('getCampaign error:', error);
+    logger.error("getCampaign error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -190,15 +233,15 @@ const getCampaign = async (req, res, next) => {
  */
 const createCampaign = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const campaign = await mailwizzService.createCampaign(req.body);
 
     res.status(201).json({
-      status: 'success',
-      data: campaign
+      status: "success",
+      data: campaign,
     });
   } catch (error) {
-    logger.error('createCampaign error:', error);
+    logger.error("createCampaign error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -224,15 +267,15 @@ const createCampaign = async (req, res, next) => {
  */
 const getCampaignStats = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const stats = await mailwizzService.getCampaignStats(req.params.id);
 
     res.status(200).json({
-      status: 'success',
-      data: stats
+      status: "success",
+      data: stats,
     });
   } catch (error) {
-    logger.error('getCampaignStats error:', error);
+    logger.error("getCampaignStats error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -262,18 +305,18 @@ const getCampaignStats = async (req, res, next) => {
  */
 const getAllLists = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
     const lists = await mailwizzService.getAllLists(page, perPage);
 
     res.status(200).json({
-      status: 'success',
-      data: lists
+      status: "success",
+      data: lists,
     });
   } catch (error) {
-    logger.error('getAllLists error:', error);
+    logger.error("getAllLists error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -298,15 +341,15 @@ const getAllLists = async (req, res, next) => {
  */
 const getList = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const list = await mailwizzService.getList(req.params.id);
 
     res.status(200).json({
-      status: 'success',
-      data: list
+      status: "success",
+      data: list,
     });
   } catch (error) {
-    logger.error('getList error:', error);
+    logger.error("getList error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -341,18 +384,22 @@ const getList = async (req, res, next) => {
  */
 const getListSubscribers = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
-    const subscribers = await mailwizzService.getListSubscribers(req.params.id, page, perPage);
+    const subscribers = await mailwizzService.getListSubscribers(
+      req.params.id,
+      page,
+      perPage
+    );
 
     res.status(200).json({
-      status: 'success',
-      data: subscribers
+      status: "success",
+      data: subscribers,
     });
   } catch (error) {
-    logger.error('getListSubscribers error:', error);
+    logger.error("getListSubscribers error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -382,18 +429,18 @@ const getListSubscribers = async (req, res, next) => {
  */
 const getAllTemplates = async (req, res, next) => {
   try {
-    const mailwizzService = getMailWizzServiceForUser(req.user);
+    const mailwizzService = await getMailWizzServiceForUser(req.user);
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
     const templates = await mailwizzService.getAllTemplates(page, perPage);
 
     res.status(200).json({
-      status: 'success',
-      data: templates
+      status: "success",
+      data: templates,
     });
   } catch (error) {
-    logger.error('getAllTemplates error:', error);
+    logger.error("getAllTemplates error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -406,5 +453,5 @@ module.exports = {
   getAllLists,
   getList,
   getListSubscribers,
-  getAllTemplates
+  getAllTemplates,
 };
