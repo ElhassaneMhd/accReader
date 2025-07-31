@@ -363,7 +363,8 @@ const Settings = () => {
     <div className="min-h-screen w-full flex flex-col items-center bg-gray-950 p-4 m-0">
       <main className="w-full flex flex-col p-10 bg-gray-900 rounded-2xl shadow-2xl mb-12">
         <Routes>
-          <Route index element={<Navigate to="ssh" replace />} />
+          <Route index element={<Navigate to="general" replace />} />
+          <Route path="general" element={<GeneralSettings />} />
           <Route
             path="ssh"
             element={
@@ -389,7 +390,6 @@ const Settings = () => {
               </section>
             }
           />
-          <Route path="general" element={<GeneralSettings />} />
           <Route
             path="notifications"
             element={

@@ -178,29 +178,37 @@ export const searchData = (data, searchTerm, searchType = "recipient") => {
   });
 };
 
+// Helper to get user-friendly status (copied from DashboardPage)
+function getFinalStatus(row) {
+  const action = row.dsnAction || "";
+  const status = row.dsnStatus || "";
+  const diag = row.dsnDiag || "";
+  if (/relayed/i.test(action) && /2\.0\.0|2\.6\.0|2\.1\.5|success/i.test(status)) return "Delivered";
+  if (/failed|failure|bounced|rejected|denied|deferred|error/i.test(action)) return "Failed";
+  if (/queued/i.test(diag)) return "Queued";
+  if (/delayed/i.test(action)) return "Delayed";
+  if (/expanded/i.test(action)) return "Expanded";
+  return action.charAt(0).toUpperCase() + action.slice(1);
+}
+
 export const filterData = (data, filters) => {
   if (!data || !filters) return data;
 
   return data.filter((row) => {
     // Date range filter
     if (filters.dateRange && filters.dateRange.start && filters.dateRange.end) {
-      // Handle both timeLoggedParsed (from CSV parser) and timeLogged (from API)
       let timeValue = row.timeLoggedParsed || row.timeLogged;
       if (!timeValue) return false;
-
-      // Parse the time if it's a string
-      const date =
-        typeof timeValue === "string" ? new Date(timeValue) : timeValue;
-      if (isNaN(date.getTime())) return false; // Skip invalid dates
-
+      const date = typeof timeValue === "string" ? new Date(timeValue) : timeValue;
+      if (isNaN(date.getTime())) return false;
       if (date < filters.dateRange.start || date > filters.dateRange.end) {
         return false;
       }
     }
 
-    // Status filter
+    // Status filter (use user-friendly status)
     if (filters.status && filters.status !== "all") {
-      if (row.dsnAction !== filters.status) return false;
+      if (getFinalStatus(row) !== filters.status) return false;
     }
 
     // VMTA filter

@@ -1,4 +1,11 @@
 import React, { useState } from "react";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/Select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -68,19 +75,21 @@ const SearchAndFilters = ({
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Search Type
               </label>
-              <select
+              <Select
                 value={searchType}
-                onChange={(e) =>
-                  onSearchChange(localSearchTerm, e.target.value)
-                }
-                className="w-full bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                onValueChange={(value) => onSearchChange(localSearchTerm, value)}
               >
-                <option value="recipient">Recipient</option>
-                <option value="sender">Sender</option>
-                <option value="diagnostic">Diagnostic</option>
-                <option value="vmta">VMTA</option>
-                <option value="all">All Fields</option>
-              </select>
+                <SelectTrigger className="w-full bg-gray-800 border border-gray-600 rounded-md px-2 pl-3 py-2 text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue placeholder="Select search type" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700 text-gray-100">
+                  <SelectItem value="recipient">Recipient</SelectItem>
+                  <SelectItem value="sender">Sender</SelectItem>
+                  <SelectItem value="diagnostic">Diagnostic</SelectItem>
+                  <SelectItem value="vmta">VMTA</SelectItem>
+                  <SelectItem value="all">All Fields</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="md:col-span-7">
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -120,62 +129,70 @@ const SearchAndFilters = ({
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Status
             </label>
-            <select
-              value={filters.status}
-              onChange={(e) => handleFilterChange("status", e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Status</option>
-              <option value="relayed">Delivered (Relayed)</option>
-              <option value="delivered">Delivered</option>
-              <option value="failed">Failed</option>
-              <option value="bounced">Bounced</option>
-              <option value="delayed">Delayed</option>
-              <option value="deferred">Deferred</option>
-              {filterOptions.statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <Select
+                value={filters.status}
+                onValueChange={(value) => handleFilterChange("status", value)}
+              >
+                <SelectTrigger className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 pr-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150 shadow-sm hover:border-blue-400">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700 text-gray-100">
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="Delivered">Delivered</SelectItem>
+                  <SelectItem value="Failed">Failed</SelectItem>
+                  <SelectItem value="Queued">Queued</SelectItem>
+                  <SelectItem value="Delayed">Delayed</SelectItem>
+                  <SelectItem value="Expanded">Expanded</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               VMTA
             </label>
-            <select
-              value={filters.vmta}
-              onChange={(e) => handleFilterChange("vmta", e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All VMTAs</option>
-              {filterOptions.vmtas.map((vmta) => (
-                <option key={vmta} value={vmta}>
-                  {vmta}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <Select
+                value={filters.vmta}
+                onValueChange={(value) => handleFilterChange("vmta", value)}
+              >
+                <SelectTrigger className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 pr-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150 shadow-sm hover:border-blue-400">
+                  <SelectValue placeholder="All VMTAs" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700 text-gray-100">
+                  <SelectItem value="all">All VMTAs</SelectItem>
+                  {filterOptions.vmtas.map((vmta) => (
+                    <SelectItem key={vmta} value={vmta}>{vmta}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Bounce Category
             </label>
-            <select
-              value={filters.bounceCategory}
-              onChange={(e) =>
-                handleFilterChange("bounceCategory", e.target.value)
-              }
-              className="w-full bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Categories</option>
-              {filterOptions.bounceCategories.map((category) => (
-                <option key={category} value={category}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <Select
+                value={filters.bounceCategory}
+                onValueChange={(value) => handleFilterChange("bounceCategory", value)}
+              >
+                <SelectTrigger className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 pr-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150 shadow-sm hover:border-blue-400">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700 text-gray-100">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {filterOptions.bounceCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex items-end">

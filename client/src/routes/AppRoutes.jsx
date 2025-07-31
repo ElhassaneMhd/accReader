@@ -106,7 +106,7 @@ const AppRoutes = () => {
                   }
                 />
                 <Route
-                  path="pmta"
+                  path="analytics"
                   element={
                     <ConnectionProvider>
                       <EmailDataProvider>

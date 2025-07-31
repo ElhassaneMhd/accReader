@@ -33,13 +33,12 @@ const AdminLayout = ({ children }) => {
     { name: "Lists", href: "/admin/lists", icon: List },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-    { name: "PMTA Dashboard", href: "/admin/pmta", icon: Database },
   ];
 
   const settingsSubmenu = [
-    { name: "SSH Connection", href: "/admin/settings?tab=ssh" },
-    { name: "General", href: "/admin/settings?tab=general" },
-    { name: "Notifications", href: "/admin/settings?tab=notifications" },
+    { name: "General", href: "/admin/settings/general" },
+    { name: "SSH Connection", href: "/admin/settings/ssh" },
+    { name: "Notifications", href: "/admin/settings/notifications" },
   ];
 
   const handleLogout = () => {
@@ -165,9 +164,7 @@ const AdminLayout = ({ children }) => {
                           to={sub.href}
                           className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
                             ${
-                              location.search.includes(
-                                `tab=${sub.href.split("=")[1]}`
-                              )
+                              location.pathname === sub.href
                                 ? "bg-gray-700 text-white"
                                 : "text-gray-300 hover:text-white hover:bg-gray-700"
                             }
