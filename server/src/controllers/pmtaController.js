@@ -1,8 +1,8 @@
-const PMTAService = require('../services/pmtaService');
-const PMTASSHImportService = require('../services/pmtaSSHImportService');
-const { AppError } = require('../middleware/errorHandler');
-const logger = require('../utils/logger');
-const path = require('path');
+const PMTAService = require("../services/pmtaService");
+const PMTASSHImportService = require("../services/pmtaSSHImportService");
+const { AppError } = require("../middleware/errorHandler");
+const logger = require("../utils/logger");
+const path = require("path");
 
 const pmtaService = new PMTAService();
 const pmtaSSHService = new PMTASSHImportService();
@@ -77,40 +77,42 @@ const pmtaSSHService = new PMTASSHImportService();
 const uploadPMTALog = async (req, res, next) => {
   try {
     if (!req.file) {
-      return next(new AppError('No file uploaded', 400));
+      return next(new AppError("No file uploaded", 400));
     }
 
     // Validate file format
-    pmtaService.validateFileFormat(req.file.filename, 'pmta_log');
+    pmtaService.validateFileFormat(req.file.filename, "pmta_log");
 
     // Parse the PMTA log file
     const result = await pmtaService.parsePMTALog(req.file.path);
-    
+
     // Generate statistics
-    const statistics = pmtaService.generateStatistics(result.data, 'pmta_log');
+    const statistics = pmtaService.generateStatistics(result.data, "pmta_log");
 
     // Clean up the uploaded file
     await pmtaService.cleanupFile(req.file.path);
 
-    logger.info(`PMTA log processed: ${req.file.filename} - ${result.data.length} records`);
+    logger.info(
+      `PMTA log processed: ${req.file.filename} - ${result.data.length} records`
+    );
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         filename: req.file.filename,
         totalRecords: result.data.length,
         errors: result.errors,
         statistics,
-        processedData: result.data.slice(0, 100) // Return first 100 records as sample
-      }
+        processedData: result.data.slice(0, 100), // Return first 100 records as sample
+      },
     });
   } catch (error) {
     // Clean up file in case of error
     if (req.file) {
       await pmtaService.cleanupFile(req.file.path);
     }
-    
-    logger.error('uploadPMTALog error:', error);
+
+    logger.error("uploadPMTALog error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -145,40 +147,45 @@ const uploadPMTALog = async (req, res, next) => {
 const uploadAccountingFile = async (req, res, next) => {
   try {
     if (!req.file) {
-      return next(new AppError('No file uploaded', 400));
+      return next(new AppError("No file uploaded", 400));
     }
 
     // Validate file format
-    pmtaService.validateFileFormat(req.file.filename, 'accounting');
+    pmtaService.validateFileFormat(req.file.filename, "accounting");
 
     // Parse the accounting file
     const result = await pmtaService.parseAccountingFile(req.file.path);
-    
+
     // Generate statistics
-    const statistics = pmtaService.generateStatistics(result.data, 'accounting');
+    const statistics = pmtaService.generateStatistics(
+      result.data,
+      "accounting"
+    );
 
     // Clean up the uploaded file
     await pmtaService.cleanupFile(req.file.path);
 
-    logger.info(`Accounting file processed: ${req.file.filename} - ${result.data.length} records`);
+    logger.info(
+      `Accounting file processed: ${req.file.filename} - ${result.data.length} records`
+    );
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         filename: req.file.filename,
         totalRecords: result.data.length,
         errors: result.errors,
         statistics,
-        processedData: result.data.slice(0, 100) // Return first 100 records as sample
-      }
+        processedData: result.data.slice(0, 100), // Return first 100 records as sample
+      },
     });
   } catch (error) {
     // Clean up file in case of error
     if (req.file) {
       await pmtaService.cleanupFile(req.file.path);
     }
-    
-    logger.error('uploadAccountingFile error:', error);
+
+    logger.error("uploadAccountingFile error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -213,40 +220,42 @@ const uploadAccountingFile = async (req, res, next) => {
 const uploadBounceFile = async (req, res, next) => {
   try {
     if (!req.file) {
-      return next(new AppError('No file uploaded', 400));
+      return next(new AppError("No file uploaded", 400));
     }
 
     // Validate file format
-    pmtaService.validateFileFormat(req.file.filename, 'bounces');
+    pmtaService.validateFileFormat(req.file.filename, "bounces");
 
     // Parse the bounce file
     const result = await pmtaService.processBounceFile(req.file.path);
-    
+
     // Generate statistics
-    const statistics = pmtaService.generateStatistics(result.data, 'bounces');
+    const statistics = pmtaService.generateStatistics(result.data, "bounces");
 
     // Clean up the uploaded file
     await pmtaService.cleanupFile(req.file.path);
 
-    logger.info(`Bounce file processed: ${req.file.filename} - ${result.data.length} records`);
+    logger.info(
+      `Bounce file processed: ${req.file.filename} - ${result.data.length} records`
+    );
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         filename: req.file.filename,
         totalRecords: result.data.length,
         errors: result.errors,
         statistics,
-        processedData: result.data.slice(0, 100) // Return first 100 records as sample
-      }
+        processedData: result.data.slice(0, 100), // Return first 100 records as sample
+      },
     });
   } catch (error) {
     // Clean up file in case of error
     if (req.file) {
       await pmtaService.cleanupFile(req.file.path);
     }
-    
-    logger.error('uploadBounceFile error:', error);
+
+    logger.error("uploadBounceFile error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -291,24 +300,29 @@ const analyzeData = async (req, res, next) => {
     const { data, analysisType } = req.body;
 
     if (!data || !Array.isArray(data)) {
-      return next(new AppError('Invalid data provided for analysis', 400));
+      return next(new AppError("Invalid data provided for analysis", 400));
     }
 
-    if (!analysisType || !['pmta_log', 'accounting', 'bounces'].includes(analysisType)) {
-      return next(new AppError('Invalid analysis type', 400));
+    if (
+      !analysisType ||
+      !["pmta_log", "accounting", "bounces"].includes(analysisType)
+    ) {
+      return next(new AppError("Invalid analysis type", 400));
     }
 
     // Generate comprehensive statistics
     const statistics = pmtaService.generateStatistics(data, analysisType);
 
-    logger.info(`Data analysis completed for ${data.length} records of type ${analysisType}`);
+    logger.info(
+      `Data analysis completed for ${data.length} records of type ${analysisType}`
+    );
 
     res.status(200).json({
-      status: 'success',
-      data: statistics
+      status: "success",
+      data: statistics,
     });
   } catch (error) {
-    logger.error('analyzeData error:', error);
+    logger.error("analyzeData error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -337,11 +351,11 @@ const analyzeData = async (req, res, next) => {
  */
 const healthCheck = (req, res) => {
   res.status(200).json({
-    status: 'success',
-    service: 'PMTA Processing Service',
+    status: "success",
+    service: "PMTA Processing Service",
     timestamp: new Date().toISOString(),
-    supportedFormats: ['CSV', 'TXT', 'LOG'],
-    maxFileSize: '50MB'
+    supportedFormats: ["CSV", "TXT", "LOG"],
+    maxFileSize: "50MB",
   });
 };
 
@@ -381,25 +395,25 @@ const connectSSH = async (req, res, next) => {
     }
 
     const connected = await pmtaSSHService.connectToServer();
-    
+
     if (connected) {
       // Load existing files after connection
       await pmtaSSHService.loadExistingImportedFiles();
-      
+
       res.status(200).json({
-        status: 'success',
-        message: 'Connected to PMTA server successfully',
-        data: pmtaSSHService.getStatus()
+        status: "success",
+        message: "Connected to PMTA server successfully",
+        data: pmtaSSHService.getStatus(),
       });
     } else {
       res.status(500).json({
-        status: 'error',
-        message: 'Failed to connect to PMTA server',
-        data: pmtaSSHService.getStatus()
+        status: "error",
+        message: "Failed to connect to PMTA server",
+        data: pmtaSSHService.getStatus(),
       });
     }
   } catch (error) {
-    logger.error('SSH connect error:', error);
+    logger.error("SSH connect error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -419,14 +433,14 @@ const connectSSH = async (req, res, next) => {
 const disconnectSSH = async (req, res, next) => {
   try {
     const disconnected = await pmtaSSHService.disconnect();
-    
+
     res.status(200).json({
-      status: 'success',
-      message: 'Disconnected from PMTA server',
-      disconnected
+      status: "success",
+      message: "Disconnected from PMTA server",
+      disconnected,
     });
   } catch (error) {
-    logger.error('SSH disconnect error:', error);
+    logger.error("SSH disconnect error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -446,8 +460,8 @@ const disconnectSSH = async (req, res, next) => {
 const getSSHStatus = (req, res) => {
   const status = pmtaSSHService.getStatus();
   res.status(200).json({
-    status: 'success',
-    data: status
+    status: "success",
+    data: status,
   });
 };
 
@@ -476,16 +490,16 @@ const getSSHStatus = (req, res) => {
 const importFiles = async (req, res, next) => {
   try {
     const { importAll = false } = req.body;
-    
+
     const result = await pmtaSSHService.importFiles(importAll);
-    
+
     res.status(200).json({
-      status: 'success',
-      message: 'Import completed',
-      data: result
+      status: "success",
+      message: "Import completed",
+      data: result,
     });
   } catch (error) {
-    logger.error('SSH import error:', error);
+    logger.error("SSH import error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -505,21 +519,21 @@ const importFiles = async (req, res, next) => {
 const getFiles = async (req, res, next) => {
   try {
     const data = pmtaSSHService.getData();
-    
+
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         ...data,
         availableFiles: pmtaSSHService.availableFiles,
-        importedFiles: pmtaSSHService.importedFiles.map(f => ({
+        importedFiles: pmtaSSHService.importedFiles.map((f) => ({
           filename: f.filename,
           recordCount: f.recordCount,
-          importTime: f.importTime
-        }))
-      }
+          importTime: f.importTime,
+        })),
+      },
     });
   } catch (error) {
-    logger.error('Get files error:', error);
+    logger.error("Get files error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -554,15 +568,15 @@ const getFiles = async (req, res, next) => {
  */
 const getData = (req, res) => {
   try {
-    const { file = 'all', limit, offset } = req.query;
-    
+    const { file = "all", limit, offset } = req.query;
+
     // Update selected file if provided
     if (file !== pmtaSSHService.selectedFile) {
       pmtaSSHService.selectedFile = file;
     }
-    
+
     let data = pmtaSSHService.getData();
-    
+
     // Apply pagination if provided
     if (limit || offset) {
       const startIndex = parseInt(offset) || 0;
@@ -571,19 +585,19 @@ const getData = (req, res) => {
       data.pagination = {
         offset: startIndex,
         limit: parseInt(limit) || data.data.length,
-        total: data.totalRecords
+        total: data.totalRecords,
       };
     }
-    
+
     res.status(200).json({
-      status: 'success',
-      data
+      status: "success",
+      data,
     });
   } catch (error) {
-    logger.error('Get data error:', error);
+    logger.error("Get data error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 };
@@ -613,20 +627,20 @@ const getData = (req, res) => {
 const importSpecificFile = async (req, res, next) => {
   try {
     const { filename } = req.body;
-    
+
     if (!filename) {
-      return next(new AppError('Filename is required', 400));
+      return next(new AppError("Filename is required", 400));
     }
-    
+
     const result = await pmtaSSHService.importSpecificFile(filename);
-    
+
     res.status(200).json({
-      status: 'success',
+      status: "success",
       message: result.message,
-      data: result
+      data: result,
     });
   } catch (error) {
-    logger.error('Import specific file error:', error);
+    logger.error("Import specific file error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -656,20 +670,20 @@ const importSpecificFile = async (req, res, next) => {
 const deleteImportedFile = async (req, res, next) => {
   try {
     const { filename } = req.body;
-    
+
     if (!filename) {
-      return next(new AppError('Filename is required', 400));
+      return next(new AppError("Filename is required", 400));
     }
-    
+
     const result = await pmtaSSHService.deleteImportedFile(filename);
-    
+
     res.status(200).json({
-      status: 'success',
+      status: "success",
       message: result.message,
-      data: result
+      data: result,
     });
   } catch (error) {
-    logger.error('Delete file error:', error);
+    logger.error("Delete file error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -699,20 +713,20 @@ const deleteImportedFile = async (req, res, next) => {
 const togglePeriodicImport = async (req, res, next) => {
   try {
     const { enabled } = req.body;
-    
+
     if (enabled) {
       await pmtaSSHService.startPeriodicImport();
     } else {
       pmtaSSHService.stopPeriodicImport();
     }
-    
+
     res.status(200).json({
-      status: 'success',
-      message: `Periodic import ${enabled ? 'started' : 'stopped'}`,
-      data: pmtaSSHService.getStatus()
+      status: "success",
+      message: `Periodic import ${enabled ? "started" : "stopped"}`,
+      data: pmtaSSHService.getStatus(),
     });
   } catch (error) {
-    logger.error('Toggle periodic import error:', error);
+    logger.error("Toggle periodic import error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -734,20 +748,20 @@ const togglePeriodicImport = async (req, res, next) => {
 const getImportStatus = (req, res) => {
   try {
     const status = pmtaSSHService.getStatus();
-    
+
     // Transform to match frontend expectations
     const compatibilityStatus = {
       ...status,
-      isConnected: status.status === 'connected',
-      note: "Files are downloaded and kept for management. Use delete controls to remove when needed."
+      isConnected: status.status === "connected",
+      note: "Files are downloaded and kept for management. Use delete controls to remove when needed.",
     };
-    
+
     res.status(200).json(compatibilityStatus);
   } catch (error) {
-    logger.error('Get import status error:', error);
+    logger.error("Get import status error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 };
@@ -766,21 +780,36 @@ const getImportStatus = (req, res) => {
  */
 const getLatestData = (req, res) => {
   try {
+    // Force reload data if requested
+    const forceReload = req.query.forceReload === "true";
+
+    if (forceReload) {
+      logger.info("Force reload requested for latest data");
+      pmtaSSHService
+        .forceReloadData()
+        .then(() => {
+          logger.info("Force reload completed");
+        })
+        .catch((err) => {
+          logger.error("Force reload failed:", err);
+        });
+    }
+
     const data = pmtaSSHService.getData();
-    
+
     // Transform to match frontend expectations
     const response = {
       ...data,
       lastUpdate: pmtaSSHService.lastDataUpdate,
-      source: 'downloaded_files_processed'
+      source: "downloaded_files_processed",
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
-    logger.error('Get latest data error:', error);
+    logger.error("Get latest data error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 };
@@ -800,21 +829,21 @@ const getLatestData = (req, res) => {
 const getConnectionStatus = (req, res) => {
   try {
     const status = pmtaSSHService.getStatus();
-    
+
     // Transform to match frontend expectations
     const connectionStatus = {
-      isConnected: status.status === 'connected',
+      isConnected: status.status === "connected",
       connectionHealth: status.connectionHealth,
       status: status.status,
-      lastError: status.lastError
+      lastError: status.lastError,
     };
-    
+
     res.status(200).json(connectionStatus);
   } catch (error) {
-    logger.error('Get connection status error:', error);
+    logger.error("Get connection status error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 };
@@ -836,23 +865,23 @@ const getAvailableFiles = async (req, res, next) => {
     if (!pmtaSSHService.isConnected) {
       return res.status(200).json({
         files: [],
-        message: 'Not connected to server'
+        message: "Not connected to server",
       });
     }
-    
+
     const remoteFiles = await pmtaSSHService.listRemoteFiles();
-    
-    const availableFiles = remoteFiles.map(filePath => ({
-      filename: require('path').basename(filePath),
+
+    const availableFiles = remoteFiles.map((filePath) => ({
+      filename: require("path").basename(filePath),
       fullPath: filePath,
-      available: true
+      available: true,
     }));
-    
+
     res.status(200).json({
-      files: availableFiles
+      files: availableFiles,
     });
   } catch (error) {
-    logger.error('Get available files error:', error);
+    logger.error("Get available files error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -883,33 +912,54 @@ const getAvailableFiles = async (req, res, next) => {
  */
 const importFilesCompatibility = async (req, res, next) => {
   try {
-    const { files, importAllFiles = false } = req.body;
-    
+    const { files, importAllFiles = false, filename } = req.body;
+
+    logger.info(`Import request received:`, {
+      files,
+      importAllFiles,
+      filename,
+    });
+
+    // Handle single filename parameter (frontend compatibility)
+    if (filename) {
+      logger.info(`Importing specific file: ${filename}`);
+      const result = await pmtaSSHService.importSpecificFile(filename);
+
+      logger.info(`Import result for ${filename}:`, result);
+
+      res.status(200).json({
+        success: result.success,
+        message: result.message || `Imported ${filename}`,
+        data: result,
+      });
+      return;
+    }
+
     if (files && files.length > 0) {
       // Import specific files
       const results = [];
-      for (const filename of files) {
-        const result = await pmtaSSHService.importSpecificFile(filename);
+      for (const file of files) {
+        const result = await pmtaSSHService.importSpecificFile(file);
         results.push(result);
       }
-      
+
       res.status(200).json({
         success: true,
         message: `Imported ${files.length} files`,
-        results
+        results,
       });
     } else {
       // Import all or latest
       const result = await pmtaSSHService.importFiles(importAllFiles);
-      
+
       res.status(200).json({
         success: result.success,
-        message: 'Import completed',
-        data: result
+        message: "Import completed",
+        data: result,
       });
     }
   } catch (error) {
-    logger.error('Import files compatibility error:', error);
+    logger.error("Import files compatibility error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -929,14 +979,14 @@ const importFilesCompatibility = async (req, res, next) => {
 const importLatestOnly = async (req, res, next) => {
   try {
     const result = await pmtaSSHService.importFiles(false); // Import only latest
-    
+
     res.status(200).json({
       success: result.success,
-      message: 'Latest file imported',
-      data: result
+      message: "Latest file imported",
+      data: result,
     });
   } catch (error) {
-    logger.error('Import latest only error:', error);
+    logger.error("Import latest only error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -964,19 +1014,19 @@ const importLatestOnly = async (req, res, next) => {
 const selectFile = (req, res) => {
   try {
     const { filename } = req.body;
-    
-    pmtaSSHService.selectedFile = filename || 'all';
-    
+
+    pmtaSSHService.selectedFile = filename || "all";
+
     res.status(200).json({
       success: true,
       message: `Selected file: ${pmtaSSHService.selectedFile}`,
-      selectedFile: pmtaSSHService.selectedFile
+      selectedFile: pmtaSSHService.selectedFile,
     });
   } catch (error) {
-    logger.error('Select file error:', error);
+    logger.error("Select file error:", error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -1002,16 +1052,16 @@ const selectFile = (req, res) => {
 const deleteFileCompatibility = async (req, res, next) => {
   try {
     const { filename } = req.params;
-    
+
     const result = await pmtaSSHService.deleteImportedFile(filename);
-    
+
     res.status(200).json({
       success: true,
       message: result.message,
-      data: result
+      data: result,
     });
   } catch (error) {
-    logger.error('Delete file compatibility error:', error);
+    logger.error("Delete file compatibility error:", error);
     return next(new AppError(error.message, 500));
   }
 };
@@ -1030,26 +1080,26 @@ const deleteFileCompatibility = async (req, res, next) => {
  */
 const getFilesCompatibility = (req, res) => {
   try {
-    const filesInfo = pmtaSSHService.importedFiles.map(file => ({
+    const filesInfo = pmtaSSHService.importedFiles.map((file) => ({
       filename: file.filename,
       recordCount: file.recordCount,
       importTime: file.importTime,
-      selected: pmtaSSHService.selectedFile === file.filename
+      selected: pmtaSSHService.selectedFile === file.filename,
     }));
-    
+
     const data = pmtaSSHService.getData();
-    
+
     res.status(200).json({
       files: filesInfo,
       selectedFile: pmtaSSHService.selectedFile,
       totalRecords: data.totalRecords,
-      availableFiles: pmtaSSHService.availableFiles || []
+      availableFiles: pmtaSSHService.availableFiles || [],
     });
   } catch (error) {
-    logger.error('Get files compatibility error:', error);
+    logger.error("Get files compatibility error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 };
@@ -1079,5 +1129,5 @@ module.exports = {
   importLatestOnly,
   selectFile,
   deleteFileCompatibility,
-  getFilesCompatibility
+  getFilesCompatibility,
 };

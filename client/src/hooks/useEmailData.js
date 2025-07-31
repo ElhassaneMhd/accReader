@@ -1,10 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { parseCSVFile } from "@/utils/csvParser";
-import {
-  analyzeEmailData,
-  searchData,
-  filterData,
-} from "@/utils/dataAnalysis";
+import { analyzeEmailData, searchData, filterData } from "@/utils/dataAnalysis";
 
 export const useEmailData = () => {
   const [rawData, setRawData] = useState([]);
@@ -42,39 +38,134 @@ export const useEmailData = () => {
     }
   }, []);
 
-  // Load data from auto-import service
-  const loadAutoImportData = useCallback(async () => {
-    if (!autoImportEnabled) return;
+  // Load data from auto-import service with file selection support
+  const loadAutoImportData = useCallback(
+    async (fileToLoad = null) => {
+      if (!autoImportEnabled) return;
 
-    try {
-      const response = await fetch(
-        "http://localhost:4000/api/pmta/latest-data"
+      console.log(
+        `🔄 Loading auto-import data. Requested file: ${fileToLoad}, Current file: ${selectedFile}`
       );
-      if (!response.ok) {
-        throw new Error("Failed to fetch auto-import data");
-      }
 
-      const { data, totalRecords, source, selectedFile, importedFiles } =
-        await response.json();
-      if (data && Array.isArray(data) && data.length > 0) {
-        // Data is already parsed JSON from direct server read
-        setRawData(data);
-        setFilteredData(data); // Immediately update filtered data to trigger UI refresh
-        setLastAutoUpdate(new Date().toISOString());
+      try {
+        // If a specific file is requested, select it first
+        if (fileToLoad && fileToLoad !== selectedFile) {
+          console.log(`📤 Selecting file on server: ${fileToLoad}`);
+          const selectResponse = await fetch(
+            "http://localhost:4000/api/pmta/files/select",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ filename: fileToLoad }),
+            }
+          );
 
-        // Update file information
-        if (selectedFile !== undefined) setSelectedFile(selectedFile);
-        if (importedFiles) setAvailableFiles(importedFiles); // Renamed but same functionality
+          if (!selectResponse.ok) {
+            const errorText = await selectResponse.text();
+            throw new Error(
+              `Failed to select file: ${fileToLoad}. Server response: ${errorText}`
+            );
+          }
 
-        console.log(
-          `Auto-import data loaded: ${totalRecords} records via ${source}`
+          const selectResult = await selectResponse.json();
+          console.log(`✅ File selection result:`, selectResult);
+          setSelectedFile(fileToLoad);
+        }
+
+        console.log(`📤 Fetching latest data from server...`);
+
+        // Try to get data, and if no data is available, force reload
+        let response = await fetch(
+          "http://localhost:4000/api/pmta/latest-data"
         );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to fetch auto-import data. Server response: ${errorText}`
+          );
+        }
+
+        let responseData = await response.json();
+
+        // If no data is available, try force reload
+        if (!responseData.data || responseData.data.length === 0) {
+          console.log(`⚠️ No data available, attempting force reload...`);
+          response = await fetch(
+            "http://localhost:4000/api/pmta/latest-data?forceReload=true"
+          );
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `Failed to force reload data. Server response: ${errorText}`
+            );
+          }
+
+          responseData = await response.json();
+        }
+
+        const {
+          data,
+          totalRecords,
+          source,
+          selectedFile: serverSelectedFile,
+          importedFiles,
+        } = responseData;
+
+        console.log(`📥 Server response:`, {
+          totalRecords,
+          source,
+          serverSelectedFile,
+          dataLength: data?.length,
+        });
+
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Data is already parsed JSON from direct server read
+          setRawData(data);
+          setFilteredData(data); // Immediately update filtered data to trigger UI refresh
+          setLastAutoUpdate(new Date().toISOString());
+
+          // Update file information
+          if (serverSelectedFile !== undefined)
+            setSelectedFile(serverSelectedFile);
+          if (importedFiles) setAvailableFiles(importedFiles);
+
+          console.log(
+            `✅ Auto-import data loaded: ${totalRecords} records via ${source} (File: ${serverSelectedFile})`
+          );
+        } else {
+          console.warn(`⚠️ No data received from server or empty data array`);
+        }
+      } catch (err) {
+        console.error("Error loading auto-import data:", err);
+        setError(err.message);
       }
-    } catch (err) {
-      console.error("Error loading auto-import data:", err);
-      // Don't set error state for auto-import failures to avoid disrupting UI
-    }
-  }, [autoImportEnabled]);
+    },
+    [autoImportEnabled, selectedFile]
+  );
+
+  // Switch to a specific file
+  const switchToFile = useCallback(
+    async (filename) => {
+      if (!autoImportEnabled) return;
+
+      console.log(`🔄 Context: Switching to file: ${filename}`);
+      setLoading(true);
+      setError(null);
+
+      try {
+        await loadAutoImportData(filename);
+        console.log(`✅ Context: Successfully switched to file: ${filename}`);
+      } catch (err) {
+        console.error(`❌ Context: Failed to switch to file ${filename}:`, err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [autoImportEnabled, loadAutoImportData]
+  );
 
   // Force refresh data (manual refresh)
   const forceRefresh = useCallback(async () => {
@@ -106,88 +197,7 @@ export const useEmailData = () => {
     setAutoRefreshEnabled((prev) => !prev);
   }, []);
 
-  // Enable auto-refresh
-  const enableAutoRefresh = useCallback(() => {
-    setAutoRefreshEnabled(true);
-  }, []);
-
-  // Disable auto-refresh
-  const disableAutoRefresh = useCallback(() => {
-    setAutoRefreshEnabled(false);
-  }, []);
-
-  // Switch between files
-  const switchToFile = useCallback(
-    async (filename) => {
-      if (!autoImportEnabled) return;
-
-      try {
-        setSelectedFile(filename); // Update UI immediately
-
-        const response = await fetch(
-          "http://localhost:4000/api/pmta/files/select",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ filename }),
-          }
-        );
-
-        if (response.ok) {
-          const result = await response.json();
-
-          // Reload data with new selection
-          await loadAutoImportData();
-
-          console.log(
-            `Switched to: ${result.selectedFile} (${
-              result.recordCount || "combined"
-            } records)`
-          );
-        }
-      } catch (err) {
-        console.error("Error switching file:", err);
-        setError("Failed to switch file");
-      }
-    },
-    [autoImportEnabled, loadAutoImportData]
-  );
-
-  // Get list of available files
-  const getAvailableFiles = useCallback(async () => {
-    if (!autoImportEnabled) return;
-
-    try {
-      const response = await fetch("http://localhost:4000/api/pmta/files");
-      if (response.ok) {
-        const result = await response.json();
-        setAvailableFiles(result.files);
-        setSelectedFile(result.selectedFile);
-        return result;
-      }
-    } catch (err) {
-      console.error("Error getting files:", err);
-    }
-  }, [autoImportEnabled]);
-
-  // Apply search and filters
-  const applyFilters = useCallback(() => {
-    let result = rawData;
-
-    // Apply search
-    if (searchTerm) {
-      result = searchData(result, searchTerm, searchType);
-    }
-
-    // Apply filters
-    result = filterData(result, filters);
-
-    setFilteredData(result);
-  }, [rawData, searchTerm, searchType, filters]);
-
-  // Update search
+  // Update search term
   const updateSearch = useCallback((term, type = "recipient") => {
     setSearchTerm(term);
     setSearchType(type);
@@ -198,7 +208,7 @@ export const useEmailData = () => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   }, []);
 
-  // Clear all filters and search
+  // Clear all filters
   const clearFilters = useCallback(() => {
     setSearchTerm("");
     setSearchType("recipient");
@@ -210,75 +220,140 @@ export const useEmailData = () => {
     });
   }, []);
 
-  // Memoized analysis
-  const analysis = useMemo(() => {
-    return analyzeEmailData(filteredData);
-  }, [filteredData]);
-
-  // Get unique values for filter options
-  const filterOptions = useMemo(() => {
-    if (rawData.length === 0) {
-      return {
-        vmtas: [],
-        bounceCategories: [],
-        statuses: [],
-      };
+  // Get available files
+  const getAvailableFiles = useCallback(async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/files/available"
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch available files");
+      }
+      const data = await response.json();
+      setAvailableFiles(data.files || []);
+    } catch (err) {
+      console.error("Error fetching available files:", err);
     }
+  }, []);
 
-    const vmtas = [
-      ...new Set(rawData.map((row) => row.vmta).filter(Boolean)),
-    ].sort();
-    const bounceCategories = [
-      ...new Set(rawData.map((row) => row.bounceCat).filter(Boolean)),
-    ].sort();
-    const statuses = [
-      ...new Set(rawData.map((row) => row.dsnAction).filter(Boolean)),
-    ].sort();
-
-    return {
-      vmtas,
-      bounceCategories,
-      statuses,
-    };
-  }, [rawData]);
-
-  // Auto-import effect - check for new data more frequently with router support and auto-refresh control
+  // Auto-refresh effect
   useEffect(() => {
     if (!autoImportEnabled || !autoRefreshEnabled) return;
 
-    // Initial load
-    loadAutoImportData();
-
-    // Set up periodic checking every 10 seconds for more responsive updates
     const interval = setInterval(() => {
-      if (autoRefreshEnabled) {
-        loadAutoImportData();
-        // Force component re-render by updating a timestamp
-        setLastAutoUpdate(new Date().toISOString());
-      }
-    }, 10000); // 10 seconds for faster updates
+      loadAutoImportData();
+    }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
   }, [autoImportEnabled, autoRefreshEnabled, loadAutoImportData]);
 
-  // Apply filters whenever dependencies change
+  // Initial data load
   useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+    if (autoImportEnabled) {
+      loadAutoImportData();
+      getAvailableFiles();
+    }
+  }, [autoImportEnabled, loadAutoImportData, getAvailableFiles]);
+
+  // Filter and search effect
+  useEffect(() => {
+    if (rawData.length === 0) {
+      setFilteredData([]);
+      return;
+    }
+
+    let filtered = rawData;
+
+    // Apply search
+    if (searchTerm.trim()) {
+      filtered = searchData(filtered, searchTerm, searchType);
+    }
+
+    // Apply filters
+    if (
+      filters.status !== "all" ||
+      filters.vmta !== "all" ||
+      filters.bounceCategory !== "all" ||
+      filters.dateRange
+    ) {
+      filtered = filterData(filtered, filters);
+    }
+
+    setFilteredData(filtered);
+  }, [rawData, searchTerm, searchType, filters]);
+
+  // Memoized analysis
+  const analysis = useMemo(() => {
+    if (filteredData.length === 0) {
+      return {
+        overview: {
+          totalRecords: 0,
+          delivered: 0,
+          failed: 0,
+          bounced: 0,
+          queued: 0,
+          delayed: 0,
+        },
+        statusBreakdown: [],
+        vmtaPerformance: [],
+        timeSeries: [],
+        topRecipients: [],
+        topSenders: [],
+        bounceAnalysis: [],
+      };
+    }
+
+    return analyzeEmailData(filteredData);
+  }, [filteredData]);
+
+  // Memoized filter options
+  const filterOptions = useMemo(() => {
+    if (rawData.length === 0) {
+      return {
+        statuses: [],
+        vmtas: [],
+        bounceCategories: [],
+        dateRange: null,
+      };
+    }
+
+    const statuses = [
+      ...new Set(
+        rawData.map((row) => row.dsnAction || row.action || "unknown")
+      ),
+    ];
+    const vmtas = [
+      ...new Set(
+        rawData.map((row) => row.vmta || row.dlvSourceIp || "unknown")
+      ),
+    ];
+    const bounceCategories = [
+      ...new Set(rawData.map((row) => row.bounceCategory || "unknown")),
+    ];
+
+    return {
+      statuses: statuses.sort(),
+      vmtas: vmtas.sort(),
+      bounceCategories: bounceCategories.sort(),
+      dateRange: null,
+    };
+  }, [rawData]);
 
   return {
     // Data
     rawData,
     filteredData,
     analysis,
-
-    // State
     loading,
     error,
+
+    // Search and filters
     searchTerm,
     searchType,
     filters,
     filterOptions,
+
+    // Auto-import settings
     autoImportEnabled,
     autoRefreshEnabled,
     lastAutoUpdate,
@@ -287,17 +362,15 @@ export const useEmailData = () => {
 
     // Actions
     loadCSVFile,
-    updateSearch,
-    updateFilters,
-    clearFilters,
+    loadAutoImportData,
+    switchToFile,
+    forceRefresh,
     enableAutoImport,
     disableAutoImport,
     toggleAutoRefresh,
-    enableAutoRefresh,
-    disableAutoRefresh,
-    loadAutoImportData,
-    forceRefresh,
-    switchToFile,
+    updateSearch,
+    updateFilters,
+    clearFilters,
     getAvailableFiles,
   };
 };

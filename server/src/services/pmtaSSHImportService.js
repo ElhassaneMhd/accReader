@@ -1,43 +1,46 @@
-const { NodeSSH } = require('node-ssh');
-const fs = require('fs').promises;
-const path = require('path');
-const chokidar = require('chokidar');
-const logger = require('../utils/logger');
-const { createReadStream } = require('fs');
-const csv = require('csv-parser');
+const { NodeSSH } = require("node-ssh");
+const fs = require("fs").promises;
+const path = require("path");
+const chokidar = require("chokidar");
+const logger = require("../utils/logger");
+const { createReadStream } = require("fs");
+const csv = require("csv-parser");
 
 class PMTASSHImportService {
   constructor() {
     this.ssh = new NodeSSH();
     this.isConnected = false;
     this.importStatus = {
-      status: 'disconnected',
+      status: "disconnected",
       lastImport: null,
       lastError: null,
       totalFiles: 0,
       filesProcessed: 0,
-      connectionHealth: 'unknown',
-    };
-    
-    // Configuration from environment
-    this.config = {
-      host: process.env.PMTA_HOST || '91.229.239.75',
-      port: parseInt(process.env.PMTA_PORT) || 22,
-      username: process.env.PMTA_USERNAME || 'your_username',
-      password: process.env.PMTA_PASSWORD || 'your_password',
-      logPath: process.env.PMTA_LOG_PATH || '/var/log/pmta',
-      logPattern: process.env.PMTA_LOG_PATTERN || 'acct-*.csv',
-      interval: parseInt(process.env.IMPORT_INTERVAL) || 30000,
-      enabled: process.env.AUTO_IMPORT_ENABLED === 'true',
+      connectionHealth: "unknown",
     };
 
-    this.localDataPath = path.join(process.cwd(), process.env.PMTA_LOCAL_DATA_PATH || 'pmta-data');
-    
+    // Configuration from environment
+    this.config = {
+      host: process.env.PMTA_HOST || "91.229.239.75",
+      port: parseInt(process.env.PMTA_PORT) || 22,
+      username: process.env.PMTA_USERNAME || "your_username",
+      password: process.env.PMTA_PASSWORD || "your_password",
+      logPath: process.env.PMTA_LOG_PATH || "/var/log/pmta",
+      logPattern: process.env.PMTA_LOG_PATTERN || "acct-*.csv",
+      interval: parseInt(process.env.IMPORT_INTERVAL) || 30000,
+      enabled: process.env.AUTO_IMPORT_ENABLED === "true",
+    };
+
+    this.localDataPath = path.join(
+      process.cwd(),
+      process.env.PMTA_LOCAL_DATA_PATH || "pmta-data"
+    );
+
     // Data storage
     this.cachedData = [];
     this.lastDataUpdate = null;
     this.importedFiles = [];
-    this.selectedFile = 'all';
+    this.selectedFile = "all";
     this.availableFiles = [];
     this.importTimer = null;
 
@@ -57,7 +60,7 @@ class PMTASSHImportService {
   // Test network connectivity
   async testConnectivity() {
     try {
-      const net = require('net');
+      const net = require("net");
       const socket = new net.Socket();
 
       return new Promise((resolve) => {
@@ -72,7 +75,7 @@ class PMTASSHImportService {
           resolve(true);
         });
 
-        socket.on('error', () => {
+        socket.on("error", () => {
           clearTimeout(timeout);
           resolve(false);
         });
@@ -85,12 +88,14 @@ class PMTASSHImportService {
   // Connect to PMTA server
   async connectToServer() {
     try {
-      logger.info(`Attempting SSH connection to: ${this.config.host}:${this.config.port}`);
-      
+      logger.info(
+        `Attempting SSH connection to: ${this.config.host}:${this.config.port}`
+      );
+
       // Test basic connectivity first
       const isReachable = await this.testConnectivity();
       if (!isReachable) {
-        throw new Error('Server is not reachable on port 22');
+        throw new Error("Server is not reachable on port 22");
       }
 
       const connectionConfig = {
@@ -106,21 +111,21 @@ class PMTASSHImportService {
       await this.ssh.connect(connectionConfig);
 
       this.isConnected = true;
-      this.importStatus.status = 'connected';
-      this.importStatus.connectionHealth = 'good';
+      this.importStatus.status = "connected";
+      this.importStatus.connectionHealth = "good";
       this.importStatus.lastError = null;
 
-      logger.info('Successfully connected to PMTA server');
+      logger.info("Successfully connected to PMTA server");
 
       // Test the connection
-      const testResult = await this.ssh.execCommand('pwd');
+      const testResult = await this.ssh.execCommand("pwd");
       logger.info(`Server working directory: ${testResult.stdout}`);
 
       return true;
     } catch (error) {
       logger.error(`Failed to connect to PMTA server: ${error.message}`);
-      this.importStatus.status = 'error';
-      this.importStatus.connectionHealth = 'poor';
+      this.importStatus.status = "error";
+      this.importStatus.connectionHealth = "poor";
       this.importStatus.lastError = error.message;
       this.isConnected = false;
       return false;
@@ -130,7 +135,7 @@ class PMTASSHImportService {
   // Disconnect from server
   async disconnect() {
     try {
-      logger.info('Disconnecting from PMTA server...');
+      logger.info("Disconnecting from PMTA server...");
 
       if (this.importTimer) {
         clearInterval(this.importTimer);
@@ -142,16 +147,16 @@ class PMTASSHImportService {
       }
 
       this.isConnected = false;
-      this.importStatus.status = 'disconnected';
-      this.importStatus.connectionHealth = 'unknown';
+      this.importStatus.status = "disconnected";
+      this.importStatus.connectionHealth = "unknown";
       this.importStatus.lastError = null;
 
-      logger.info('Successfully disconnected from PMTA server');
+      logger.info("Successfully disconnected from PMTA server");
       return true;
     } catch (error) {
       logger.error(`Error during disconnect: ${error.message}`);
       this.isConnected = false;
-      this.importStatus.status = 'disconnected';
+      this.importStatus.status = "disconnected";
       return false;
     }
   }
@@ -159,7 +164,7 @@ class PMTASSHImportService {
   // List remote files
   async listRemoteFiles() {
     if (!this.isConnected) {
-      throw new Error('Not connected to PMTA server');
+      throw new Error("Not connected to PMTA server");
     }
 
     try {
@@ -173,14 +178,14 @@ class PMTASSHImportService {
 
       const files = result.stdout
         .trim()
-        .split('\n')
+        .split("\n")
         .filter((f) => f.length > 0);
-      
+
       this.importStatus.totalFiles = files.length;
       logger.info(`Found ${files.length} log files on server`);
       return files;
     } catch (error) {
-      logger.error('Error listing remote files:', error);
+      logger.error("Error listing remote files:", error);
       throw error;
     }
   }
@@ -211,7 +216,7 @@ class PMTASSHImportService {
         logger.info(`Downloaded: ${filename} (${stats.size} bytes)`);
         return localPath;
       } else {
-        throw new Error('Downloaded file is empty');
+        throw new Error("Downloaded file is empty");
       }
     } catch (error) {
       logger.error(`Failed to download ${filename}: ${error.message}`);
@@ -227,17 +232,17 @@ class PMTASSHImportService {
 
       createReadStream(filePath)
         .pipe(csv())
-        .on('data', (data) => {
+        .on("data", (data) => {
           // Add filename to each record
           data._filename = filename;
           data._lineNumber = results.length + 1;
           results.push(data);
         })
-        .on('end', () => {
+        .on("end", () => {
           logger.info(`Parsed ${filename}: ${results.length} records`);
           resolve(results);
         })
-        .on('error', (error) => {
+        .on("error", (error) => {
           logger.error(`Error parsing ${filename}: ${error.message}`);
           reject(error);
         });
@@ -248,21 +253,25 @@ class PMTASSHImportService {
   async importFiles(importAllFiles = false) {
     try {
       if (!this.isConnected) {
-        throw new Error('Not connected to server');
+        throw new Error("Not connected to server");
       }
 
       const allFiles = await this.listRemoteFiles();
       if (allFiles.length === 0) {
-        logger.info('No files found matching pattern');
+        logger.info("No files found matching pattern");
         return { success: true, data: [], filesProcessed: 0, totalFiles: 0 };
       }
 
       const filesToImport = importAllFiles ? allFiles : [allFiles[0]];
-      
+
       if (!importAllFiles) {
-        logger.info(`Performance mode: Downloading only the latest file (${path.basename(filesToImport[0])})`);
+        logger.info(
+          `Performance mode: Downloading only the latest file (${path.basename(filesToImport[0])})`
+        );
       } else {
-        logger.info(`Full import mode: Downloading all ${filesToImport.length} files`);
+        logger.info(
+          `Full import mode: Downloading all ${filesToImport.length} files`
+        );
       }
 
       let allData = [];
@@ -276,16 +285,30 @@ class PMTASSHImportService {
         available: true,
       }));
 
-      // Clear previous imported files
-      this.importedFiles = [];
+      // Load existing imported files first (don't clear them)
+      if (this.importedFiles.length === 0) {
+        await this.loadExistingImportedFiles();
+      }
+
+      // Add existing data to allData
+      allData = [...this.cachedData];
 
       for (const remoteFile of filesToImport) {
         const filename = path.basename(remoteFile);
 
+        // Skip if already imported
+        const existingFile = this.importedFiles.find(
+          (f) => f.filename === filename
+        );
+        if (existingFile) {
+          logger.info(`File ${filename} already imported, skipping`);
+          continue;
+        }
+
         try {
           // Download file
           const localPath = await this.downloadFile(remoteFile);
-          
+
           // Parse CSV content
           const fileData = await this.parseCSVFile(localPath);
 
@@ -302,11 +325,12 @@ class PMTASSHImportService {
           processedFiles++;
 
           // Mark as imported in available files
-          const availableFile = this.availableFiles.find(f => f.filename === filename);
+          const availableFile = this.availableFiles.find(
+            (f) => f.filename === filename
+          );
           if (availableFile) {
             availableFile.imported = true;
           }
-
         } catch (error) {
           logger.error(`Failed to process ${filename}: ${error.message}`);
         }
@@ -323,14 +347,16 @@ class PMTASSHImportService {
       this.cachedData = allData;
       this.lastDataUpdate = new Date();
 
-      logger.info(`Import completed: ${processedFiles}/${filesToImport.length} files processed, ${allData.length} total records`);
+      logger.info(
+        `Import completed: ${processedFiles}/${filesToImport.length} files processed, ${allData.length} total records`
+      );
 
       return {
         success: true,
         data: allData,
         filesProcessed: processedFiles,
         totalFiles: allFiles.length,
-        importedFiles: filesToImport.length,
+        importedFiles: this.importedFiles.length,
         availableFiles: allFiles.length,
       };
     } catch (error) {
@@ -343,11 +369,13 @@ class PMTASSHImportService {
   async importSpecificFile(filename) {
     try {
       if (!this.isConnected) {
-        throw new Error('Not connected to server');
+        throw new Error("Not connected to server");
       }
 
       // Check if file is already imported
-      const existingFile = this.importedFiles.find(f => f.filename === filename);
+      const existingFile = this.importedFiles.find(
+        (f) => f.filename === filename
+      );
       if (existingFile) {
         return {
           success: true,
@@ -357,10 +385,31 @@ class PMTASSHImportService {
         };
       }
 
+      // Ensure available files are loaded
+      if (!this.availableFiles || this.availableFiles.length === 0) {
+        const allFiles = await this.listRemoteFiles();
+        this.availableFiles = allFiles.map((file) => ({
+          filename: path.basename(file),
+          fullPath: file,
+          imported: false,
+          available: true,
+        }));
+      }
+
       // Find the file in available files
-      const availableFile = this.availableFiles.find(f => f.filename === filename);
+      const availableFile = this.availableFiles.find(
+        (f) => f.filename === filename
+      );
       if (!availableFile) {
-        throw new Error(`File ${filename} not found in available files`);
+        const availableFilenames = this.availableFiles
+          .map((f) => f.filename)
+          .join(", ");
+        logger.error(
+          `File ${filename} not found. Available files: ${availableFilenames}`
+        );
+        throw new Error(
+          `File ${filename} not found in available files. Available: ${availableFilenames}`
+        );
       }
 
       logger.info(`Importing specific file: ${filename}`);
@@ -391,7 +440,9 @@ class PMTASSHImportService {
 
       this.lastDataUpdate = new Date();
 
-      logger.info(`Successfully imported ${filename} (${fileData.length} records)`);
+      logger.info(
+        `Successfully imported ${filename} (${fileData.length} records)`
+      );
 
       return {
         success: true,
@@ -413,9 +464,11 @@ class PMTASSHImportService {
   // Delete imported file
   async deleteImportedFile(filename) {
     try {
-      const fileIndex = this.importedFiles.findIndex(f => f.filename === filename);
+      const fileIndex = this.importedFiles.findIndex(
+        (f) => f.filename === filename
+      );
       if (fileIndex === -1) {
-        throw new Error('File not found in imported files');
+        throw new Error("File not found in imported files");
       }
 
       const file = this.importedFiles[fileIndex];
@@ -424,7 +477,9 @@ class PMTASSHImportService {
       this.importedFiles.splice(fileIndex, 1);
 
       // Remove from cached data
-      this.cachedData = this.cachedData.filter(record => record._filename !== filename);
+      this.cachedData = this.cachedData.filter(
+        (record) => record._filename !== filename
+      );
 
       // Delete physical file if it exists
       if (file.localPath) {
@@ -432,19 +487,23 @@ class PMTASSHImportService {
           await fs.unlink(file.localPath);
           logger.info(`Deleted physical file: ${file.localPath}`);
         } catch (error) {
-          logger.warn(`Could not delete physical file ${file.localPath}: ${error.message}`);
+          logger.warn(
+            `Could not delete physical file ${file.localPath}: ${error.message}`
+          );
         }
       }
 
       // Update available files
-      const availableFile = this.availableFiles.find(f => f.filename === filename);
+      const availableFile = this.availableFiles.find(
+        (f) => f.filename === filename
+      );
       if (availableFile) {
         availableFile.imported = false;
       }
 
       // If deleted file was selected, switch to "all"
       if (this.selectedFile === filename) {
-        this.selectedFile = 'all';
+        this.selectedFile = "all";
       }
 
       this.lastDataUpdate = new Date();
@@ -469,7 +528,9 @@ class PMTASSHImportService {
       clearInterval(this.importTimer);
     }
 
-    logger.info(`Starting periodic import every ${this.config.interval / 1000} seconds`);
+    logger.info(
+      `Starting periodic import every ${this.config.interval / 1000} seconds`
+    );
 
     this.importTimer = setInterval(async () => {
       try {
@@ -487,19 +548,21 @@ class PMTASSHImportService {
     if (this.importTimer) {
       clearInterval(this.importTimer);
       this.importTimer = null;
-      logger.info('Stopped periodic import');
+      logger.info("Stopped periodic import");
     }
   }
 
   // Load existing imported files
   async loadExistingImportedFiles() {
     try {
-      logger.info('Loading existing imported files...');
+      logger.info("Loading existing imported files...");
 
       const files = await fs.readdir(this.localDataPath);
-      const csvFiles = files.filter(file => file.endsWith('.csv'));
+      const csvFiles = files.filter((file) => file.endsWith(".csv"));
 
-      logger.info(`Found ${csvFiles.length} existing files: ${csvFiles.join(', ')}`);
+      logger.info(
+        `Found ${csvFiles.length} existing files: ${csvFiles.join(", ")}`
+      );
 
       for (const filename of csvFiles) {
         try {
@@ -532,7 +595,9 @@ class PMTASSHImportService {
 
       this.lastDataUpdate = new Date();
 
-      logger.info(`Successfully loaded ${this.importedFiles.length} imported files with ${this.cachedData.length} total records`);
+      logger.info(
+        `Successfully loaded ${this.importedFiles.length} imported files with ${this.cachedData.length} total records`
+      );
 
       // Set default selected file
       if (this.importedFiles.length > 0) {
@@ -549,38 +614,85 @@ class PMTASSHImportService {
 
   // Get data for selected file or all files
   getData() {
-    if (this.selectedFile === 'all') {
+    // Ensure we have data loaded
+    if (this.cachedData.length === 0 && this.importedFiles.length > 0) {
+      logger.warn(
+        "Cached data is empty but imported files exist, reloading..."
+      );
+      this.loadExistingImportedFiles().catch((err) => {
+        logger.error("Failed to reload existing files:", err);
+      });
+    }
+
+    if (this.selectedFile === "all") {
       return {
         data: this.cachedData,
         totalRecords: this.cachedData.length,
-        selectedFile: 'all',
-        source: 'combined_files',
+        selectedFile: "all",
+        source: "combined_files",
+        importedFiles: this.importedFiles.map((f) => ({
+          filename: f.filename,
+          recordCount: f.recordCount,
+          importTime: f.importTime,
+          selected: false,
+        })),
       };
     } else {
-      const file = this.importedFiles.find(f => f.filename === this.selectedFile);
+      const file = this.importedFiles.find(
+        (f) => f.filename === this.selectedFile
+      );
       if (file) {
         return {
           data: file.data,
           totalRecords: file.recordCount,
           selectedFile: this.selectedFile,
-          source: 'individual_file',
+          source: "individual_file",
+          importedFiles: this.importedFiles.map((f) => ({
+            filename: f.filename,
+            recordCount: f.recordCount,
+            importTime: f.importTime,
+            selected: f.filename === this.selectedFile,
+          })),
         };
       } else {
         // Fallback to combined data
         return {
           data: this.cachedData,
           totalRecords: this.cachedData.length,
-          selectedFile: 'all',
-          source: 'combined_files',
+          selectedFile: "all",
+          source: "combined_files",
+          importedFiles: this.importedFiles.map((f) => ({
+            filename: f.filename,
+            recordCount: f.recordCount,
+            importTime: f.importTime,
+            selected: false,
+          })),
         };
       }
+    }
+  }
+
+  // Force reload all data
+  async forceReloadData() {
+    try {
+      logger.info("Force reloading all data...");
+      this.cachedData = [];
+      this.importedFiles = [];
+      await this.loadExistingImportedFiles();
+      logger.info(
+        `Force reload completed: ${this.cachedData.length} records from ${this.importedFiles.length} files`
+      );
+      return true;
+    } catch (error) {
+      logger.error("Force reload failed:", error);
+      return false;
     }
   }
 
   // Update connection configuration
   updateConfig(newConfig) {
     this.config = { ...this.config, ...newConfig };
-    logger.info('PMTA SSH configuration updated');
+    logger.info("PMTA SSH configuration updated");
   }
 
   // Get status

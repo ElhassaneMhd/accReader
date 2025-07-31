@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { selectIsAuthenticated, selectAuth } from "@/store/slices/authSlice";
 
 import Login from "@/pages/auth/Login";
-import ClientDashboard from "@/pages/mailwizz/ClientDashboard";
+import MailWizzDashboard from "@/pages/admin/MailWizzDashboard";
 import CampaignManagement from "@/pages/admin/CampaignManagement";
 import UserManagement from "@/pages/admin/UserManagement";
 import ListManagementPage from "@/pages/admin/ListManagementPage";
@@ -13,7 +13,6 @@ import OverviewPage from "@/pages/admin/OverviewPage";
 import ListSubscribersPage from "@/pages/admin/ListSubscribersPage";
 
 import DashboardPage from "@/pages/admin/DashboardPage";
-import PublicUploadPage from "@/pages/PublicUploadPage";
 
 import { ConnectionProvider } from "@/contexts/ConnectionContext";
 import { EmailDataProvider } from "@/contexts/EmailDataContext";
@@ -75,7 +74,7 @@ const AppRoutes = () => {
           <ProtectedRoute requiredRole="client">
             <ClientLayout>
               <Routes>
-                <Route index element={<ClientDashboard />} />
+                <Route index element={<MailWizzDashboard />} />
               </Routes>
             </ClientLayout>
           </ProtectedRoute>

@@ -76,6 +76,27 @@ const ImportStatus = ({
     }
   };
 
+  const forceReloadData = async () => {
+    setLoading(true);
+    try {
+      console.log("🔄 Force reloading data...");
+      const response = await fetch(
+        "http://localhost:4000/api/pmta/latest-data?forceReload=true"
+      );
+      if (response.ok) {
+        console.log("✅ Force reload completed");
+        // Trigger a refresh of the main data
+        if (onForceRefresh) {
+          onForceRefresh();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to force reload data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStatus(); // Always fetch once on mount
 
@@ -264,6 +285,25 @@ const ImportStatus = ({
               <>
                 <RefreshCw size={16} className="mr-2" />
                 Force Import
+              </>
+            )}
+          </Button>
+
+          <Button
+            onClick={forceReloadData}
+            disabled={loading}
+            variant="outline"
+            className="flex-1 bg-blue-900/20 border-blue-600 text-blue-400 hover:bg-blue-900/30"
+          >
+            {loading ? (
+              <>
+                <RefreshCw size={16} className="mr-2 animate-spin" />
+                Reloading...
+              </>
+            ) : (
+              <>
+                <Server size={16} className="mr-2" />
+                Reload Data
               </>
             )}
           </Button>

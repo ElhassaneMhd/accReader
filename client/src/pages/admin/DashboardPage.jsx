@@ -2,12 +2,12 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import OverviewStats from "@/components/OverviewStats";
-import Charts from "@/components/Charts";
-import VmtaPerformance from "@/components/VmtaPerformance";
-import SearchAndFilters from "@/components/SearchAndFilters";
+import Charts from "@/components/Analytics/Charts";
+import VmtaPerformance from "@/components/Analytics/VmtaPerformance";
+import SearchAndFilters from "@/components/Analytics/SearchAndFilters";
 import DataTable from "@/components/DataTable";
-import ImportStatus from "@/components/ImportStatus";
-import FileSelector from "@/components/FileSelector";
+import ImportStatus from "@/components/Analytics/ImportStatus";
+import FileSelector from "@/components/Analytics/FileSelector";
 import { useEmailDataContext } from "@/hooks/useEmailDataContext";
 import { useConnectionContext } from "@/hooks/useConnectionContext";
 
@@ -38,7 +38,7 @@ const DashboardPage = () => {
     disableAutoImport,
     toggleAutoRefresh,
     forceRefresh,
-    switchToFile,
+    switchToFile: contextSwitchToFile,
     getAvailableFiles,
   } = useEmailDataContext();
 
@@ -72,8 +72,13 @@ const DashboardPage = () => {
     const action = row.original?.dsnAction || row.dsnAction || "";
     const status = row.original?.dsnStatus || row.dsnStatus || "";
     const diag = row.original?.dsnDiag || row.dsnDiag || "";
-    if (/relayed/i.test(action) && /2\.0\.0|2\.6\.0|2\.1\.5|success/i.test(status)) return "Delivered";
-    if (/failed|failure|bounced|rejected|denied|deferred|error/i.test(action)) return "Failed";
+    if (
+      /relayed/i.test(action) &&
+      /2\.0\.0|2\.6\.0|2\.1\.5|success/i.test(status)
+    )
+      return "Delivered";
+    if (/failed|failure|bounced|rejected|denied|deferred|error/i.test(action))
+      return "Failed";
     if (/queued/i.test(diag)) return "Queued";
     if (/delayed/i.test(action)) return "Delayed";
     if (/expanded/i.test(action)) return "Expanded";
@@ -101,9 +106,7 @@ const DashboardPage = () => {
             });
           }
         }
-        return (
-          <span className="whitespace-nowrap block">{formatted}</span>
-        );
+        return <span className="whitespace-nowrap block">{formatted}</span>;
       },
     },
     {
@@ -114,9 +117,12 @@ const DashboardPage = () => {
         let color = "text-gray-300";
         if (finalStatus === "Delivered") color = "text-green-400 font-semibold";
         else if (finalStatus === "Failed") color = "text-red-400 font-semibold";
-        else if (finalStatus === "Queued") color = "text-yellow-400 font-semibold";
-        else if (finalStatus === "Delayed") color = "text-orange-400 font-semibold";
-        else if (finalStatus === "Expanded") color = "text-purple-400 font-semibold";
+        else if (finalStatus === "Queued")
+          color = "text-yellow-400 font-semibold";
+        else if (finalStatus === "Delayed")
+          color = "text-orange-400 font-semibold";
+        else if (finalStatus === "Expanded")
+          color = "text-purple-400 font-semibold";
         return <span className={color}>{finalStatus}</span>;
       },
     },
@@ -128,7 +134,12 @@ const DashboardPage = () => {
       cell: ({ row }) => {
         // Show the IP address instead of pmta-vmta0
         // Try dlvSourceIp, fallback to vmta if not present
-        const ip = row.original?.dlvSourceIp || row.dlvSourceIp || row.original?.vmta || row.vmta || "-";
+        const ip =
+          row.original?.dlvSourceIp ||
+          row.dlvSourceIp ||
+          row.original?.vmta ||
+          row.vmta ||
+          "-";
         return <span className="font-mono text-blue-300">{ip}</span>;
       },
     },
@@ -145,18 +156,24 @@ const DashboardPage = () => {
         // Extract human-friendly reason
         let reason = "";
         if (/Invalid Recipient/i.test(diag)) reason = "Invalid Recipient";
-        else if (/mail accepted for delivery/i.test(diag)) reason = "Accepted for Delivery";
-        else if (/no mail hosts for domain/i.test(diag)) reason = "No Mail Hosts for Domain";
+        else if (/mail accepted for delivery/i.test(diag))
+          reason = "Accepted for Delivery";
+        else if (/no mail hosts for domain/i.test(diag))
+          reason = "No Mail Hosts for Domain";
         else if (/OK/i.test(diag)) reason = "OK";
-        else if (/queued mail for delivery/i.test(diag)) reason = "Queued for Delivery";
+        else if (/queued mail for delivery/i.test(diag))
+          reason = "Queued for Delivery";
         else if (/success/i.test(diag)) reason = "Success";
-        else if (/fail|error|rejected|denied|deferred/i.test(diag)) reason = "Delivery Failed";
+        else if (/fail|error|rejected|denied|deferred/i.test(diag))
+          reason = "Delivery Failed";
         else if (diag.length > 60) reason = diag.slice(0, 60) + "...";
         else reason = diag;
 
         return (
           <span>
-            {code && <span className="font-semibold text-blue-300">{code}</span>}
+            {code && (
+              <span className="font-semibold text-blue-300">{code}</span>
+            )}
             <span className="ml-2">{reason}</span>
           </span>
         );
@@ -194,9 +211,10 @@ const DashboardPage = () => {
             <FileSelector
               selectedFile={selectedFile}
               availableFiles={availableFiles}
-              onFileSelect={switchToFile}
+              onFileSelect={contextSwitchToFile}
               onRefreshFiles={getAvailableFiles}
               isAutoImportEnabled={autoImportEnabled}
+              switchToFile={contextSwitchToFile}
             />
           </div>
         )}
