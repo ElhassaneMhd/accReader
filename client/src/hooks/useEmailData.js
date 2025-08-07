@@ -245,7 +245,7 @@ export const useEmailData = () => {
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
-  }, [autoImportEnabled, autoRefreshEnabled, loadAutoImportData]);
+  }, [autoImportEnabled, autoRefreshEnabled]); // Removed loadAutoImportData from deps
 
   // Initial data load
   useEffect(() => {
@@ -253,7 +253,7 @@ export const useEmailData = () => {
       loadAutoImportData();
       getAvailableFiles();
     }
-  }, [autoImportEnabled, loadAutoImportData, getAvailableFiles]);
+  }, [autoImportEnabled]); // Removed loadAutoImportData and getAvailableFiles from deps
 
   // Filter and search effect
   useEffect(() => {

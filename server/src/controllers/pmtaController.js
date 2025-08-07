@@ -1014,13 +1014,53 @@ const importLatestOnly = async (req, res, next) => {
 const selectFile = (req, res) => {
   try {
     const { filename } = req.body;
+    const selected = filename || "all";
+    pmtaSSHService.selectedFile = selected;
 
-    pmtaSSHService.selectedFile = filename || "all";
+    // If not "all", ensure the file's data is loaded
+    if (selected !== "all") {
+      let file = pmtaSSHService.importedFiles.find(f => f.filename === selected);
+      if (!file) {
+        // Try to load from disk if not in memory
+        const path = require("path");
+        const fs = require("fs");
+        const filePath = path.join(pmtaSSHService.localDataPath, selected);
+        if (fs.existsSync(filePath)) {
+          pmtaSSHService.parseCSVFile(filePath).then(data => {
+            pmtaSSHService.importedFiles.push({
+              filename: selected,
+              data,
+              recordCount: data.length,
+              importTime: new Date().toISOString(),
+              localPath: filePath,
+            });
+            pmtaSSHService.lastDataUpdate = new Date();
+            res.status(200).json({
+              success: true,
+              message: `Selected file: ${selected} (loaded from disk)`,
+              selectedFile: selected,
+            });
+          }).catch(error => {
+            logger.error("Error loading selected file from disk:", error);
+            res.status(500).json({
+              success: false,
+              message: `Failed to load file: ${error.message}`,
+            });
+          });
+          return;
+        } else {
+          return res.status(404).json({
+            success: false,
+            message: `File not found: ${selected}`,
+          });
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
-      message: `Selected file: ${pmtaSSHService.selectedFile}`,
-      selectedFile: pmtaSSHService.selectedFile,
+      message: `Selected file: ${selected}`,
+      selectedFile: selected,
     });
   } catch (error) {
     logger.error("Select file error:", error);

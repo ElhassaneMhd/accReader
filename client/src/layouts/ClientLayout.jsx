@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Mail,
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { logoutUser, selectAuth } from "@/store/slices/authSlice";
 
-const ClientLayout = ({ children }) => {
+const ClientLayout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -191,7 +191,7 @@ const ClientLayout = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 bg-gray-950">{children}</main>
+        <main className="flex-1 bg-gray-950"><Outlet /></main>
       </div>
     </div>
   );

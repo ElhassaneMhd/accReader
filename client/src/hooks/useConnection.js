@@ -9,6 +9,29 @@ export const useConnection = () => {
   const [connectionError, setConnectionError] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
 
+  const verifyActiveConnection = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/connection-status`);
+      if (response.ok) {
+        const status = await response.json();
+        if (status.isConnected) {
+          setIsConnected(true);
+          setConnectionStatus(status.status);
+        } else {
+          // Connection is not active, clear session
+          localStorage.removeItem(SESSION_KEY);
+        }
+      } else {
+        // API not available, clear session
+        localStorage.removeItem(SESSION_KEY);
+      }
+    } catch (error) {
+      console.error("Failed to verify connection:", error);
+      // API service might not be running, don't set as connected
+      localStorage.removeItem(SESSION_KEY);
+    }
+  };
+
   // Check for existing session on load
   useEffect(() => {
     const checkSession = () => {
@@ -36,29 +59,6 @@ export const useConnection = () => {
 
     checkSession();
   }, []);
-
-  const verifyActiveConnection = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/connection-status`);
-      if (response.ok) {
-        const status = await response.json();
-        if (status.isConnected) {
-          setIsConnected(true);
-          setConnectionStatus(status.status);
-        } else {
-          // Connection is not active, clear session
-          localStorage.removeItem(SESSION_KEY);
-        }
-      } else {
-        // API not available, clear session
-        localStorage.removeItem(SESSION_KEY);
-      }
-    } catch (error) {
-      console.error("Failed to verify connection:", error);
-      // API service might not be running, don't set as connected
-      localStorage.removeItem(SESSION_KEY);
-    }
-  };
 
   const connect = async (connectionData) => {
     setIsConnecting(true);

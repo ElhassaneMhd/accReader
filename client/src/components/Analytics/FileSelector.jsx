@@ -70,7 +70,6 @@ const FileSelector = ({
   useEffect(() => {
     // Always fetch available files on mount, regardless of auto-import setting
     dispatch(fetchAvailableFiles());
-    fetchImportedFiles();
   }, [dispatch]);
 
   // Auto-fetch files when auto-import is enabled
@@ -84,26 +83,9 @@ const FileSelector = ({
     }
   }, [dispatch, isAutoImportEnabled]);
 
-  // Debug logging
-  useEffect(() => {
-    fetchImportedFiles();
-  }, []);
+  // Remove the problematic useEffect that was causing infinite renders
 
-  const [debugInfo, setDebugInfo] = useState({
-    availableFiles: [],
-    importedFiles: [],
-    selectedFile: null,
-    isConnected: false,
-  });
-
-  useEffect(() => {
-    setDebugInfo({
-      availableFiles: availableFiles?.length || 0,
-      importedFiles: serverImportedFiles?.length || 0,
-      selectedFile,
-      isConnected: true,
-    });
-  }, [availableFiles, serverImportedFiles, selectedFile]);
+  // Remove the debug info useEffect that was causing infinite renders
 
   const fetchImportedFiles = async () => {
     try {

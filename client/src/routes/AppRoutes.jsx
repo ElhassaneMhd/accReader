@@ -72,53 +72,49 @@ const AppRoutes = () => {
         path="/dashboard/*"
         element={
           <ProtectedRoute requiredRole="client">
-            <ClientLayout>
-              <Routes>
-                <Route index element={<MailWizzDashboard />} />
-              </Routes>
-            </ClientLayout>
+            <ClientLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<MailWizzDashboard />} />
+      </Route>
 
       <Route
         path="/admin/*"
         element={
           <ProtectedRoute requiredRole="admin">
-            <AdminLayout>
-              <Routes>
-                <Route index element={<OverviewPage />} />
-                <Route path="overview" element={<OverviewPage />} />
-                <Route path="campaigns" element={<CampaignManagement />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="lists" element={<ListManagementPage />} />
-                <Route
-                  path="lists/:listUid"
-                  element={<ListSubscribersPage />}
-                />
-                <Route
-                  path="settings/*"
-                  element={
-                    <ConnectionProvider>
-                      <Settings />
-                    </ConnectionProvider>
-                  }
-                />
-                <Route
-                  path="analytics"
-                  element={
-                    <ConnectionProvider>
-                      <EmailDataProvider>
-                        <DashboardPage />
-                      </EmailDataProvider>
-                    </ConnectionProvider>
-                  }
-                />
-              </Routes>
-            </AdminLayout>
+            <AdminLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<OverviewPage />} />
+        <Route path="overview" element={<OverviewPage />} />
+        <Route path="campaigns" element={<CampaignManagement />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="lists" element={<ListManagementPage />} />
+        <Route
+          path="lists/:listUid"
+          element={<ListSubscribersPage />}
+        />
+        <Route
+          path="settings/*"
+          element={
+            <ConnectionProvider>
+              <Settings />
+            </ConnectionProvider>
+          }
+        />
+        <Route
+          path="analytics"
+          element={
+            <ConnectionProvider>
+              <EmailDataProvider>
+                <DashboardPage />
+              </EmailDataProvider>
+            </ConnectionProvider>
+          }
+        />
+      </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
